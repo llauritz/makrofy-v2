@@ -87,12 +87,10 @@ function GlanceStrip({ onDismiss }: { onDismiss: () => void }) {
 function ScreenChrome({
   title,
   onBack,
-  headerRight,
   children,
 }: {
   title: string
   onBack: () => void
-  headerRight?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
@@ -107,7 +105,6 @@ function ScreenChrome({
             <ChevronLeft className="h-5 w-5" />
           </button>
           <h1 className="text-xl font-semibold whitespace-nowrap">{title}</h1>
-          {headerRight}
         </header>
         {children}
       </div>
@@ -274,32 +271,31 @@ function WeekReport({ onBack }: { onBack: () => void }) {
       ? Math.round(((avg7 - avgPrev) / avgPrev) * 100)
       : null
   const range = inRangeStatsFor(week)
-  const pager = (
-    <div className="ml-auto flex items-center gap-1">
-      <button
-        aria-label="Older week"
-        onClick={older}
-        disabled={offset >= MAX_WEEK_OFFSET}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dcc8] bg-[#fffdf7] text-[#7d7060] disabled:opacity-35 dark:border-[#3a2f22] dark:bg-[#2a211a] dark:text-[#a5988a]"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-      <button
-        aria-label="Newer week"
-        onClick={newer}
-        disabled={offset === 0}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dcc8] bg-[#fffdf7] text-[#7d7060] disabled:opacity-35 dark:border-[#3a2f22] dark:bg-[#2a211a] dark:text-[#a5988a]"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    </div>
-  )
   return (
-    <ScreenChrome
-      title={offset === 0 ? "This week" : fmtRange(week)}
-      onBack={onBack}
-      headerRight={pager}
-    >
+    <ScreenChrome title="Week report" onBack={onBack}>
+      {/* Week selector — one wide pill with borderless chevrons, deliberately a
+          different shape from the circled back button (screen nav vs content nav). */}
+      <div className="mb-4 flex items-center justify-between rounded-full border border-[#eee5d2] bg-[#fffdf7] px-1 py-1 dark:border-[#3a2f22] dark:bg-[#2a211a]">
+        <button
+          aria-label="Older week"
+          onClick={older}
+          disabled={offset >= MAX_WEEK_OFFSET}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-[#7d7060] disabled:opacity-30 dark:text-[#a5988a]"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span className="text-[13px] font-semibold">
+          {offset === 0 ? "This week" : fmtRange(week)}
+        </span>
+        <button
+          aria-label="Newer week"
+          onClick={newer}
+          disabled={offset === 0}
+          className="flex h-8 w-8 items-center justify-center rounded-full text-[#7d7060] disabled:opacity-30 dark:text-[#a5988a]"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
       <div
         className="px-1"
         onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
