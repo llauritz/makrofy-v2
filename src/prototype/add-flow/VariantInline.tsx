@@ -145,6 +145,23 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
         />
       </div>
 
+      <div className="mt-2 flex items-center gap-2">
+        {MACROS.map((m) => (
+          <MacroPillInput
+            key={m.key}
+            macro={m}
+            value={values[m.key]}
+            onChange={(v) => set({ [m.key]: v })}
+            flagged={flags.has(m.key)}
+            busy={thinking}
+            onClearFlag={() => clearFlag(m.key)}
+          />
+        ))}
+        <AddButton onClick={commit} />
+      </div>
+
+      {/* History search results — below the pills, like everything else
+          that reacts to the typed text (user decision). */}
       {typeaheadOn && phase.kind !== "question" && phase.kind !== "hint" && (
         <TypeaheadPanel
           query={values.label}
@@ -162,21 +179,6 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
           }}
         />
       )}
-
-      <div className="mt-2 flex items-center gap-2">
-        {MACROS.map((m) => (
-          <MacroPillInput
-            key={m.key}
-            macro={m}
-            value={values[m.key]}
-            onChange={(v) => set({ [m.key]: v })}
-            flagged={flags.has(m.key)}
-            busy={thinking}
-            onClearFlag={() => clearFlag(m.key)}
-          />
-        ))}
-        <AddButton onClick={commit} />
-      </div>
 
       {/* AI zone — everything the AI does surfaces here, below the pills,
           inside the card (user decision: maximum visibility, one place). */}
