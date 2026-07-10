@@ -1,9 +1,10 @@
-// PROTOTYPE — issue #5, Variant A "Inline fill".
-// Contract: the AI writes INTO the form fields; the Add button stays the one
-// and only commit point. Every tier surfaces inside the add card itself —
-// shimmering fields while thinking, dashed ~values when unsure, an inline
-// question row with answer chips when ambiguous, a hint row when hopeless.
-// Google attribution renders at the bottom of the card, never on entries.
+// PROTOTYPE — issue #5, Variant A "Inline fill" — CHOSEN, iteration 2.
+// Contract: the AI writes INTO the numeric form fields — never the label
+// (the user's wording is preserved; the AI's interpretation shows in the
+// info row). The Add button stays the one and only commit point. ALL AI
+// surfaces (thinking, question, hint, interpretation, Google attribution)
+// live in one zone BELOW the macro pills, inside the add card, for maximum
+// visibility. Committed AI-assisted entries carry the ✨ marker.
 import * as React from "react"
 import { X } from "lucide-react"
 
@@ -35,6 +36,9 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
   const [flags, setFlags] = React.useState<Set<FlagKey>>(new Set())
   const [interp, setInterp] = React.useState<string | null>(null)
   const [attribution, setAttribution] = React.useState<string | null>(null)
+  // Set while the current field values came from an AI fill — committed
+  // entries then carry the ✨ marker (attribution itself stays in the card).
+  const [aiAssisted, setAiAssisted] = React.useState(false)
   // The typeahead opens only on text the user typed (or seeded) — never on a
   // label the AI wrote back, or it would cover the fill it just made.
   const [typeaheadOn, setTypeaheadOn] = React.useState(true)
@@ -50,6 +54,7 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
     setFlags(new Set())
     setInterp(null)
     setAttribution(null)
+    setAiAssisted(false)
   }, [])
 
   // Consuming the try-tray seed is inherently a set-state-in-effect.
@@ -71,6 +76,7 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
     if (r.status === "confident" || r.status === "unsure") {
       set(formFromFood(r.food))
       setTypeaheadOn(false)
+      setAiAssisted(true)
       setInterp(`${r.food.label} — ${r.food.servingText}`)
       setFlags(r.status === "unsure" ? flagsFromUncertain(r.uncertainFields) : new Set())
       setPhase({ kind: "idle" })
@@ -95,7 +101,9 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
   const commit = () => {
     const entry = buildEntry()
     if (!entry) return
-    addEntry(entry)
+    // ✨ provenance marker on AI-assisted entries (no chip — attribution was
+    // displayed in the card at response time).
+    addEntry(aiAssisted ? { ...entry, ai: { flagged: [], grounded: false } } : entry)
     reset()
     clearAiState()
   }
@@ -155,8 +163,25 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
         />
       )}
 
+      <div className="mt-2 flex items-center gap-2">
+        {MACROS.map((m) => (
+          <MacroPillInput
+            key={m.key}
+            macro={m}
+            value={values[m.key]}
+            onChange={(v) => set({ [m.key]: v })}
+            flagged={flags.has(m.key)}
+            busy={thinking}
+            onClearFlag={() => clearFlag(m.key)}
+          />
+        ))}
+        <AddButton onClick={commit} />
+      </div>
+
+      {/* AI zone — everything the AI does surfaces here, below the pills,
+          inside the card (user decision: maximum visibility, one place). */}
       {phase.kind === "question" && (
-        <div className="mt-2 rounded-2xl bg-[#f3ecdd] px-4 py-3 dark:bg-[#211a12]">
+        <div className="animate-in fade-in slide-in-from-top-1 mt-2 rounded-2xl bg-[#f3ecdd] px-4 py-3 duration-200 dark:bg-[#211a12]">
           <div className="flex items-start justify-between gap-2">
             <span className="text-sm">{phase.question}</span>
             <button
@@ -182,7 +207,7 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
       )}
 
       {phase.kind === "hint" && (
-        <div className="mt-2 flex items-start justify-between gap-2 rounded-2xl bg-[#f3ecdd] px-4 py-3 dark:bg-[#211a12]">
+        <div className="animate-in fade-in slide-in-from-top-1 mt-2 flex items-start justify-between gap-2 rounded-2xl bg-[#f3ecdd] px-4 py-3 duration-200 dark:bg-[#211a12]">
           <span className="text-sm text-[#7d7060] dark:text-[#a5988a]">
             Can’t estimate this one. {phase.hint}
           </span>
@@ -196,23 +221,8 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
         </div>
       )}
 
-      <div className="mt-2 flex items-center gap-2">
-        {MACROS.map((m) => (
-          <MacroPillInput
-            key={m.key}
-            macro={m}
-            value={values[m.key]}
-            onChange={(v) => set({ [m.key]: v })}
-            flagged={flags.has(m.key)}
-            busy={thinking}
-            onClearFlag={() => clearFlag(m.key)}
-          />
-        ))}
-        <AddButton onClick={commit} />
-      </div>
-
       {(thinking || interp || flags.size > 0 || attribution) && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 px-1 text-[11px] text-[#7d7060] dark:text-[#a5988a]">
+        <div className="animate-in fade-in mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 px-1 text-[11px] text-[#7d7060] duration-200 dark:text-[#a5988a]">
           {thinking && <span>Estimating…</span>}
           {interp && <span className="truncate">{interp}</span>}
           {flags.size > 0 && <span>Best guess — tap a dashed value to adjust.</span>}

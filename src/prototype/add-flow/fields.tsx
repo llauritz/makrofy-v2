@@ -7,7 +7,7 @@ import * as React from "react"
 import { Plus, Sparkles } from "lucide-react"
 
 import { MACROS, type Entry, type MacroKey } from "./Shell"
-import { suggest, type Food, type Suggestion } from "./engine"
+import { MIN_QUERY_CHARS, suggest, type Food, type Suggestion } from "./engine"
 
 export type FlagKey = MacroKey | "kcal"
 
@@ -45,11 +45,12 @@ export function useAddForm() {
   return { values, set, reset, buildEntry }
 }
 
-// Map an AI Food payload onto the form fields (1 decimal, trailing zeros trimmed).
+// Map an AI Food payload onto the numeric form fields. The label is NOT
+// touched — the AI never renames what the user typed (user decision); its
+// interpretation shows in the info row instead.
 export function formFromFood(food: Food): Partial<FormValues> {
   const fmt = (n: number) => String(Math.round(n * 10) / 10)
   return {
-    label: food.label,
     kcal: String(Math.round(food.calories)),
     p: fmt(food.protein_g),
     f: fmt(food.fat_g),
@@ -68,8 +69,10 @@ export function flagsFromUncertain(fields: string[]): Set<FlagKey> {
   return flags
 }
 
+// Flagged (uncertain) values: a clearly visible dashed outline, no extra
+// characters in the field (user decision: no "~" after the P/F/C letters).
 const flaggedOutline =
-  "outline outline-1 outline-dashed outline-[#b9ab92] -outline-offset-1 dark:outline-[#5a4c3b]"
+  "outline-2 outline-dashed outline-[#8f7c5e] -outline-offset-2 dark:outline-[#8a775c]"
 
 export function FoodInput({
   value,
@@ -136,8 +139,10 @@ export function KcalInput({
       inputMode="decimal"
       aria-label="Calories"
       className={
-        "w-16 rounded-full bg-[#f3ecdd] px-3 py-2.5 text-center text-sm tabular-nums outline-none placeholder:text-[#a5988a] dark:bg-[#211a12] " +
-        (flagged ? flaggedOutline : "") +
+        // outline-none (focus reset) and the dashed flag outline are mutually
+        // exclusive — both set outline-style, and the reset would win.
+        "w-16 rounded-full bg-[#f3ecdd] px-3 py-2.5 text-center text-sm tabular-nums placeholder:text-[#a5988a] dark:bg-[#211a12] " +
+        (flagged ? flaggedOutline : "outline-none") +
         (busy ? " animate-pulse" : "")
       }
     />
@@ -176,7 +181,6 @@ export function MacroPillInput({
       />
       <span className="text-xs font-medium text-[#7d7060] dark:text-[#a5988a]">
         {macro.letter}
-        {flagged ? "~" : ""}
       </span>
       <input
         value={value}
@@ -233,6 +237,11 @@ export function AiButton({
 
 // History typeahead — renders inside the add card, directly under the input.
 // Instant (sync), never waits on anything. Tap = add the past entry as-is.
+//
+// Word-by-word search (user decision): only the word currently being typed is
+// searched ("10g butter" → first "10g", then "butter" once typing resumes
+// after the space). The previous word's results stay visible until the next
+// word produces results of its own.
 export function TypeaheadPanel({
   query,
   onPick,
@@ -240,10 +249,25 @@ export function TypeaheadPanel({
   query: string
   onPick: (s: Suggestion) => void
 }) {
-  const suggestions = suggest(query)
+  const [suggestions, setSuggestions] = React.useState<Suggestion[]>([])
+  // Sticky derived state — an effect on purpose. eslint-disable react-hooks/set-state-in-effect
+  /* eslint-disable react-hooks/set-state-in-effect */
+  React.useEffect(() => {
+    if (!query.trim()) {
+      setSuggestions([])
+      return
+    }
+    const words = query.trim().split(/\s+/)
+    const current = words[words.length - 1]
+    if (current.length < MIN_QUERY_CHARS) return // keep previous word's results
+    const next = suggest(current)
+    if (next.length > 0) setSuggestions(next)
+    // empty → keep previous word's results visible
+  }, [query])
+  /* eslint-enable react-hooks/set-state-in-effect */
   if (suggestions.length === 0) return null
   return (
-    <div className="mt-2 flex flex-col overflow-hidden rounded-2xl bg-[#f3ecdd] dark:bg-[#211a12]">
+    <div className="animate-in fade-in mt-2 flex flex-col overflow-hidden rounded-2xl bg-[#f3ecdd] duration-200 dark:bg-[#211a12]">
       {suggestions.map((s) => (
         <button
           key={s.label}
