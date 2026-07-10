@@ -161,20 +161,21 @@ export function VariantInline({ entries, addEntry, seed }: VariantProps) {
       </div>
 
       {/* History search results — below the pills, like everything else
-          that reacts to the typed text (user decision). */}
+          that reacts to the typed text (user decision). Tapping one FILLS
+          the form; the Add button stays the only commit point (user decision
+          — supersedes the original "tap to re-add instantly"). */}
       {typeaheadOn && phase.kind !== "question" && phase.kind !== "hint" && (
         <TypeaheadPanel
           query={values.label}
           onPick={(s) => {
-            addEntry({
-              id: `n${Date.now()}`,
+            set({
               label: s.label,
-              kcal: s.kcal,
-              p: s.p,
-              f: s.f,
-              c: s.c,
+              kcal: s.kcal ? String(s.kcal) : "",
+              p: s.p ? String(s.p) : "",
+              f: s.f ? String(s.f) : "",
+              c: s.c ? String(s.c) : "",
             })
-            reset()
+            setTypeaheadOn(false)
             clearAiState()
           }}
         />
