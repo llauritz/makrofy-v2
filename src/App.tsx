@@ -1,10 +1,11 @@
-// PROTOTYPE MOUNT (issue #4): the home page currently hosts the visual-design-direction
-// prototype — three variants switchable via ?variant= (A|B|C). Throwaway: replace with
-// the real app shell once a direction is chosen. See src/prototype/design-directions/.
-import { DesignDirectionsPrototype } from "@/prototype/design-directions"
+// PROTOTYPE MOUNT (issue #7): the home page currently hosts the stats
+// prototype — three variants switchable via ?variant= (A|B|C). Throwaway:
+// replace with the real app shell once the stat set and placement are
+// settled. See src/prototype/stats/.
+import { StatsPrototype } from "@/prototype/stats"
 
 export function App() {
-  return <DesignDirectionsPrototype />
+  return <StatsPrototype />
 }
 
 export default App
