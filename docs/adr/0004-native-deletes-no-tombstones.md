@@ -1,0 +1,3 @@
+# Native deletes, last-write-wins, no tombstones
+
+Deleting an Entry is a real Firestore document delete. The SDK queues deletes offline and syncs them reliably — V1 lost deletes because its hand-rolled sync layer dropped them, not because it lacked tombstones, and ADR 0001 removes that root cause. Concurrent cross-device offline races (edit vs delete) resolve by operation order (last write wins); the stakes are one re-loggable food entry, which does not justify tombstone machinery: `where('deleted','==',false)` on every query, composite indexes, a purge job, and a typeahead index that must skip corpses. Undo ("entry deleted — undo") is an in-memory deferred delete, not a model concern.
