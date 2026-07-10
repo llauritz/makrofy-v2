@@ -91,14 +91,37 @@ export function rolling7(n: number): { date: Date; avg: number | null }[] {
 export const inRange = (kcal: number) => kcal >= RANGE_LO && kcal <= RANGE_HI
 
 /** Completed tracked days of the last 7 that landed in the range band. */
-export function inRangeStats() {
-  const win = lastDays(7)
-  const tracked = win.filter((d) => d.kcal != null && !d.today)
+export function inRangeStatsFor(days: Day[]) {
+  const tracked = days.filter((d) => d.kcal != null && !d.today)
   return {
     inRange: tracked.filter((d) => inRange(d.kcal as number)).length,
     tracked: tracked.length,
-    days: win, // includes today — RangeDots renders it as the small forming dot
+    days, // includes today — RangeDots renders it as the small forming dot
+    // The band earns its place only after a week of near-daily use:
+    // a full 7-day window with at least 5 tracked days.
+    enough: days.length === 7 && tracked.length >= 5,
   }
+}
+
+export const inRangeStats = () => inRangeStatsFor(lastDays(7))
+
+/** 7-day window ending `offset` weeks back (offset 0 = ends today). Shorter at the data edge. */
+export function weekSliceEnding(offset: number): Day[] {
+  const end = DAYS.length - offset * 7
+  if (end <= 0) return [] // a negative end would wrap around via slice()
+  return DAYS.slice(Math.max(0, end - 7), end)
+}
+
+/** Oldest reachable pager offset — the last window is partial, showing the gated state. */
+export const MAX_WEEK_OFFSET = Math.floor((DAYS.length - 1) / 7)
+
+export function fmtRange(days: Day[]): string {
+  const M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  const a = days[0].date
+  const b = days[days.length - 1].date
+  return a.getMonth() === b.getMonth()
+    ? `${a.getDate()} – ${b.getDate()} ${M[b.getMonth()]}`
+    : `${a.getDate()} ${M[a.getMonth()]} – ${b.getDate()} ${M[b.getMonth()]}`
 }
 
 export const WEEKDAY = ["S", "M", "T", "W", "T", "F", "S"]

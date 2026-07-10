@@ -20,12 +20,16 @@ import {
 } from "./charts"
 import {
   DAYS,
+  MAX_WEEK_OFFSET,
   RANGE_HI,
   RANGE_LO,
   avgKcal,
+  fmtRange,
   inRangeStats,
+  inRangeStatsFor,
   lastDays,
   rolling7,
+  weekSliceEnding,
 } from "./data"
 
 function GlanceStrip({ onDismiss }: { onDismiss: () => void }) {
@@ -44,9 +48,11 @@ function GlanceStrip({ onDismiss }: { onDismiss: () => void }) {
           Last 7 days
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-[11px]" style={{ color: MUTED }}>
-            {range.inRange} of {range.tracked} in range
-          </span>
+          {range.enough && (
+            <span className="text-[11px]" style={{ color: MUTED }}>
+              {range.inRange} of {range.tracked} in range
+            </span>
+          )}
           <button
             aria-label="Dismiss until tomorrow"
             onClick={onDismiss}
@@ -81,10 +87,12 @@ function GlanceStrip({ onDismiss }: { onDismiss: () => void }) {
 function ScreenChrome({
   title,
   onBack,
+  headerRight,
   children,
 }: {
   title: string
   onBack: () => void
+  headerRight?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
@@ -94,11 +102,12 @@ function ScreenChrome({
           <button
             aria-label="Back"
             onClick={onBack}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dcc8] bg-[#fffdf7] text-[#7d7060] dark:border-[#3a2f22] dark:bg-[#2a211a] dark:text-[#a5988a]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e6dcc8] bg-[#fffdf7] text-[#7d7060] dark:border-[#3a2f22] dark:bg-[#2a211a] dark:text-[#a5988a]"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-semibold">{title}</h1>
+          <h1 className="text-xl font-semibold whitespace-nowrap">{title}</h1>
+          {headerRight}
         </header>
         {children}
       </div>
@@ -195,12 +204,20 @@ function Dashboard({
             }
             spark={<Sparkline values={rolling7(12).map((p) => p.avg)} />}
           />
-          <StatTile
-            label="In range"
-            value={`${range.inRange} of ${range.tracked}`}
-            unit="days"
-            note={`${RANGE_LO.toLocaleString()}–${RANGE_HI.toLocaleString()} kcal (80–110% of goal)`}
-          />
+          {range.enough ? (
+            <StatTile
+              label="In range"
+              value={`${range.inRange} of ${range.tracked}`}
+              unit="days"
+              note={`${RANGE_LO.toLocaleString()}–${RANGE_HI.toLocaleString()} kcal (80–110% of goal)`}
+            />
+          ) : (
+            <StatTile
+              label="In range"
+              value="—"
+              note="shows after a week of near-daily tracking"
+            />
+          )}
         </div>
 
         <Section title="Trend" sub="Last 30 days">
@@ -243,17 +260,57 @@ function Dashboard({
 }
 
 function WeekReport({ onBack }: { onBack: () => void }) {
-  const week = lastDays(7)
+  // Week pager: 0 = the trailing 7 days, higher = further back. Arrows + swipe;
+  // the oldest window is partial, so it demonstrates the gated in-range state.
+  const [offset, setOffset] = React.useState(0)
+  const older = () => setOffset((o) => Math.min(MAX_WEEK_OFFSET, o + 1))
+  const newer = () => setOffset((o) => Math.max(0, o - 1))
+  const touchX = React.useRef<number | null>(null)
+  const week = weekSliceEnding(offset)
   const avg7 = avgKcal(week)
-  const avgPrev = avgKcal(DAYS.slice(-14, -7))
+  const avgPrev = avgKcal(weekSliceEnding(offset + 1))
   const deltaPct =
     avg7 != null && avgPrev != null
       ? Math.round(((avg7 - avgPrev) / avgPrev) * 100)
       : null
-  const range = inRangeStats()
+  const range = inRangeStatsFor(week)
+  const pager = (
+    <div className="ml-auto flex items-center gap-1">
+      <button
+        aria-label="Older week"
+        onClick={older}
+        disabled={offset >= MAX_WEEK_OFFSET}
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dcc8] bg-[#fffdf7] text-[#7d7060] disabled:opacity-35 dark:border-[#3a2f22] dark:bg-[#2a211a] dark:text-[#a5988a]"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <button
+        aria-label="Newer week"
+        onClick={newer}
+        disabled={offset === 0}
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dcc8] bg-[#fffdf7] text-[#7d7060] disabled:opacity-35 dark:border-[#3a2f22] dark:bg-[#2a211a] dark:text-[#a5988a]"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  )
   return (
-    <ScreenChrome title="This week" onBack={onBack}>
-      <div className="px-1">
+    <ScreenChrome
+      title={offset === 0 ? "This week" : fmtRange(week)}
+      onBack={onBack}
+      headerRight={pager}
+    >
+      <div
+        className="px-1"
+        onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
+        onTouchEnd={(e) => {
+          if (touchX.current == null) return
+          const dx = e.changedTouches[0].clientX - touchX.current
+          touchX.current = null
+          if (dx > 48) older()
+          if (dx < -48) newer()
+        }}
+      >
         <div className="mt-2">
           <div className="flex items-baseline gap-2">
             <span className="text-[44px] leading-none font-semibold">
@@ -279,17 +336,29 @@ function WeekReport({ onBack }: { onBack: () => void }) {
           <WeekColumns days={week} height={140} />
         </div>
 
-        <div className="mt-6 flex items-center justify-between gap-3 rounded-3xl border border-[#eee5d2] bg-[#fffdf7] px-4 py-3.5 dark:border-[#3a2f22] dark:bg-[#2a211a]">
-          <div className="min-w-0">
-            <div className="text-[13px] font-semibold">
-              {range.inRange} of {range.tracked} days in range
+        {range.enough ? (
+          <div className="mt-6 flex items-center justify-between gap-3 rounded-3xl border border-[#eee5d2] bg-[#fffdf7] px-4 py-3.5 dark:border-[#3a2f22] dark:bg-[#2a211a]">
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold">
+                {range.inRange} of {range.tracked} days in range
+              </div>
+              <div className="mt-0.5 text-[11px]" style={{ color: MUTED }}>
+                {RANGE_LO.toLocaleString()}–{RANGE_HI.toLocaleString()} kcal (80–110% of goal)
+              </div>
+            </div>
+            <RangeDots days={range.days} />
+          </div>
+        ) : (
+          <div className="mt-6 rounded-3xl border border-dashed border-[#cbbfa4] px-4 py-3.5 dark:border-[#4a3e2e]">
+            <div className="text-[13px] font-semibold" style={{ color: MUTED }}>
+              In range
             </div>
             <div className="mt-0.5 text-[11px]" style={{ color: MUTED }}>
-              {RANGE_LO.toLocaleString()}–{RANGE_HI.toLocaleString()} kcal (80–110% of goal)
+              Shows after a week of near-daily tracking — {range.tracked} of 7
+              days tracked in this window.
             </div>
           </div>
-          <RangeDots days={range.days} />
-        </div>
+        )}
 
         <p className="mt-4 text-[11px]" style={{ color: MUTED }}>
           Untracked days are left out of averages.
