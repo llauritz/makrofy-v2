@@ -4,6 +4,8 @@
 //   A "Dashboard"    — separate stats screen, FULL candidate set
 //   B "Glance strip" — inline strip on the main screen only, NO stats screen
 //   C "Week report"  — inline teaser + a curated, narrative stats screen
+//   D "Composed"     — iteration 2 (default): dashboard minus goal-Δ/monthly,
+//                      This-week tile → week-report subpage, morning strip
 // Throwaway: delete this directory and the App.tsx mount once the stat set and
 // placement are settled. ?theme=light|dark forces the mode (screenshot workflow).
 import * as React from "react"
@@ -15,11 +17,13 @@ import {
   PrototypeSwitcher,
   type VariantDef,
 } from "../design-directions/PrototypeSwitcher"
+import { VariantComposed } from "./VariantComposed"
 import { VariantDashboard } from "./VariantDashboard"
 import { VariantReport } from "./VariantReport"
 import { VariantStrip } from "./VariantStrip"
 
 const VARIANTS: VariantDef[] = [
+  { key: "D", name: "Composed" },
   { key: "A", name: "Dashboard" },
   { key: "B", name: "Glance strip" },
   { key: "C", name: "Week report" },
@@ -30,7 +34,7 @@ function useVariantParam(): [string, (key: string) => void] {
     const v = new URLSearchParams(window.location.search)
       .get("variant")
       ?.toUpperCase()
-    return VARIANTS.some((d) => d.key === v) ? (v as string) : "A"
+    return VARIANTS.some((d) => d.key === v) ? (v as string) : "D"
   })
   const set = React.useCallback((key: string) => {
     const url = new URL(window.location.href)
@@ -52,6 +56,7 @@ export function StatsPrototype() {
 
   return (
     <>
+      {variant === "D" && <VariantComposed />}
       {variant === "A" && <VariantDashboard />}
       {variant === "B" && <VariantStrip />}
       {variant === "C" && <VariantReport />}
