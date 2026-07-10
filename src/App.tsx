@@ -1,10 +1,11 @@
-// PROTOTYPE MOUNT (issue #4): the home page currently hosts the visual-design-direction
-// prototype — three variants switchable via ?variant= (A|B|C). Throwaway: replace with
-// the real app shell once a direction is chosen. See src/prototype/design-directions/.
-import { DesignDirectionsPrototype } from "@/prototype/design-directions"
+// PROTOTYPE MOUNT (issue #5): the home page currently hosts the add-flow
+// prototype — three interaction-contract variants switchable via ?variant=
+// (A|B|C). Throwaway: replace with the real app shell once the add-flow
+// contract is settled. See src/prototype/add-flow/.
+import { AddFlowPrototype } from "@/prototype/add-flow"
 
 export function App() {
-  return <DesignDirectionsPrototype />
+  return <AddFlowPrototype />
 }
 
 export default App
