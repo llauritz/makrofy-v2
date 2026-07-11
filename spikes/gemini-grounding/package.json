@@ -1,0 +1,13 @@
+{
+  "name": "spike-gemini-grounding",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "PROTOTYPE — throwaway spike for issue #20, not production code",
+  "scripts": {
+    "spike": "node spike.mjs --suite"
+  },
+  "dependencies": {
+    "firebase": "12.16.0"
+  }
+}
