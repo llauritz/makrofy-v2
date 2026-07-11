@@ -6,7 +6,7 @@ export function Header() {
   return (
     <header className="flex items-center justify-between px-5 pt-7 pb-4">
       <div className="font-wordmark text-[30px] leading-none font-semibold">
-        Makrofy
+        Yaffle
       </div>
       <div className="flex items-center gap-1">
         <button
