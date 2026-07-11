@@ -1,7 +1,10 @@
-import { CloudOff, Settings2 } from "lucide-react"
+import { CloudOff } from "lucide-react"
+
+import { SettingsSheet } from "./SettingsSheet"
 
 // Fraunces wordmark, sync indicator, settings. The sync indicator is a static
-// placeholder until #19 feeds it real states; settings opens nothing until #17.
+// placeholder until #19 feeds it real states; settings opens a placeholder
+// sheet (#17 builds the real one) that hosts the quiet install entry from #23.
 export function Header() {
   return (
     <header className="flex items-center justify-between px-5 pt-7 pb-4">
@@ -15,12 +18,7 @@ export function Header() {
         >
           <CloudOff className="h-[18px] w-[18px]" />
         </button>
-        <button
-          aria-label="Settings"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dcc8] bg-card text-muted-foreground dark:border-border"
-        >
-          <Settings2 className="h-[18px] w-[18px]" />
-        </button>
+        <SettingsSheet />
       </div>
     </header>
   )

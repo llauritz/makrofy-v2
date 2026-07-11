@@ -3,9 +3,24 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Yaffle</title>
+  <meta name="description" content="A calm calorie and macro tracker." />
+
+  <!-- Warm Market flour as the browser/OS chrome colour. ThemeProvider keeps
+       this single meta in sync with the resolved theme (light #f6f1e6 / dark
+       #17110c) so it follows the in-app toggle, not just the OS preference. -->
+  <meta name="theme-color" content="#f6f1e6" />
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+  <!-- iOS runs Add-to-Home-Screen apps full-screen off these (no manifest). -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Yaffle" />
 </head>
 
 <body>
