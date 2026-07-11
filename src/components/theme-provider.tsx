@@ -39,6 +39,26 @@ function getSystemTheme(): ResolvedTheme {
   return "light"
 }
 
+// Keep the browser/OS chrome colour matched to the resolved theme (spec § PWA).
+// A single meta (updated here) beats static per-mode metas, which only track
+// the OS and would mis-report during a manual light/dark override.
+const THEME_COLORS: Record<ResolvedTheme, string> = {
+  light: "#f6f1e6",
+  dark: "#17110c",
+}
+
+function applyThemeColorMeta(resolvedTheme: ResolvedTheme) {
+  let meta = document.querySelector<HTMLMetaElement>(
+    'meta[name="theme-color"]'
+  )
+  if (!meta) {
+    meta = document.createElement("meta")
+    meta.name = "theme-color"
+    document.head.appendChild(meta)
+  }
+  meta.content = THEME_COLORS[resolvedTheme]
+}
+
 function disableTransitionsTemporarily() {
   const style = document.createElement("style")
   style.appendChild(
@@ -112,6 +132,7 @@ export function ThemeProvider({
 
       root.classList.remove("light", "dark")
       root.classList.add(resolvedTheme)
+      applyThemeColorMeta(resolvedTheme)
 
       if (restoreTransitions) {
         restoreTransitions()
