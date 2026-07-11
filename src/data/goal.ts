@@ -15,6 +15,13 @@ export interface Goal {
   carbs?: number
 }
 
+/**
+ * The ring needs a Goal to measure against before onboarding (#17) has set
+ * one. Spec § Onboarding prefills 2000 kcal, so the walking skeleton falls back
+ * to the same figure until the real Goal doc exists.
+ */
+export const DEFAULT_GOAL_KCAL = 2000
+
 /** Save the Goal, replacing it whole. Queued, not awaited (see addEntry). */
 export function setGoal(db: Firestore, uid: string, goal: Goal): void {
   const data: Record<string, unknown> = { kcal: goal.kcal }

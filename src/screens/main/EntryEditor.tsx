@@ -1,63 +1,62 @@
 import * as React from "react"
-import { Plus } from "lucide-react"
+import { Check, Trash2, X } from "lucide-react"
 import { motion } from "motion/react"
 
+import type { Entry, EntryEdit } from "@/data/entries"
 import {
-  EMPTY_MACROS,
+  macroInputsFrom,
   parseMacros,
   parseOptional,
-  type EntryDraft,
 } from "./fields"
 import { MACROS, macroTint } from "./macros"
 
-// Label + kcal on top, tinted P/F/C gram pills + ink Add below. Only Add
-// commits (spec § Add flow). #a5988a (not muted-foreground) for placeholders
-// and the "g" unit in BOTH modes matches the record screenshots (issue #4).
-export function AddCard({
-  onAdd,
-  disabled = false,
+// The inline editor an Entry row swaps to on tap. Same field grammar as the
+// add card, plus Delete / Cancel / Save. Delete routes through the parent's
+// deferred-delete + undo (ADR 0004); it never writes here.
+export function EntryEditor({
+  entry,
+  onSave,
+  onCancel,
+  onDelete,
 }: {
-  onAdd: (draft: EntryDraft) => void
-  disabled?: boolean
+  entry: Entry
+  onSave: (edit: EntryEdit) => void
+  onCancel: () => void
+  onDelete: () => void
 }) {
-  const [label, setLabel] = React.useState("")
-  const [kcal, setKcal] = React.useState("")
-  const [macros, setMacros] = React.useState(EMPTY_MACROS)
-  const labelRef = React.useRef<HTMLInputElement>(null)
+  const [label, setLabel] = React.useState(entry.label)
+  const [kcal, setKcal] = React.useState(String(entry.kcal))
+  const [macros, setMacros] = React.useState(() => macroInputsFrom(entry))
 
-  // A blank-kcal Entry is intentional (0-kcal, dashed) — a label is the only
-  // requirement to commit.
-  const canAdd = label.trim() !== "" && !disabled
+  const canSave = label.trim() !== ""
 
-  const submit = () => {
-    if (!canAdd) return
-    onAdd({
+  const save = () => {
+    if (!canSave) return
+    onSave({
       label: label.trim(),
       kcal: parseOptional(kcal) ?? 0,
       ...parseMacros(macros),
     })
-    setLabel("")
-    setKcal("")
-    setMacros(EMPTY_MACROS)
-    labelRef.current?.focus()
   }
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault()
-      submit()
+      save()
+    } else if (e.key === "Escape") {
+      e.preventDefault()
+      onCancel()
     }
   }
 
   return (
-    <div className="mx-4 mt-1 rounded-3xl border bg-card p-3 shadow-[0_1px_2px_rgba(43,32,21,0.05)]">
+    <div className="rounded-2xl border bg-card p-3">
       <div className="flex items-center gap-2">
         <input
-          ref={labelRef}
+          autoFocus
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="What did you eat?"
           aria-label="Food"
           className="min-w-0 flex-1 rounded-full bg-input px-4 py-2.5 text-sm outline-none placeholder:text-[#a5988a]"
         />
@@ -99,16 +98,40 @@ export function AddCard({
             <span className="text-xs text-[#a5988a]">g</span>
           </label>
         ))}
+      </div>
+      <div className="mt-2.5 flex items-center justify-between">
         <motion.button
           type="button"
-          onClick={submit}
-          disabled={!canAdd}
+          onClick={onDelete}
           whileTap={{ scale: 0.9 }}
-          aria-label="Add entry"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
+          aria-label="Delete entry"
+          className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-destructive"
         >
-          <Plus className="h-5 w-5" strokeWidth={2.5} />
+          <Trash2 className="h-4 w-4" />
+          Delete
         </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            type="button"
+            onClick={onCancel}
+            whileTap={{ scale: 0.9 }}
+            aria-label="Cancel"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-input text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+          </motion.button>
+          <motion.button
+            type="button"
+            onClick={save}
+            disabled={!canSave}
+            whileTap={{ scale: 0.9 }}
+            aria-label="Save changes"
+            className="flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
+          >
+            <Check className="h-4 w-4" strokeWidth={2.5} />
+            Save
+          </motion.button>
+        </div>
       </div>
     </div>
   )
