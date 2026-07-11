@@ -1,13 +1,19 @@
 // Seam: the entries module — the only way Entries are written, deleted, and
 // observed (ADR 0003; CONTEXT.md for Entry / Day / Backfill / Meal type).
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { Timestamp } from "firebase/firestore"
+import {
+  doc,
+  onSnapshot,
+  Timestamp,
+  type DocumentData,
+} from "firebase/firestore"
 import {
   addEntry,
   deleteEntry,
   deriveMealType,
   listenToAllEntries,
   listenToDay,
+  updateEntry,
   type Entry,
 } from "@/data/entries"
 import { ensureIdentity } from "@/data/identity"
@@ -23,6 +29,35 @@ const at = (hour: number, minute = 0) => new Date(2026, 6, 11, hour, minute)
 
 // Independent of the module's own date helpers on purpose.
 const todayLocal = () => new Date().toLocaleDateString("en-CA")
+
+// The Day listener never sees a server timestamp resolve (it isn't watching
+// metadata) and estimates them sub-second while a write is pending, so it
+// can't be used to compare timestamps across a write. This reads the
+// server-confirmed state — no pending writes, not from cache — where every
+// server timestamp has settled to its real (whole-second, in the emulator)
+// value.
+function waitForServerEntry(
+  ctx: EmulatorApp,
+  uid: string,
+  id: string,
+  match: (data: DocumentData) => boolean = () => true,
+): Promise<DocumentData> {
+  const ref = doc(ctx.db, "users", uid, "entries", id)
+  return new Promise((resolve) => {
+    const unsub = onSnapshot(ref, { includeMetadataChanges: true }, (snap) => {
+      const data = snap.data()
+      if (
+        data &&
+        !snap.metadata.hasPendingWrites &&
+        !snap.metadata.fromCache &&
+        match(data)
+      ) {
+        unsub()
+        resolve(data)
+      }
+    })
+  })
+}
 
 describe("deriveMealType", () => {
   it("maps the local clock onto meal windows", () => {
@@ -162,5 +197,74 @@ describe("logging and observing a Day", () => {
       const latest = states[states.length - 1]
       return latest.length === 0 ? latest : undefined
     })
+  })
+
+  it("editing an Entry rewrites its mutable fields, keeping its identity", async () => {
+    const today = todayLocal()
+    const id = await addEntry(ctx.db, uid, {
+      date: today,
+      label: "porrige", // typo to fix
+      kcal: 300,
+      source: "manual",
+    })
+
+    // First appearance in the log, then the server-confirmed createdAt.
+    const states = observeDay(today)
+    await waitFor(() => states.find((s) => s.length === 1))
+    const before = await waitForServerEntry(ctx, uid, id)
+    const createdAtMs = (before.createdAt as Timestamp).toMillis()
+
+    // Straddle a second boundary so a regression that restamped createdAt would
+    // land on a later second and be caught.
+    await new Promise((r) => setTimeout(r, 1100))
+    updateEntry(ctx.db, uid, id, { label: "porridge", kcal: 320, protein: 12 })
+
+    const after = await waitForServerEntry(
+      ctx,
+      uid,
+      id,
+      (d) => d.label === "porridge",
+    )
+    expect(after).toMatchObject({
+      date: today, // untouched
+      label: "porridge",
+      kcal: 320,
+      protein: 12,
+      source: "manual", // untouched
+    })
+    // createdAt is preserved; updatedAt advances to the edit.
+    expect((after.createdAt as Timestamp).toMillis()).toBe(createdAtMs)
+    expect((after.updatedAt as Timestamp).toMillis()).toBeGreaterThan(
+      createdAtMs,
+    )
+  })
+
+  it("editing clears macros that were removed and adds ones that appear", async () => {
+    const today = todayLocal()
+    const id = await addEntry(ctx.db, uid, {
+      date: today,
+      label: "mixed plate",
+      kcal: 500,
+      protein: 30,
+      fat: 20,
+      source: "manual",
+    })
+
+    const states = observeDay(today)
+    await waitFor(() => states.find((s) => s[0]?.protein === 30))
+
+    // Drop fat, keep protein, introduce carbs.
+    await updateEntry(ctx.db, uid, id, {
+      label: "mixed plate",
+      kcal: 500,
+      protein: 30,
+      carbs: 45,
+    })
+
+    const after = await waitFor(() =>
+      states.find((s) => s[0] && "carbs" in s[0]),
+    )
+    expect(after[0]).toMatchObject({ protein: 30, carbs: 45 })
+    expect("fat" in after[0]).toBe(false)
   })
 })

@@ -1,17 +1,21 @@
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   onSnapshot,
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
   type Firestore,
   type QuerySnapshot,
   type Timestamp,
   type Unsubscribe,
 } from "firebase/firestore"
+
+import { localDay } from "@/lib/day"
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack" | "unknown"
 export type EntrySource = "manual" | "history" | "ai"
@@ -36,22 +40,28 @@ export interface Entry {
   updatedAt: Timestamp
 }
 
-export interface NewEntry {
-  date: string
+/** The label, calories and optional macros shared by new and edited Entries. */
+export interface EntryNutrients {
   label: string
   kcal: number
   protein?: number
   fat?: number
   carbs?: number
+}
+
+export interface NewEntry extends EntryNutrients {
+  date: string
   source: EntrySource
   flagged?: FlaggableField[]
 }
 
-/** The device-local Day a moment belongs to. */
-export function localDay(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
+/**
+ * The mutable fields of an Entry. Editing never moves an Entry to another Day,
+ * restamps its Source, or touches its flags — date, source, mealType,
+ * createdAt and any flagged values are fixed at commit. An absent optional
+ * macro means "cleared": the field is removed.
+ */
+export type EntryEdit = EntryNutrients
 
 /**
  * Meal type is attached silently, never shown in V2 UI — it exists as the
@@ -93,6 +103,32 @@ export function addEntry(db: Firestore, uid: string, entry: NewEntry): string {
     console.error("Entry write failed", ref.id, err)
   })
   return ref.id
+}
+
+/**
+ * Rewrite an Entry's mutable fields in place — same id, same Day. Optional
+ * macros absent from the edit are deleted from the document, so blanking a
+ * field in the editor truly removes it. Queued, not awaited (see addEntry).
+ */
+export function updateEntry(
+  db: Firestore,
+  uid: string,
+  id: string,
+  edit: EntryEdit,
+): void {
+  const data: Record<string, unknown> = {
+    label: edit.label,
+    kcal: edit.kcal,
+    updatedAt: serverTimestamp(),
+  }
+  // Only the macros are reconciled; flagged values are left untouched so they
+  // persist past an edit (ADR 0003). A cleared macro is removed.
+  for (const field of ["protein", "fat", "carbs"] as const) {
+    data[field] = edit[field] !== undefined ? edit[field] : deleteField()
+  }
+  updateDoc(doc(entriesCollection(db, uid), id), data).catch((err) => {
+    console.error("Entry update failed", id, err)
+  })
 }
 
 /** Native document delete — no tombstones (ADR 0004). Queued like addEntry. */
