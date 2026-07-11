@@ -25,3 +25,6 @@ dist-ssr
 
 # V1 reference app (its own git repo, local-only reference; feature catalog lives on map issue #1)
 makrofy-v1/
+
+# Firebase hosting deploy cache
+.firebase/
