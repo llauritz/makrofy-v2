@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client"
 
 import "./index.css"
 import App from "./App.tsx"
+import { LanguageProvider } from "@/components/language-provider.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
 import { ensureIdentity } from "@/data/identity"
 import { auth, db } from "@/lib/firebase"
@@ -24,7 +25,9 @@ if (import.meta.env.DEV) {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </ThemeProvider>
   </StrictMode>
 )

@@ -1,10 +1,11 @@
 import { CloudOff } from "lucide-react"
 
-import { SettingsSheet } from "./SettingsSheet"
+import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 
 // Fraunces wordmark, sync indicator, settings. The sync indicator is a static
-// placeholder until #19 feeds it real states; settings opens a placeholder
-// sheet (#17 builds the real one) that hosts the quiet install entry from #23.
+// placeholder until #19 feeds it real states; settings opens the real surface
+// (#17) — goal, theme, language, and the slots that fill in as their tickets
+// land (sign-in #19, install #23, export/import #24).
 export function Header() {
   return (
     <header className="flex items-center justify-between px-5 pt-7 pb-4">
