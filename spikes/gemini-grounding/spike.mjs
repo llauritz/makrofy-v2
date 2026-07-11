@@ -1,6 +1,6 @@
 // PROTOTYPE (issue #20) — throwaway shell. Run: npm run spike | node spike.mjs "food"
 import { initializeApp } from "firebase/app";
-import { getAI, GoogleAIBackend } from "firebase/ai";
+import { getAI, GoogleAIBackend, VertexAIBackend } from "firebase/ai";
 import {
   MODEL_ID,
   makeCombinedModel,
@@ -112,8 +112,11 @@ function printReport(title, rep) {
   }
 }
 
+const useVertex = process.argv.includes("--vertex");
 const app = initializeApp(firebaseConfig);
-const ai = getAI(app, { backend: new GoogleAIBackend() });
+const ai = getAI(app, {
+  backend: useVertex ? new VertexAIBackend("us-central1") : new GoogleAIBackend(),
+});
 const combined = makeCombinedModel(ai);
 const ungrounded = makeUngroundedModel(ai);
 const groundedText = makeGroundedTextModel(ai);
@@ -148,7 +151,7 @@ async function probeTwoStep(title, input) {
   }
 }
 
-console.log(dim(`model: ${MODEL_ID}  sdk: firebase@12.16.0 (firebase/ai, GoogleAIBackend)  project: goyaffle`));
+console.log(dim(`model: ${MODEL_ID}  sdk: firebase@12.16.0 (firebase/ai, ${useVertex ? "VertexAIBackend us-central1" : "GoogleAIBackend"})  project: goyaffle`));
 await obtainAppCheckToken();
 
 if (twoStepFlag) {
