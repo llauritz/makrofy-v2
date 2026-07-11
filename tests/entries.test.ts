@@ -118,11 +118,17 @@ describe("logging and observing a Day", () => {
 
   it("a Day listener sees only its own Day, in log order", async () => {
     const today = todayLocal()
+    const states = observeDay(today)
+
+    // The emulator truncates server timestamps to whole seconds (production
+    // is microsecond-precision), so the adds must straddle a second boundary
+    // for their log order to be defined.
     await addEntry(ctx.db, uid, { date: today, label: "first", kcal: 100, source: "manual" })
+    await waitFor(() => states.find((s) => s.length === 1))
+    await new Promise((r) => setTimeout(r, 1100))
     await addEntry(ctx.db, uid, { date: today, label: "second", kcal: 200, source: "manual" })
     await addEntry(ctx.db, uid, { date: "2026-01-05", label: "other day", kcal: 300, source: "manual" })
 
-    const states = observeDay(today)
     const entries = await waitFor(() => states.find((s) => s.length === 2))
     expect(entries.map((e) => e.label)).toEqual(["first", "second"])
   })

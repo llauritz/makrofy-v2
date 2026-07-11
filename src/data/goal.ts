@@ -1,0 +1,42 @@
+import {
+  doc,
+  onSnapshot,
+  setDoc,
+  type Firestore,
+  type Unsubscribe,
+} from "firebase/firestore"
+
+// The one synced setting: /users/{uid}/settings/goal (ADR 0003). The progress
+// ring must agree across devices; theme and language stay device-local.
+export interface Goal {
+  kcal: number
+  protein?: number
+  fat?: number
+  carbs?: number
+}
+
+/** Save the Goal, replacing it whole. Queued, not awaited (see addEntry). */
+export function setGoal(db: Firestore, uid: string, goal: Goal): void {
+  const data: Record<string, unknown> = { kcal: goal.kcal }
+  for (const field of ["protein", "fat", "carbs"] as const) {
+    if (goal[field] !== undefined) data[field] = goal[field]
+  }
+  setDoc(goalDoc(db, uid), data).catch((err) => {
+    console.error("Goal write failed", err)
+  })
+}
+
+/** Observe the Goal; null until onboarding has set one. */
+export function listenToGoal(
+  db: Firestore,
+  uid: string,
+  onChange: (goal: Goal | null) => void,
+): Unsubscribe {
+  return onSnapshot(goalDoc(db, uid), (snap) =>
+    onChange(snap.exists() ? (snap.data() as Goal) : null),
+  )
+}
+
+function goalDoc(db: Firestore, uid: string) {
+  return doc(db, "users", uid, "settings", "goal")
+}

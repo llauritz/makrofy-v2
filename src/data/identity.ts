@@ -39,13 +39,14 @@ function isRetryable(err: unknown): boolean {
 // Resolves after the backoff delay, or as soon as the browser reports
 // connectivity is back — whichever comes first.
 function nextChance(delayMs: number): Promise<void> {
+  const target = typeof window === "undefined" ? undefined : window
   return new Promise((resolve) => {
     const done = () => {
       clearTimeout(timer)
-      globalThis.removeEventListener?.("online", done)
+      target?.removeEventListener("online", done)
       resolve()
     }
     const timer = setTimeout(done, delayMs)
-    globalThis.addEventListener?.("online", done)
+    target?.addEventListener("online", done)
   })
 }
