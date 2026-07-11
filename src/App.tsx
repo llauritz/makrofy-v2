@@ -1,10 +1,21 @@
-// PROTOTYPE MOUNT (issue #4): the home page currently hosts the visual-design-direction
-// prototype — three variants switchable via ?variant= (A|B|C). Throwaway: replace with
-// the real app shell once a direction is chosen. See src/prototype/design-directions/.
-import { DesignDirectionsPrototype } from "@/prototype/design-directions"
+import * as React from "react"
+
+import { useTheme } from "@/components/theme-provider"
+import { MainScreen } from "@/screens/main/MainScreen"
+
+// Dev convenience: ?theme=dark|light forces the mode (shareable per-mode links,
+// headless screenshots of both modes). The real theme setting arrives with #17.
+function useThemeParam() {
+  const { setTheme } = useTheme()
+  React.useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("theme")
+    if (t === "dark" || t === "light") setTheme(t)
+  }, [setTheme])
+}
 
 export function App() {
-  return <DesignDirectionsPrototype />
+  useThemeParam()
+  return <MainScreen />
 }
 
 export default App
