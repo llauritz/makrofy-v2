@@ -115,7 +115,7 @@ function printReport(title, rep) {
 const useVertex = process.argv.includes("--vertex");
 const app = initializeApp(firebaseConfig);
 const ai = getAI(app, {
-  backend: useVertex ? new VertexAIBackend("us-central1") : new GoogleAIBackend(),
+  backend: useVertex ? new VertexAIBackend("global") : new GoogleAIBackend(),
 });
 const combined = makeCombinedModel(ai);
 const ungrounded = makeUngroundedModel(ai);
@@ -151,7 +151,7 @@ async function probeTwoStep(title, input) {
   }
 }
 
-console.log(dim(`model: ${MODEL_ID}  sdk: firebase@12.16.0 (firebase/ai, ${useVertex ? "VertexAIBackend us-central1" : "GoogleAIBackend"})  project: goyaffle`));
+console.log(dim(`model: ${MODEL_ID}  sdk: firebase@12.16.0 (firebase/ai, ${useVertex ? "VertexAIBackend global" : "GoogleAIBackend"})  project: goyaffle`));
 await obtainAppCheckToken();
 
 if (twoStepFlag) {
