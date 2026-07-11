@@ -1,0 +1,31 @@
+# Deploys a preview channel for every PR from this repo (not forks).
+# Previews hit the real backend as throwaway anonymous UIDs, isolated by
+# the /users/{uid} rules — accepted in the deploy spec (docs/spec.md).
+# Scaffolded by `firebase init hosting:github` (#12), build steps added in #16.
+
+name: Deploy to Firebase Hosting on PR
+on: pull_request
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+jobs:
+  build_and_preview:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GOYAFFLE }}
+          projectId: goyaffle
