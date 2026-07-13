@@ -22,6 +22,14 @@ export interface Goal {
  */
 export const DEFAULT_GOAL_KCAL = 2000
 
+/**
+ * How much we yet know about a profile's Goal doc — the load state the
+ * first-run gate reads (src/screens/onboarding/gate.ts). "unset" and "loading"
+ * are distinct because onboarding must not flash before the first snapshot
+ * lands. Produced by useGoalStatus (src/data/hooks.ts) from the listener below.
+ */
+export type GoalStatus = "loading" | "unset" | "set"
+
 /** Save the Goal, replacing it whole. Queued, not awaited (see addEntry). */
 export function setGoal(db: Firestore, uid: string, goal: Goal): void {
   const data: Record<string, unknown> = { kcal: goal.kcal }

@@ -11,7 +11,7 @@ import * as React from "react"
 import { onAuthStateChanged } from "firebase/auth"
 
 import { listenToAllEntries, listenToDay, type Entry } from "@/data/entries"
-import { listenToGoal, type Goal } from "@/data/goal"
+import { listenToGoal, type Goal, type GoalStatus } from "@/data/goal"
 import { auth, db } from "@/lib/firebase"
 
 /** The app's current Firebase uid, or null until the Guest identity resolves. */
@@ -44,6 +44,26 @@ export function useGoal(uid: string | null): Goal | null {
     return listenToGoal(db, uid, setGoal)
   }, [uid])
   return goal
+}
+
+/**
+ * The Goal's load status, for the first-run gate (src/screens/onboarding
+ * /gate.ts). `useGoal` collapses "haven't heard yet" and "no Goal" into null;
+ * onboarding must tell them apart so a returning user never flashes the goal
+ * screen while the first snapshot is in flight. "unset" is decided from the
+ * local snapshot so first run works offline; a future signed-in user opening a
+ * fresh device (#19) is the one case that could momentarily read "unset".
+ */
+export function useGoalStatus(uid: string | null): GoalStatus {
+  const [status, setStatus] = React.useState<GoalStatus>("loading")
+  React.useEffect(() => {
+    if (!uid) return
+    return listenToGoal(db, uid, (goal) => setStatus(goal ? "set" : "unset"))
+  }, [uid])
+  // Before a uid resolves the gate reads "loading" regardless of this value
+  // (resolveAppView short-circuits on a null uid), so a stale status here can
+  // never surface as a wrong screen.
+  return status
 }
 
 /**
