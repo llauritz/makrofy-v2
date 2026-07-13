@@ -4,6 +4,11 @@ import { motion } from "motion/react"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import { parseGoalKcal } from "@/lib/goal-input"
 
+// PARKED — not currently mounted. This first-run screen shipped in #17 but is
+// being reworked in issue #35; App sends every profile straight to the main
+// screen for now (goal set in Settings). Kept in the tree as the starting point
+// for that rework. See the gate in ./gate.ts.
+//
 // First run: one goal screen, then straight in (spec § Onboarding). The kcal
 // field is prefilled with the V1 default so accepting it is a single tap —
 // that prefill is what keeps "fresh profile → logging an Entry in ≤2 taps"

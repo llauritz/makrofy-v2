@@ -1,4 +1,4 @@
-import { ArrowLeftRight, LogIn, Settings2 } from "lucide-react"
+import { ArrowLeftRight, LogIn } from "lucide-react"
 import * as React from "react"
 
 import { useLanguage } from "@/components/language-provider"
@@ -8,7 +8,6 @@ import {
   BottomSheetClose,
   BottomSheetContent,
   BottomSheetTitle,
-  BottomSheetTrigger,
 } from "@/components/ui/bottom-sheet"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useGoal, useIdentity } from "@/data/hooks"
@@ -21,18 +20,19 @@ import { InstallAppEntry } from "@/pwa/InstallApp"
 // The real settings surface (#17): goal · theme · language, then the slots that
 // fill in as their tickets land — sign-in (#19), install (#23, live now) and
 // export/import (#24). Self-contained like a screen: it reads and writes the
-// synced Goal and the device-local theme/language directly, so the Header only
-// has to mount it. The goal is the one synced setting (ADR 0003); theme and
-// language stay on the device.
-export function SettingsSheet() {
+// synced Goal and the device-local theme/language directly. Controlled by its
+// owner (MainScreen) so several affordances can open it — the header gear, the
+// header sync indicator, and the summary ring. The goal is the one synced
+// setting (ADR 0003); theme and language stay on the device.
+export function SettingsSheet({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
   return (
-    <BottomSheet>
-      <BottomSheetTrigger
-        aria-label="Settings"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dcc8] bg-card text-muted-foreground transition-colors hover:text-foreground dark:border-border"
-      >
-        <Settings2 className="h-[18px] w-[18px]" />
-      </BottomSheetTrigger>
+    <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="max-h-[88svh] gap-6 overflow-y-auto">
         <div className="flex items-center justify-between">
           <BottomSheetTitle className="text-lg font-semibold">

@@ -13,6 +13,7 @@ import { useDay, useGoal, useIdentity, useLoggedDays } from "@/data/hooks"
 import { localDay, stepDay } from "@/lib/day"
 import { db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
+import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
 import { DayNav } from "./DayNav"
 import { EntryList } from "./EntryList"
@@ -35,6 +36,7 @@ export function MainScreen() {
     localDay(new Date()),
   )
   const [editingId, setEditingId] = React.useState<string | null>(null)
+  const [settingsOpen, setSettingsOpen] = React.useState(false)
   // The Entry awaiting a deferred delete — hidden from the log while its undo
   // snackbar is up; the real delete fires only when the window lapses.
   const [pending, setPending] = React.useState<Entry | null>(null)
@@ -104,9 +106,11 @@ export function MainScreen() {
     setPending(null)
   }
 
+  const openSettings = () => setSettingsOpen(true)
+
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col">
-      <Header />
+      <Header onOpenSettings={openSettings} />
       <main className="flex flex-1 flex-col">
         <div {...swipe}>
           <WeekStrip
@@ -134,9 +138,10 @@ export function MainScreen() {
           <AnimatePresence initial={false}>
             {pending && <UndoSnackbar key="undo" onUndo={undo} />}
           </AnimatePresence>
-          <SummaryCard summary={summary} />
+          <SummaryCard summary={summary} onOpenSettings={openSettings} />
         </div>
       </main>
+      <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
 }

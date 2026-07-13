@@ -1,12 +1,9 @@
 import * as React from "react"
 
 import { useTheme } from "@/components/theme-provider"
-import { setGoal } from "@/data/goal"
 import { useGoalStatus, useIdentity } from "@/data/hooks"
-import { db } from "@/lib/firebase"
 import { MainScreen } from "@/screens/main/MainScreen"
 import { resolveAppView } from "@/screens/onboarding/gate"
-import { OnboardingScreen } from "@/screens/onboarding/OnboardingScreen"
 
 // Dev convenience: ?theme=dark|light forces the mode (shareable per-mode links,
 // headless screenshots of both modes) on top of the real Settings control.
@@ -25,29 +22,23 @@ export function App() {
   const goalStatus = useGoalStatus(uid)
   const view = resolveAppView(uid, goalStatus)
 
-  // Splash until identity and the first Goal snapshot settle, so a returning
-  // user never flashes the onboarding screen (spec § Onboarding).
+  // Splash until identity and the first Goal snapshot settle, so the ring never
+  // flashes the fallback goal before the synced value arrives.
   if (view === "loading") return <Splash />
 
-  // First run: set the one synced Goal, then the live snapshot flips us to the
-  // main screen — onboarding is a data state, not a route to navigate back to.
-  if (view === "onboarding") {
-    return (
-      <OnboardingScreen
-        onSubmit={(kcal) => {
-          if (uid) setGoal(db, uid, { kcal })
-        }}
-      />
-    )
-  }
-
+  // First-run onboarding (src/screens/onboarding/OnboardingScreen.tsx) is PARKED
+  // pending a rework — see issue #35. Until then a fresh profile (view
+  // "onboarding") is treated like a returning one: straight to the main screen,
+  // where the goal is set in Settings and the ring falls back to
+  // DEFAULT_GOAL_KCAL meanwhile. Re-enable by rendering OnboardingScreen when
+  // `view === "onboarding"`.
   return <MainScreen />
 }
 
 // A quiet launch screen in the app's own colours while identity and the first
 // Goal snapshot settle. It carries the resolved theme's background, so the
-// hand-off is continuous — onboarding fades in over the same colour, the main
-// screen takes over without a flash of unstyled or wrong-theme content.
+// hand-off is continuous — the main screen takes over without a flash of
+// unstyled or wrong-theme content.
 function Splash() {
   return (
     <div className="flex min-h-svh items-center justify-center bg-background">

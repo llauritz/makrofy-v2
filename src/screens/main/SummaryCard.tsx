@@ -51,23 +51,43 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
 }
 
 // Floating summary card: ring, Remaining/Over + % of goal, outlined macro
-// pills, stats button (opens the dashboard once #22 lands). The sticky footer
-// and undo snackbar around it are the MainScreen's.
-export function SummaryCard({ summary }: { summary: DaySummary }) {
+// pills, stats button (opens the dashboard once #22 lands). The ring and the
+// Remaining/Over readout open Settings (where the goal they measure against is
+// edited); the stats button and macro pills keep their own roles. The sticky
+// footer and undo snackbar around it are the MainScreen's.
+export function SummaryCard({
+  summary,
+  onOpenSettings,
+}: {
+  summary: DaySummary
+  onOpenSettings: () => void
+}) {
   const headline = summary.isOver
     ? `Over: ${summary.over.toLocaleString()}`
     : `Remaining: ${summary.remaining.toLocaleString()}`
   return (
     <div className="flex items-center gap-4 rounded-[28px] border bg-card p-4 shadow-[0_8px_30px_rgba(43,32,21,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
-      <ProgressRing summary={summary} />
+      <button
+        type="button"
+        onClick={onOpenSettings}
+        aria-label="Open settings"
+        className="shrink-0 rounded-full outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
+      >
+        <ProgressRing summary={summary} />
+      </button>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <div>
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            aria-label="Open settings"
+            className="rounded-md text-left outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring active:opacity-70"
+          >
             <div className="text-lg leading-tight font-bold">{headline}</div>
             <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
               {summary.pctOfGoal}% of {summary.goalKcal.toLocaleString()} goal
             </div>
-          </div>
+          </button>
           <button
             type="button"
             aria-label="Statistics"
