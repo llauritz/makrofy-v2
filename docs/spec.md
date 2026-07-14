@@ -19,7 +19,7 @@ Vite SPA + PWA — React 19, TypeScript, Tailwind 4 (scaffold in place; no Next.
 
 ## Data & sync
 
-Normative: **ADRs 0001–0005** (`docs/adr/`). Gist:
+Normative: **ADRs 0001–0006** (`docs/adr/`). Gist:
 
 - **The Firestore SDK is the store** (ADR 0001): `persistentLocalCache` + multi-tab manager; no local DB, no custom sync layer. Offline use, queued writes, and last-write-wins come from the SDK. The service worker never caches Firestore traffic.
 - **Entry schema** (ADR 0003), one flat collection `/users/{uid}/entries/{autoId}`:
@@ -36,6 +36,7 @@ Normative: **ADRs 0001–0005** (`docs/adr/`). Gist:
   ```
 
 - **Settings**: one synced `/users/{uid}/settings/goal` doc (the ring must agree across devices). Theme and language are device-local. Nothing else syncs.
+- **Per-Day metadata sidecar** (ADR 0006): a `days` collection `/users/{uid}/days/{YYYY-MM-DD}` holds user-authored per-Day annotations — first field **Coverage**. A non-authoritative overlay: absence means no metadata, never no Day; stats still range-query Entries; it never holds cached aggregates.
 - **Deletes are native** (ADR 0004): real document deletes, LWW, no tombstones; undo is an in-memory deferred delete.
 - **Typeahead index is derived** (ADR 0005): built in memory from the entries listener; no history/favorites collection.
 - **Security rules**: `/users/{userId}/{document=**}` UID-match (`docs/research/firebase-backend-validation.md`).
@@ -80,9 +81,10 @@ Normative: [#3](https://github.com/llauritz/makrofy-v2/issues/3) + `docs/researc
 
 Normative: [#7](https://github.com/llauritz/makrofy-v2/issues/7); screenshots `docs/design/v2-stats-*.png`; reference on branch `prototype/stats` (Variant D).
 
-- **Placement**: dashboard from the summary-card stats button; This-week tile opens the **week report subpage** (pill selector + swipe paging between 7-day windows); **morning glance strip** above the summary card on first open each morning, dismissed by ✕ or the day's first log.
-- **In**: this-week columns (dashed goal line) · 7-day average (+sparkline+delta) · *in range* (80–110% of Goal, dot row; gated behind ≥5 of 7 tracked days) · 30-day trend (daily tan line + 7-day ink line) · macro share stacked columns. **Out**: goal-difference bars, monthly calendar, streak, best day, weight trend.
+- **Placement**: dashboard from the summary-card stats button; This-week tile opens the **week report subpage** (pill selector + swipe paging between 7-day windows); **morning glance strip** above the summary card on first open each morning (also hosts the Coverage label/revise chips when yesterday's Coverage ≠ Everything), dismissed by ✕ or the day's first log.
+- **In**: this-week columns (dashed goal line) · 7-day average (+sparkline+delta) · *in range* (80–110% of Goal, dot row; gated behind ≥5 of 7 *assessable* days — Coverage Everything/unlabelled) · 30-day trend (daily tan line + 7-day ink line) · macro share stacked columns. **Out**: goal-difference bars, monthly calendar, streak, best day, weight trend.
 - **Rules**: untracked days are gaps never zeros; averages over tracked days only; today is a lighter "now" bar, excluded until complete; future days get no marks; calorie charts monochrome ink (P/F/C hues reserved).
+- **Coverage gates admission** (ADR 0006, CONTEXT.md): *Some* Days are excluded from every aggregate and drawn as a distinct marker (not a blank gap); *Most* Days count everywhere except the in-range measure and render approximate; *Everything*/unlabelled Days count fully. Coverage never scales a Day's numbers — its only lever is per-metric admission.
 
 ## PWA & offline
 
