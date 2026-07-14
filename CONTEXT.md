@@ -27,11 +27,23 @@ _Avoid_: anonymous user (auth-implementation term)
 What happens when a Guest signs into an account that already has data: both sets of Entries are kept, combined without prompting.
 
 **Suggestion**:
-A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits.
-_Avoid_: favorite (V1 concept, superseded)
+A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from the Product's Rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills numbers only — the typed label stays.
+_Avoid_: favorite (V1 concept, superseded), autofill
 
 **Frecency**:
-The Suggestion ranking: reuse count decayed by recency (~3-week half-life), so current habits outrank old ones.
+The Suggestion ranking: reuse count decayed by recency (~3-week half-life), so current habits outrank old ones. A Quantity's unit typed into the label boosts same-kind Products in the ranking — it never filters.
+
+**Quantity**:
+The amount parsed from the start or end of an Entry label — a number with an optional unit. Kinds: mass, volume, count. A bare number is a count; no number at all means a count of 1.
+_Avoid_: amount, portion, serving
+
+**Product**:
+What a group of Entries has in common: the same food measured the same way — same label once the Quantity is stripped, same Quantity kind. "30g Banana" and "2 Banana" are different Products; "Banana 30g" and "Banana 0.03kg" are the same one. Suggestions represent Products.
+_Avoid_: food, item, staple
+
+**Rate**:
+A Product's per-unit calories and macros, derived from its Entry history: the most-attested rate wins, freshness breaks ties, and Entries with zero or missing calories never vote.
+_Avoid_: price, factor
 
 **AI fill**:
 The Gemini-backed path that fills the add card's numbers from the typed label. It never rewrites the label; only Add commits. Committed AI-filled Entries carry the ✨ marker.
