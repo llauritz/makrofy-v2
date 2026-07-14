@@ -17,11 +17,21 @@ if (!script) {
 
 const env = { ...process.env }
 // emulators:exec runs the script in a bare shell, so local binaries (vite,
-// vitest) need node_modules/.bin on PATH explicitly.
-env.PATH = join(import.meta.dirname, "..", "node_modules", ".bin") + delimiter + (env.PATH ?? "")
-if (env.JAVA_HOME) {
-  env.PATH = join(env.JAVA_HOME, "bin") + delimiter + env.PATH
-}
+// vitest) need node_modules/.bin on PATH explicitly, and JAVA_HOME/bin goes
+// first so a modern JDK wins over an older system-wide java (see top comment).
+// Windows keys the search path `Path`, not `PATH`; spreading process.env yields
+// a plain, case-sensitive object, so writing a fresh `env.PATH` would leave the
+// real `Path` untouched and let the two collide — dropping the inherited search
+// path, and with it a globally-installed `firebase`. Find the real key and
+// prepend to it.
+const pathKey = Object.keys(env).find((k) => k.toLowerCase() === "path") ?? "PATH"
+const prefix = [
+  env.JAVA_HOME ? join(env.JAVA_HOME, "bin") : undefined,
+  join(import.meta.dirname, "..", "node_modules", ".bin"),
+]
+  .filter(Boolean)
+  .join(delimiter)
+env[pathKey] = prefix + delimiter + (env[pathKey] ?? "")
 
 const cmd = `firebase emulators:exec --only auth,firestore ${ui ? "--ui " : ""}"${script}"`
 const child = spawn(cmd, { stdio: "inherit", env, shell: true })
