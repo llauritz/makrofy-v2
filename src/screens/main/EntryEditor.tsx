@@ -10,9 +10,11 @@ import {
 } from "./fields"
 import { MACROS, macroTint } from "./macros"
 
-// The inline editor an Entry row swaps to on tap. Same field grammar as the
-// add card, plus Delete / Cancel / Save. Delete routes through the parent's
-// deferred-delete + undo (ADR 0004); it never writes here.
+// The inline editor an Entry row fade-throughs to on tap. Chrome-less: the
+// border and background live on EntryList's FadeSwap box, which makes the
+// space while row and editor contents fade (spec § Motion). Same field
+// grammar as the add card, plus Delete / Cancel / Save. Delete routes through
+// the parent's deferred-delete + undo (ADR 0004); it never writes here.
 export function EntryEditor({
   entry,
   onSave,
@@ -50,7 +52,7 @@ export function EntryEditor({
   }
 
   return (
-    <div className="rounded-2xl border bg-card p-3">
+    <div className="p-3">
       <div className="flex items-center gap-2">
         <input
           autoFocus

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { MotionConfig } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
 import { useGoalStatus, useIdentity } from "@/data/hooks"
@@ -32,7 +33,14 @@ export function App() {
   // where the goal is set in Settings and the ring falls back to
   // DEFAULT_GOAL_KCAL meanwhile. Re-enable by rendering OnboardingScreen when
   // `view === "onboarding"`.
-  return <MainScreen />
+  //
+  // reducedMotion="user": with the OS reduce-motion setting on, movement
+  // snaps and fades remain — the degraded mode of spec § Motion.
+  return (
+    <MotionConfig reducedMotion="user">
+      <MainScreen />
+    </MotionConfig>
+  )
 }
 
 // A quiet launch screen in the app's own colours while identity and the first

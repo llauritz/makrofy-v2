@@ -3,13 +3,17 @@ import { AnimatePresence, motion } from "motion/react"
 import type { Entry, EntryEdit } from "@/data/entries"
 import { SPRING } from "./anim"
 import { EntryEditor } from "./EntryEditor"
+import { FadeSwap } from "./FadeSwap"
 import { MacroChips } from "./MacroChips"
 
 // The day's Entries, newest first (the parent reverses log order) with the
 // deferred-deletes already hidden. Spec conventions: no times; macro chips
 // only for macros actually logged; 0-kcal Entries dashed with a muted number
 // (#a5988a in BOTH modes, per the record screenshots, issue #4). Tapping a row
-// swaps it for the inline editor; everything animates, nothing jumps.
+// fade-throughs to the inline editor: the card's box makes the space, the
+// content fades, the rows below are pushed in lockstep (spec § Motion). The
+// card chrome lives on the FadeSwap box so the card persists across the swap;
+// `layout` is position-only — size interpolation would stretch (ADR 0007).
 export function EntryList({
   entries,
   editingId,
@@ -31,7 +35,7 @@ export function EntryList({
         {entries.length === 0 ? (
           <motion.div
             key="empty"
-            layout
+            layout="position"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -44,27 +48,46 @@ export function EntryList({
           </motion.div>
         ) : (
           <ul className="flex flex-col gap-2">
-            {entries.map((entry) => (
-              <motion.li
-                key={entry.id}
-                layout
-                initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={SPRING}
-              >
-                {editingId === entry.id ? (
-                  <EntryEditor
-                    entry={entry}
-                    onSave={(edit) => onSaveEdit(entry.id, edit)}
-                    onCancel={onCancelEdit}
-                    onDelete={() => onDelete(entry)}
-                  />
-                ) : (
-                  <EntryRow entry={entry} onEdit={() => onStartEdit(entry.id)} />
-                )}
-              </motion.li>
-            ))}
+            {entries.map((entry) => {
+              const editing = editingId === entry.id
+              // A 0-kcal row is dashed; the editor is always a solid card. The
+              // chrome flips at the swap, while the contents are mid-fade.
+              const dashed = entry.kcal === 0 && !editing
+              return (
+                <motion.li
+                  key={entry.id}
+                  layout="position"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={SPRING}
+                >
+                  <FadeSwap
+                    swapKey={editing ? "editor" : "row"}
+                    className={
+                      "rounded-2xl " +
+                      (dashed
+                        ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
+                        : "border bg-card")
+                    }
+                  >
+                    {editing ? (
+                      <EntryEditor
+                        entry={entry}
+                        onSave={(edit) => onSaveEdit(entry.id, edit)}
+                        onCancel={onCancelEdit}
+                        onDelete={() => onDelete(entry)}
+                      />
+                    ) : (
+                      <EntryRow
+                        entry={entry}
+                        onEdit={() => onStartEdit(entry.id)}
+                      />
+                    )}
+                  </FadeSwap>
+                </motion.li>
+              )
+            })}
           </ul>
         )}
       </AnimatePresence>
@@ -72,6 +95,7 @@ export function EntryList({
   )
 }
 
+// Chrome-less (border and background live on the FadeSwap box around it).
 function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
   const noKcal = entry.kcal === 0
   return (
@@ -79,12 +103,7 @@ function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
       type="button"
       onClick={onEdit}
       aria-label={`Edit ${entry.label}`}
-      className={
-        "w-full rounded-2xl px-4 py-3 text-left " +
-        (noKcal
-          ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-          : "border bg-card")
-      }
+      className="w-full rounded-2xl px-4 py-3 text-left"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
