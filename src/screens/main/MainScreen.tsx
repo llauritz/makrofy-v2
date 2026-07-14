@@ -22,7 +22,8 @@ import { auth, db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
 import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
-import { DayNav } from "./DayNav"
+// DayNav (the "< Today >" bar) hidden for now — restore in a later ticket.
+// import { DayNav } from "./DayNav"
 import { EntryList } from "./EntryList"
 import type { EntryDraft } from "./fields"
 import { Header } from "./Header"
@@ -131,11 +132,8 @@ export function MainScreen() {
             loggedDays={loggedDays}
             onSelect={goToDay}
           />
-          <DayNav
-            selectedDay={selectedDay}
-            onStep={step}
-            onToday={() => goToDay(localDay(new Date()))}
-          />
+          {/* DayNav hidden for now — restore in a later ticket. Day nav still
+              works via swipe (useDaySwipe) and the WeekStrip chips above. */}
           <AddCard onAdd={handleAdd} disabled={!uid} />
           <EntryList
             entries={newestFirst}
