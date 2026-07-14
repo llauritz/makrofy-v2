@@ -5,6 +5,7 @@ import {
   doc,
   onSnapshot,
   Timestamp,
+  waitForPendingWrites,
   type DocumentData,
 } from "firebase/firestore"
 import {
@@ -13,7 +14,9 @@ import {
   deriveMealType,
   listenToAllEntries,
   listenToDay,
+  readAllEntries,
   updateEntry,
+  writeEntries,
   type Entry,
 } from "@/data/entries"
 import { ensureIdentity } from "@/data/identity"
@@ -266,5 +269,54 @@ describe("logging and observing a Day", () => {
     )
     expect(after[0]).toMatchObject({ protein: 30, carbs: 45 })
     expect("fat" in after[0]).toBe(false)
+  })
+})
+
+// The one-shot read and id-preserving batch write that back the union merge
+// (ADR 0002, #19): a Guest's whole history is read while still signed in as the
+// Guest, then written into the account it's merging into.
+describe("reading and copying whole Entries", () => {
+  let ctx: EmulatorApp
+  let uid: string
+
+  beforeEach(async () => {
+    await clearFirestoreData()
+    ctx = createEmulatorApp()
+    uid = (await ensureIdentity(ctx.auth)).uid
+  })
+
+  afterEach(async () => {
+    await destroyEmulatorApp(ctx)
+  })
+
+  it("reads the whole history in one shot, ids and timestamps intact", async () => {
+    addEntry(ctx.db, uid, { date: "2026-07-11", label: "eggs", kcal: 180, source: "manual" })
+    addEntry(ctx.db, uid, { date: "2026-07-12", label: "toast", kcal: 90, source: "history" })
+    await waitForPendingWrites(ctx.db)
+
+    const entries = await readAllEntries(ctx.db, uid)
+    expect(entries.map((e) => e.label).sort()).toEqual(["eggs", "toast"])
+    expect(entries.every((e) => e.createdAt instanceof Timestamp)).toBe(true)
+    expect(entries.every((e) => typeof e.id === "string" && e.id.length > 0)).toBe(true)
+  })
+
+  it("re-writing the same Entries preserves ids and never duplicates", async () => {
+    // Copy is id-preserving, so an interrupted-then-retried merge lands the same
+    // documents rather than duplicating them — the union stays clean.
+    addEntry(ctx.db, uid, { date: "2026-07-11", label: "porridge", kcal: 320, source: "manual" })
+    await waitForPendingWrites(ctx.db)
+    const held = await readAllEntries(ctx.db, uid)
+
+    await writeEntries(ctx.db, uid, held)
+    await writeEntries(ctx.db, uid, held)
+
+    const after = await readAllEntries(ctx.db, uid)
+    expect(after).toHaveLength(1)
+    expect(after.map((e) => e.id)).toEqual(held.map((e) => e.id))
+  })
+
+  it("writing an empty set is a no-op", async () => {
+    await writeEntries(ctx.db, uid, [])
+    expect(await readAllEntries(ctx.db, uid)).toEqual([])
   })
 })

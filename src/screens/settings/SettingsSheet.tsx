@@ -1,4 +1,4 @@
-import { ArrowLeftRight, LogIn } from "lucide-react"
+import { ArrowLeftRight } from "lucide-react"
 import * as React from "react"
 
 import { useLanguage } from "@/components/language-provider"
@@ -16,6 +16,7 @@ import { parseGoalKcal } from "@/lib/goal-input"
 import type { Language } from "@/lib/language"
 import { cn } from "@/lib/utils"
 import { InstallAppEntry } from "@/pwa/InstallApp"
+import { SignInSetting } from "@/screens/settings/SignInSetting"
 
 // The real settings surface (#17): goal · theme · language, then the slots that
 // fill in as their tickets land — sign-in (#19), install (#23, live now) and
@@ -46,11 +47,8 @@ export function SettingsSheet({
         <LanguageSetting />
 
         <div className="flex flex-col gap-1 border-t pt-4">
+          <SignInSetting />
           <InstallAppEntry />
-          <StubRow
-            icon={<LogIn className="h-[18px] w-[18px]" />}
-            label="Sign in"
-          />
           <StubRow
             icon={<ArrowLeftRight className="h-[18px] w-[18px]" />}
             label="Export / import"

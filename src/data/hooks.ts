@@ -8,11 +8,17 @@
 // listener is opened; the initial empty state stands (V2 has no sign-out — that
 // arrives with #19).
 import * as React from "react"
-import { onAuthStateChanged } from "firebase/auth"
+import { onAuthStateChanged, onIdTokenChanged, type User } from "firebase/auth"
 
-import { listenToAllEntries, listenToDay, type Entry } from "@/data/entries"
+import {
+  listenToAllEntries,
+  listenToDay,
+  listenToSyncMetadata,
+  type Entry,
+} from "@/data/entries"
 import { listenToGoal, type Goal, type GoalStatus } from "@/data/goal"
 import { auth, db } from "@/lib/firebase"
+import { resolveSyncStatus, type SnapshotMeta, type SyncStatus } from "@/lib/sync"
 
 /** The app's current Firebase uid, or null until the Guest identity resolves. */
 export function useIdentity(): string | null {
@@ -24,6 +30,110 @@ export function useIdentity(): string | null {
     [],
   )
   return uid
+}
+
+/** A plain summary of the current Firebase user, for the Settings sign-in row. */
+export interface AuthUser {
+  uid: string
+  /** A Guest (anonymous) versus a linked Google account (ADR 0002). */
+  isAnonymous: boolean
+  displayName: string | null
+  email: string | null
+}
+
+/**
+ * The current Firebase user as a summary, or null before it resolves. Uses
+ * onIdTokenChanged, not onAuthStateChanged: linking Google onto a Guest keeps
+ * the same uid (so onAuthStateChanged never fires) but refreshes the token, and
+ * the sign-in row must flip from "Sign in" to the account the moment it does.
+ */
+export function useAuthUser(): AuthUser | null {
+  const [user, setUser] = React.useState<AuthUser | null>(() =>
+    summarizeUser(auth.currentUser),
+  )
+  React.useEffect(
+    () => onIdTokenChanged(auth, (u) => setUser(summarizeUser(u))),
+    [],
+  )
+  return user
+}
+
+function summarizeUser(user: User | null): AuthUser | null {
+  if (!user) return null
+  return {
+    uid: user.uid,
+    isAnonymous: user.isAnonymous,
+    displayName: user.displayName,
+    email: user.email,
+  }
+}
+
+// How long any non-synced state must persist before it's shown. A normal online
+// write acks, and a load's cache→server hop clears, well inside this window — so
+// neither flashes the indicator — and a deliberate sign-out re-mints a Guest
+// inside it too, so attention never flashes. Only a genuine offline stretch or
+// an auth pause outlasts it.
+const SYNC_SETTLE_MS = 1200
+
+/**
+ * The header sync indicator's live state (spec § PWA & offline). Snapshot
+ * metadata drives silent↔pending; losing the identity's token unexpectedly
+ * (onIdTokenChanged firing null after we had a user) raises attention, whose tap
+ * re-auths. resolveSyncStatus (src/lib/sync.ts) holds the precedence; this hook
+ * adds a short settle so a normal load never flashes the indicator, while a
+ * genuine offline stretch or an actual auth pause still surfaces.
+ */
+export function useSyncStatus(uid: string | null): SyncStatus {
+  const [meta, setMeta] = React.useState<SnapshotMeta>({
+    hasPendingWrites: false,
+    fromCache: false,
+  })
+  const [authExpired, setAuthExpired] = React.useState(false)
+  const [display, setDisplay] = React.useState<SyncStatus>("synced")
+
+  React.useEffect(() => {
+    if (!uid) return
+    return listenToSyncMetadata(db, uid, setMeta)
+  }, [uid])
+
+  React.useEffect(() => {
+    let hadUser = auth.currentUser !== null
+    return onIdTokenChanged(auth, (user) => {
+      if (user) {
+        hadUser = true
+        setAuthExpired(false)
+      } else if (hadUser) {
+        // Attention is meant for an auth-expired write pause (spec § PWA &
+        // offline). A truly silent token expiry keeps currentUser and never
+        // fires here, and for a Guest it can't happen at all (anonymous
+        // auto-cleanup is off, ADR 0002) — so what we can actually observe is an
+        // outright loss of identity: onIdTokenChanged going null after we had a
+        // user. A deliberate sign-out fires it too, but the settle rides out the
+        // momentary gap before a fresh Guest is minted.
+        setAuthExpired(true)
+      }
+    })
+  }, [])
+
+  const target = resolveSyncStatus(meta, { authExpired })
+  // Only "synced" shows at once — the user never waits to learn they're fine.
+  // Every non-synced state waits out the settle, so a normal online write and a
+  // load's cache→server hop stay silent; only a genuine offline stretch or auth
+  // pause lasts long enough to surface.
+  const immediate = target === "synced"
+
+  // Reflect an immediate target during render (React's supported adjust-state-
+  // during-render pattern) so there's no flash and no cascading effect; the
+  // deferred case is left to the timer below.
+  if (immediate && display !== target) setDisplay(target)
+
+  React.useEffect(() => {
+    if (immediate) return
+    const timer = setTimeout(() => setDisplay(target), SYNC_SETTLE_MS)
+    return () => clearTimeout(timer)
+  }, [immediate, target])
+
+  return display
 }
 
 /** One Day's Entries, live and in log order (oldest first). */

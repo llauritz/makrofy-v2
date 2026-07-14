@@ -3,12 +3,14 @@ import {
   deleteDoc,
   deleteField,
   doc,
+  getDocs,
   onSnapshot,
   query,
   serverTimestamp,
   setDoc,
   updateDoc,
   where,
+  writeBatch,
   type Firestore,
   type QuerySnapshot,
   type Timestamp,
@@ -16,6 +18,7 @@ import {
 } from "firebase/firestore"
 
 import { localDay } from "@/lib/day"
+import type { SnapshotMeta } from "@/lib/sync"
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack" | "unknown"
 export type EntrySource = "manual" | "history" | "ai"
@@ -95,9 +98,7 @@ export function addEntry(db: Firestore, uid: string, entry: NewEntry): string {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }
-  for (const field of ["protein", "fat", "carbs", "flagged"] as const) {
-    if (entry[field] !== undefined) data[field] = entry[field]
-  }
+  assignPresentMacros(data, entry)
   const ref = doc(entriesCollection(db, uid))
   setDoc(ref, data).catch((err) => {
     console.error("Entry write failed", ref.id, err)
@@ -162,6 +163,88 @@ export function listenToAllEntries(
   onChange: (entries: Entry[]) => void,
 ): Unsubscribe {
   return onSnapshot(entriesCollection(db, uid), (snap) => onChange(toEntries(snap)))
+}
+
+/**
+ * Watch a profile's sync health, the header indicator's live feed (spec § PWA &
+ * offline). The entries collection stands in for the whole connection:
+ * `fromCache` flips true whenever the client can't reach the server, and
+ * `hasPendingWrites` covers the queued Entry writes that dominate the app.
+ * Metadata-only changes are included so the indicator settles the moment a write
+ * is acknowledged, without a document ever changing.
+ */
+export function listenToSyncMetadata(
+  db: Firestore,
+  uid: string,
+  onChange: (meta: SnapshotMeta) => void,
+): Unsubscribe {
+  return onSnapshot(
+    entriesCollection(db, uid),
+    { includeMetadataChanges: true },
+    (snap) =>
+      onChange({
+        hasPendingWrites: snap.metadata.hasPendingWrites,
+        fromCache: snap.metadata.fromCache,
+      }),
+  )
+}
+
+/**
+ * One-shot read of a profile's whole Entry history — the merge source when a
+ * Guest signs into an existing account (ADR 0002, #19). Estimated server
+ * timestamps keep createdAt a real Timestamp even for a still-pending write,
+ * matching the listeners.
+ */
+export async function readAllEntries(db: Firestore, uid: string): Promise<Entry[]> {
+  return toEntries(await getDocs(entriesCollection(db, uid)))
+}
+
+/**
+ * Batch-write whole Entries under a uid, each keeping its id and every stored
+ * field — original timestamps included. This is the copy half of the union
+ * merge (ADR 0002): Firestore auto-ids are collision-free, so writing a Guest's
+ * Entries into an existing account is a clean union that never clobbers what is
+ * already there. A no-op for an empty set.
+ */
+export async function writeEntries(
+  db: Firestore,
+  uid: string,
+  entries: Entry[],
+): Promise<void> {
+  if (entries.length === 0) return
+  const batch = writeBatch(db)
+  for (const entry of entries) {
+    batch.set(doc(entriesCollection(db, uid), entry.id), toDocData(entry))
+  }
+  await batch.commit()
+}
+
+// An Entry's persisted shape — every stored field but the id (that's the
+// document key). Undefined optionals are omitted, mirroring how they were
+// written, so a copy is byte-for-byte the same document.
+function toDocData(entry: Entry): Record<string, unknown> {
+  const data: Record<string, unknown> = {
+    date: entry.date,
+    label: entry.label,
+    kcal: entry.kcal,
+    mealType: entry.mealType,
+    source: entry.source,
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
+  }
+  assignPresentMacros(data, entry)
+  return data
+}
+
+// Copy the optional macro and flag fields that are set, omitting undefined ones
+// — the shape a new write (addEntry) and a merge copy (toDocData) both need.
+function assignPresentMacros(
+  data: Record<string, unknown>,
+  source: Pick<Entry, "protein" | "fat" | "carbs" | "flagged">,
+): void {
+  for (const field of ["protein", "fat", "carbs", "flagged"] as const) {
+    if (source[field] !== undefined) data[field] = source[field]
+  }
 }
 
 function entriesCollection(db: Firestore, uid: string) {
