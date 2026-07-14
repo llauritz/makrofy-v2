@@ -39,12 +39,19 @@ const todayLocal = () => new Date().toLocaleDateString("en-CA")
 // server-confirmed state — no pending writes, not from cache — where every
 // server timestamp has settled to its real (whole-second, in the emulator)
 // value.
-function waitForServerEntry(
+async function waitForServerEntry(
   ctx: EmulatorApp,
   uid: string,
   id: string,
   match: (data: DocumentData) => boolean = () => true,
 ): Promise<DocumentData> {
+  // Drain the queued write first (addEntry/updateEntry are fire-and-forget —
+  // they return void, the write is not awaited). Without this the listener has
+  // to catch the exact hasPendingWrites→false metadata transition, which races
+  // a fresh listener's server sync and can deadlock on a slow machine (it hung
+  // here in CI). Draining leaves only the fromCache→false transition to await.
+  // Mirrors the readAllEntries tests below.
+  await waitForPendingWrites(ctx.db)
   const ref = doc(ctx.db, "users", uid, "entries", id)
   return new Promise((resolve) => {
     const unsub = onSnapshot(ref, { includeMetadataChanges: true }, (snap) => {
