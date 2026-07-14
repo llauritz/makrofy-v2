@@ -9,9 +9,16 @@ import {
   type EntryEdit,
 } from "@/data/entries"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
-import { useDay, useGoal, useIdentity, useLoggedDays } from "@/data/hooks"
+import {
+  useDay,
+  useGoal,
+  useIdentity,
+  useLoggedDays,
+  useSyncStatus,
+} from "@/data/hooks"
+import { refreshIdentity } from "@/data/identity"
 import { localDay, stepDay } from "@/lib/day"
-import { db } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
 import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
@@ -47,6 +54,7 @@ export function MainScreen() {
   const dayEntries = useDay(uid, selectedDay)
   const goal = useGoal(uid)
   const loggedDays = useLoggedDays(uid)
+  const syncStatus = useSyncStatus(uid)
 
   const clearTimer = () => {
     if (timer.current !== undefined) {
@@ -107,10 +115,15 @@ export function MainScreen() {
   }
 
   const openSettings = () => setSettingsOpen(true)
+  const reauth = () => void refreshIdentity(auth)
 
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col">
-      <Header onOpenSettings={openSettings} />
+      <Header
+        onOpenSettings={openSettings}
+        syncStatus={syncStatus}
+        onReauth={reauth}
+      />
       <main className="flex flex-1 flex-col">
         <div {...swipe}>
           <WeekStrip
