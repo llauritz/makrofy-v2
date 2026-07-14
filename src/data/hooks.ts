@@ -222,10 +222,10 @@ function toHistoryEntry(entry: Entry): HistoryEntry {
 export function useProductIndex(uid: string | null): ProductIndex {
   const [index, setIndex] = React.useState<ProductIndex>(EMPTY_INDEX)
   React.useEffect(() => {
-    if (!uid) {
-      setIndex(EMPTY_INDEX)
-      return
-    }
+    // No reset on a null uid (matching the sibling hooks): uid only goes null
+    // for the moment between sign-out and the fresh Guest, whose listener
+    // then replaces the index wholesale.
+    if (!uid) return
     return listenToAllEntries(db, uid, (entries) =>
       setIndex(buildProductIndex(entries.map(toHistoryEntry), Date.now())),
     )
