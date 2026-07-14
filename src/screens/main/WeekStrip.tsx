@@ -42,7 +42,10 @@ export function WeekStrip({
             }
           >
             {/* Sliding selection ring — invisible over the inverted today chip,
-                which already reads as current. */}
+                which already reads as current. Travel is legal only because
+                every chip is the same fixed width (w-11); if chip sizes ever
+                diverge, shared-layout travel would stretch the ring and it
+                must become a cross-fade (spec § Motion). */}
             {cell.isSelected && !cell.isToday && (
               <motion.span
                 layoutId="week-selection"

@@ -55,6 +55,17 @@ Normative: [#4](https://github.com/llauritz/makrofy-v2/issues/4) (full token spe
 - **Macro coding, fixed order P/F/C = blue/yellow/red** (CVD-validated). Marks light `#2f6bc4`/`#b8830a`/`#c03b2e`, dark `#5b91e4`/`#b98a20`/`#cf6152`; text-grade light `#2f6bc4`/`#96690a`/`#c03b2e`, dark `#5b91e4`/`#b98a20`/`#e07d6e`.
 - **Conventions**: no entry times; 0-kcal entries dashed + muted; exactly one future day visible in the week strip (dashed + dimmed); ring is a plain single-hue kcal meter (segmented plate-ring rejected); both modes designed together; keep `color-scheme: light`/`dark` on `:root`/`.dark` in `src/index.css`.
 
+## Motion — "space and fade"
+
+Normative: **ADR 0007**. Tokens live in `src/screens/main/anim.ts`; the card primitive is `FadeSwap`.
+
+- **The law (layout content):** motion means making space; appearing means fading. Boxes animate their **real size** (height — never a scale transform), neighbors **translate** to open/close the space, and content **fades in place**. No element both moves and fades.
+- **Nothing ever stretches**: non-uniform scaling is banned everywhere, including Motion's layout-scale size interpolation — `layout` is only ever used as `layout="position"` (ADR 0007). Uniform scale stays legal (tap-shrink, ≤2 % enter/exit garnish).
+- **Content swaps are fade-throughs**: old content fades out fast (~80 ms) at the old size → the box springs to the new size, **top edge anchored, growing downward**, pushing lower cards in lockstep → new content fades in (~150 ms) as the box settles. Cards above never move; no custom scrolling (the keyboard's scroll-into-view covers focused inputs).
+- **Overlays** (undo snackbar, sheets) float above the layout, so space-making doesn't apply: they may enter with a directional slide + fade.
+- **Indicators** (week-strip selection ring, summary arc) may **travel/sweep** — continuity is their message. Travel is only legal between same-size anchors; if anchors diverge in size it must degrade to a cross-fade.
+- **Reduced motion**: `MotionConfig reducedMotion="user"` app-wide — movement snaps, fades remain.
+
 ## Add flow — "Inline fill"
 
 Normative: [#5](https://github.com/llauritz/makrofy-v2/issues/5); screenshots `docs/design/v2-add-flow-*.png`; reference on branch `prototype/add-flow` (Variant A).
@@ -62,7 +73,7 @@ Normative: [#5](https://github.com/llauritz/makrofy-v2/issues/5); screenshots `d
 - **Only Add commits.** History picks and AI fills write into the form; nothing enters the day log except through Add.
 - **One response zone below the P/F/C pills** inside the add card hosts everything reactive: history results, AI thinking, interpretation + flag help + attribution, question chips, hints.
 - **Typeahead** (Suggestions): word-by-word sticky search (only the word being typed searches; previous results linger until new matches), min 2 chars/word, max 4 rows, frecency ranking (~3-week half-life decay), normalized-label dedup keeping freshest macros and summing counts. Rows: label, kcal, grams, ×use-count. Tap fills, never commits.
-- **Everything animates — no sudden layout jumps** when zones appear/disappear. Standing requirement across the whole app.
+- **Everything animates — no sudden layout jumps** when zones appear/disappear. Standing requirement across the whole app; choreography in § Motion.
 
 ## AI macro-fill
 
@@ -115,7 +126,7 @@ Decided at spec time (swept from the map's fog): **en + es** (V1 parity), Englis
 
 ## Cross-cutting build requirements
 
-- **Everything animates; no layout jumps** — anywhere in the app, not just the add card.
+- **Everything animates; no layout jumps** — anywhere in the app, not just the add card. Vocabulary and choreography: § Motion.
 - Dark and light designed together; verify every screen in both at 390×844.
 - **Health Connect hooks** (cheap, honour now): `mealType` on every Entry, kcal + gram fields, nutrition authoritative in Firestore, Capacitor-wrappable build.
 - **V1 failure classes not to repeat** (full catalog on the [map](https://github.com/llauritz/makrofy-v2/issues/1)): sync that drops deletes/swallows errors, materialized favorites drift, dubious stat definitions with NaN/timezone edges, future-nav asymmetry, inconsistent dark mode, missing PWA icons, decimal-vs-integer macro truncation.
