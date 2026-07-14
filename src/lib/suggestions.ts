@@ -18,16 +18,24 @@ export const HALF_LIFE_DAYS = 21
 const DAY_MS = 86_400_000
 
 /**
- * A history Entry reduced to what the index needs — nutrients plus the log time
- * as plain ms. The hook adapts a Firestore Entry (createdAt.toMillis()) into
- * this, keeping the index free of any Firestore type.
+ * Calories and macros, kcal always present (0 = blank) and macros only when
+ * logged — the shape an Entry carries, a Reading's per-unit rate reuses, and
+ * a Suggestion row displays and fills.
  */
-export interface HistoryEntry {
-  label: string
+export interface Nutrients {
   kcal: number
   protein?: number
   fat?: number
   carbs?: number
+}
+
+/**
+ * A history Entry reduced to what the index needs — nutrients plus the log time
+ * as plain ms. The hook adapts a Firestore Entry (createdAt.toMillis()) into
+ * this, keeping the index free of any Firestore type.
+ */
+export interface HistoryEntry extends Nutrients {
+  label: string
   /** When the Entry was logged, ms since epoch. */
   createdAtMs: number
 }
@@ -36,29 +44,23 @@ export interface HistoryEntry {
 // merge into that Reading instead of competing as their own (issue #37).
 export const RATE_TOLERANCE = 0.05
 
-/** A Reading's per-unit calories and macros — per gram, ml or count unit. */
-export interface Rate {
-  kcal: number
-  protein?: number
-  fat?: number
-  carbs?: number
-}
+/**
+ * A Reading's per-unit calories and macros — per gram, ml or count unit. The
+ * top-ranked Reading's rate is the Product's Rate (CONTEXT.md).
+ */
+export type Rate = Nutrients
 
 /**
  * The freshest Entry attesting a Reading, as logged, plus its parsed Quantity
  * — the portion a scaled Suggestion scales from ("30g · 90") and the label and
  * numbers a baseline tap fills.
  */
-export interface ReadingBase {
+export interface ReadingBase extends Nutrients {
   label: string
   /** The Quantity token as logged ("30g"); "1" for a quantityless count. */
   quantityRaw: string
   /** Normalized magnitude (grams / ml / count units). */
   quantityValue: number
-  kcal: number
-  protein?: number
-  fat?: number
-  carbs?: number
   createdAtMs: number
 }
 
@@ -110,19 +112,21 @@ function decay(ageDays: number): number {
   return Math.pow(0.5, ageDays / HALF_LIFE_DAYS)
 }
 
-// A kcal-bearing Entry waiting to be bucketed into a Reading, with the
-// Quantity its per-unit rate divides by (a quantityless label is count-1).
+// A quantityless label counts as a count of 1 (CONTEXT.md "Quantity").
+const COUNT_OF_ONE: Quantity = { kind: "count", value: 1, numeral: 1, raw: "1" }
+
+// A kcal-bearing Entry waiting to be folded into a Reading, with the Quantity
+// its per-unit rate divides by.
 interface Voter {
   entry: HistoryEntry
-  quantityRaw: string
-  quantityValue: number
+  quantity: Quantity
 }
 
 /**
  * Build the in-memory Product index from the full entry history (ADR 0005).
  * Each Entry's label splits into label + Quantity (the grammar, #37); Entries
  * collapse by stripped label + Quantity kind. Each group counts its uses, sums
- * a recency-decayed weight per use for the frecency score, and buckets its
+ * a recency-decayed weight per use for the frecency score, and folds its
  * kcal-bearing Entries into Readings by per-unit rate: rates within
  * RATE_TOLERANCE of a fresher one merge into its Reading (adding a vote),
  * anything further apart competes as its own. Products come out ranked
@@ -170,11 +174,7 @@ export function buildProductIndex(
       g.freshestLabel = label
     }
     if (e.kcal > 0) {
-      g.voters.push({
-        entry: e,
-        quantityRaw: quantity?.raw ?? "1",
-        quantityValue: quantity?.value ?? 1,
-      })
+      g.voters.push({ entry: e, quantity: quantity ?? COUNT_OF_ONE })
     }
   }
 
@@ -184,7 +184,7 @@ export function buildProductIndex(
     // Display label: dropping the trailing punctuation a stripped Quantity
     // leaves behind ("Banana, 30g" → "Banana," → "Banana").
     label: g.freshestLabel.replace(TRAILING_PUNCTUATION, ""),
-    readings: bucketReadings(g.voters),
+    readings: deriveReadings(g.voters),
     useCount: g.useCount,
     score: g.score,
     freshest: g.freshest,
@@ -196,13 +196,13 @@ export function buildProductIndex(
 // Fold one Product's voters into Readings. Freshest-first, so each Reading is
 // anchored on (and shows) the freshest Entry attesting it; older votes within
 // RATE_TOLERANCE of that anchor's per-unit rate pile onto it.
-function bucketReadings(voters: Voter[]): Reading[] {
+function deriveReadings(voters: Voter[]): Reading[] {
   const sorted = [...voters].sort(
     (a, b) => b.entry.createdAtMs - a.entry.createdAtMs,
   )
   const readings: Reading[] = []
   for (const v of sorted) {
-    const rate = v.entry.kcal / v.quantityValue
+    const rate = v.entry.kcal / v.quantity.value
     const home = readings.find(
       (r) => Math.abs(rate - r.rate.kcal) <= r.rate.kcal * RATE_TOLERANCE,
     )
@@ -211,7 +211,7 @@ function bucketReadings(voters: Voter[]): Reading[] {
       continue
     }
     const perUnit = (n: number | undefined) =>
-      n === undefined ? undefined : n / v.quantityValue
+      n === undefined ? undefined : n / v.quantity.value
     readings.push({
       votes: 1,
       rate: {
@@ -222,8 +222,8 @@ function bucketReadings(voters: Voter[]): Reading[] {
       },
       base: {
         label: v.entry.label,
-        quantityRaw: v.quantityRaw,
-        quantityValue: v.quantityValue,
+        quantityRaw: v.quantity.raw,
+        quantityValue: v.quantity.value,
         kcal: v.entry.kcal,
         protein: v.entry.protein,
         fat: v.entry.fat,
@@ -232,9 +232,11 @@ function bucketReadings(voters: Voter[]): Reading[] {
       },
     })
   }
-  // Freshest-first insertion makes the sort's tie-break free: equal votes stay
-  // in insertion (freshness) order only if the sort is stable — Array.sort is.
-  readings.sort((a, b) => b.votes - a.votes)
+  // Most-attested first, freshness breaking ties — each base is the freshest
+  // Entry of its Reading, so its log time is the Reading's.
+  readings.sort(
+    (a, b) => b.votes - a.votes || b.base.createdAtMs - a.base.createdAtMs,
+  )
   return readings
 }
 
@@ -249,24 +251,24 @@ export function currentSearchWord(input: string): string {
 }
 
 /**
- * The Products matching one search word: those whose stripped label contains a
- * word the search word prefixes (so "brea" finds "chicken breast"),
- * frecency-ranked and capped at MAX_ROWS. Below MIN_WORD_CHARS nothing
- * searches — the caller keeps whatever was showing (see the sticky reducer).
- * Matching is label-only: a typed Quantity never filters (its unit-boost is a
- * reordering, applied by advanceSuggestions).
+ * Every Product matching one search word: those whose stripped label contains
+ * a word the search word prefixes (so "brea" finds "chicken breast"),
+ * frecency-ranked. The word normalizes the way Product labels did — lower-
+ * cased, trailing punctuation dropped — so retyping "Banana," still finds
+ * Banana. Below MIN_WORD_CHARS nothing searches — the caller keeps whatever
+ * was showing (see the sticky reducer). Matching is label-only, and nothing
+ * caps here: a typed Quantity never filters, and its unit-boost must be able
+ * to lift a Product into view before advanceSuggestions trims to MAX_ROWS.
  */
 export function matchProducts(index: ProductIndex, word: string): Product[] {
-  const w = word.toLowerCase()
+  const w = word.toLowerCase().replace(TRAILING_PUNCTUATION, "")
   if (w.length < MIN_WORD_CHARS) return []
-  return index.products
-    .filter((p) =>
-      p.label
-        .toLowerCase()
-        .split(/\s+/)
-        .some((token) => token.startsWith(w)),
-    )
-    .slice(0, MAX_ROWS)
+  return index.products.filter((p) =>
+    p.label
+      .toLowerCase()
+      .split(/\s+/)
+      .some((token) => token.startsWith(w)),
+  )
 }
 
 /**
@@ -276,15 +278,11 @@ export function matchProducts(index: ProductIndex, word: string): Product[] {
  * label with its unscaled numbers. Absent = the typed label is the truth: a
  * tap fills numbers only, and `hint` names the portion they scaled from.
  */
-export interface SuggestionRow {
+export interface SuggestionRow extends Nutrients {
   key: string
   label: string
   /** Votes for this row's Reading (every use, for a Reading-less Product). */
   useCount: number
-  kcal: number
-  protein?: number
-  fat?: number
-  carbs?: number
   /** The scaled row's base portion, "30g · 90". */
   hint?: string
   fillLabel?: string
@@ -379,7 +377,7 @@ function productRows(
         fillLabel: r.base.label,
       }
     }
-    const v = typed.kind === product.kind ? typed.value : typed.number
+    const v = typed.kind === product.kind ? typed.value : typed.numeral
     const scale = (n: number | undefined) =>
       n === undefined ? undefined : Math.round(n * v * 10) / 10
     return {
@@ -400,8 +398,8 @@ const TRAILING_PUNCTUATION = /[\s\p{P}]+$/u
 /**
  * The one point where a label becomes text a Product can be keyed on —
  * lower-cased, whitespace-collapsed, trailing punctuation dropped. The
- * Quantity grammar strips the amount before this runs (buildProductIndex), so
- * two Entries whose stripped labels share a key — and whose Quantity kinds
+ * Quantity grammar strips the Quantity before this runs (buildProductIndex),
+ * so two Entries whose stripped labels share a key — and whose Quantity kinds
  * match — are the same Product (CONTEXT.md).
  */
 export function dedupKey(label: string): string {

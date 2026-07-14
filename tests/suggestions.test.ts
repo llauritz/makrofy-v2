@@ -252,14 +252,13 @@ describe("matchProducts", () => {
     expect(matchProducts(menu, "b")).toEqual([])
   })
 
-  it("returns at most MAX_ROWS, frecency-ranked", () => {
-    const rows = matchProducts(menu, "apple")
-    expect(rows).toHaveLength(4) // five apples match; the stalest is dropped
-    expect(rows.map((p) => p.label)).toEqual([
+  it("returns every match, frecency-ranked — capping happens at the row stage", () => {
+    expect(matchProducts(menu, "apple").map((p) => p.label)).toEqual([
       "apple pie",
       "apple juice",
       "apple sauce",
       "apple crumble",
+      "apple tart",
     ])
   })
 })
@@ -374,6 +373,32 @@ describe("advanceSuggestions — scaled rows (#37)", () => {
   it("accepts the Quantity at either end", () => {
     const s = advanceSuggestions(EMPTY_SUGGESTIONS, "40g Banana", index)
     expect(s.rows[0]).toMatchObject({ label: "Banana 40g", kcal: 120 })
+  })
+
+  it("matches even when the typed label keeps its comma — 'Banana, 40g'", () => {
+    // Retyping the historical label exactly as it was logged must not go
+    // silent: the search word "Banana," normalizes like the Product key does.
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "Banana, 40g", index)
+    expect(s.rows[0]).toMatchObject({ label: "Banana 40g", kcal: 120 })
+  })
+
+  it("boosts a same-kind Product into view, not just within the cap", () => {
+    // Four fresher count Products fill MAX_ROWS; the stale mass Product would
+    // be invisible on frecency alone. Its unit typed, it must rank first —
+    // the boost reorders the ranking, it doesn't just shuffle the survivors.
+    const crowded = buildProductIndex(
+      [
+        entry("milk shake", { kcal: 300 }),
+        entry("milk bread", { kcal: 250 }),
+        entry("milk pudding", { kcal: 200 }),
+        entry("milk tart", { kcal: 150 }),
+        entry("milk 100ml", { kcal: 50, ageDays: 30 }),
+      ],
+      NOW,
+    )
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "milk 200ml", crowded)
+    expect(s.rows[0]).toMatchObject({ label: "milk 200ml", kcal: 100 })
+    expect(s.rows).toHaveLength(4)
   })
 
   it("rounds scaled kcal to the nearest integer", () => {

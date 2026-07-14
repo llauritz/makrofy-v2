@@ -16,7 +16,7 @@ export interface Quantity {
    * Quantity meets a Product of another kind — matching is unit-blind, a unit
    * boosts but never filters — this is the magnitude that scales it.
    */
-  number: number
+  numeral: number
   /** The token as typed (trailing punctuation dropped) — for row display. */
   raw: string
 }
@@ -47,20 +47,25 @@ function parseToken(token: string): Quantity | null {
   const cleaned = token.replace(/[\p{P}]+$/u, "")
   const m = QUANTITY_TOKEN.exec(cleaned)
   if (!m) return null
-  const number = Number(m[1].replace(",", "."))
-  if (!(number > 0)) return null
+  const numeral = Number(m[1].replace(",", "."))
+  if (!(numeral > 0)) return null
   if (m[2] === undefined) {
-    return { kind: "count", value: number, number, raw: cleaned }
+    return { kind: "count", value: numeral, numeral, raw: cleaned }
   }
   const unit = UNITS[m[2].toLowerCase()]
   if (!unit) return null
-  return { kind: unit.kind, value: number * unit.factor, number, raw: cleaned }
+  return {
+    kind: unit.kind,
+    value: numeral * unit.factor,
+    numeral,
+    raw: cleaned,
+  }
 }
 
 /**
  * Split a raw label into its label text and Quantity. Only an edge token can
  * be a Quantity, and only when a label remains beside it — a lone "30g" is a
- * label, not an amount of nothing. When both ends parse, the unit-bearing
+ * label, not a Quantity of nothing. When both ends parse, the unit-bearing
  * token wins, then the trailing one.
  */
 export function parseLabel(raw: string): ParsedLabel {

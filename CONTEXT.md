@@ -31,7 +31,7 @@ _Avoid_: anonymous user (auth-implementation term)
 What happens when a Guest signs into an account that already has data: both sets of Entries are kept, combined without prompting.
 
 **Suggestion**:
-A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. When a Product's history disagrees on its per-unit value, each distinct value competes as its own Suggestion — most-attested first, freshest breaking ties — never collapsed into one winning row. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from its per-unit rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills numbers only — the typed label stays.
+A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. A Product's competing Readings appear as adjacent Suggestions, never collapsed into one winning row. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from its Reading's rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills numbers only — the typed label stays.
 _Avoid_: favorite (V1 concept, superseded), autofill
 
 **Frecency**:
@@ -46,8 +46,12 @@ What a group of Entries has in common: the same food measured the same way — s
 _Avoid_: food, item, staple
 
 **Rate**:
-A Product's per-unit calories and macros, derived from its Entry history: the most-attested rate wins, freshness breaks ties, and Entries with zero or missing calories never vote.
+A Product's per-unit calories and macros: its most-attested Reading's value, freshness breaking ties. Entries with zero or missing calories never vote.
 _Avoid_: price, factor
+
+**Reading**:
+One distinct per-unit value observed in a Product's Entry history, carrying its vote count — implied rates within ±5% of a fresher one merge into its Reading. Readings compete as Suggestions, most-attested first, freshest breaking ties: an outvoted Reading is still offered, never suppressed.
+_Avoid_: bucket, attestation
 
 **AI fill**:
 The Gemini-backed path that fills the add card's numbers from the typed label. It never rewrites the label; only Add commits. Committed AI-filled Entries carry the ✨ marker.

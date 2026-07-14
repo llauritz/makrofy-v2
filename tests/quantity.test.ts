@@ -11,7 +11,7 @@ describe("parseLabel", () => {
   it("parses a trailing mass Quantity off the label", () => {
     expect(parseLabel("Banana 30g")).toEqual({
       label: "Banana",
-      quantity: { kind: "mass", value: 30, number: 30, raw: "30g" },
+      quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
     })
   })
 
@@ -26,7 +26,7 @@ describe("parseLabel", () => {
   it("parses a leading Quantity — '30g Banana' and 'Banana 30g' both work", () => {
     expect(parseLabel("30g Banana")).toEqual({
       label: "Banana",
-      quantity: { kind: "mass", value: 30, number: 30, raw: "30g" },
+      quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
     })
   })
 
@@ -34,13 +34,13 @@ describe("parseLabel", () => {
     expect(parseLabel("2 Banana").quantity).toEqual({
       kind: "count",
       value: 2,
-      number: 2,
+      numeral: 2,
       raw: "2",
     })
     expect(parseLabel("0.5 Banana").quantity).toEqual({
       kind: "count",
       value: 0.5,
-      number: 0.5,
+      numeral: 0.5,
       raw: "0.5",
     })
   })
@@ -49,13 +49,13 @@ describe("parseLabel", () => {
     expect(parseLabel("Banana 0.03kg").quantity).toEqual({
       kind: "mass",
       value: 30,
-      number: 0.03,
+      numeral: 0.03,
       raw: "0.03kg",
     })
     expect(parseLabel("milk 0.2l").quantity).toEqual({
       kind: "volume",
       value: 200,
-      number: 0.2,
+      numeral: 0.2,
       raw: "0.2l",
     })
   })
@@ -65,13 +65,13 @@ describe("parseLabel", () => {
     expect(parseLabel("1,5kg flour").quantity).toEqual({
       kind: "mass",
       value: 1500,
-      number: 1.5,
+      numeral: 1.5,
       raw: "1,5kg",
     })
     // …but "Banana," stays label punctuation: label + Quantity, not a decimal.
     expect(parseLabel("Banana, 30g")).toEqual({
       label: "Banana,",
-      quantity: { kind: "mass", value: 30, number: 30, raw: "30g" },
+      quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
     })
   })
 
@@ -79,23 +79,23 @@ describe("parseLabel", () => {
     // unit beats bare…
     expect(parseLabel("2 Banana 30g")).toEqual({
       label: "2 Banana",
-      quantity: { kind: "mass", value: 30, number: 30, raw: "30g" },
+      quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
     })
     expect(parseLabel("30g Banana 2")).toEqual({
       label: "Banana 2",
-      quantity: { kind: "mass", value: 30, number: 30, raw: "30g" },
+      quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
     })
     // …and trailing beats leading when neither (or both) carry a unit.
     expect(parseLabel("2 Banana 3").quantity).toEqual({
       kind: "count",
       value: 3,
-      number: 3,
+      numeral: 3,
       raw: "3",
     })
     expect(parseLabel("30g Banana 50g").quantity).toEqual({
       kind: "mass",
       value: 50,
-      number: 50,
+      numeral: 50,
       raw: "50g",
     })
   })
@@ -114,7 +114,7 @@ describe("parseLabel", () => {
     expect(parseLabel("200")).toEqual({ label: "200", quantity: null })
   })
 
-  it("rejects a zero amount and unknown units", () => {
+  it("rejects a zero Quantity and unknown units", () => {
     expect(parseLabel("0 banana").quantity).toBeNull()
     expect(parseLabel("banana 2x").quantity).toBeNull()
   })
@@ -123,13 +123,13 @@ describe("parseLabel", () => {
     expect(parseLabel("Banana 30G").quantity).toEqual({
       kind: "mass",
       value: 30,
-      number: 30,
+      numeral: 30,
       raw: "30G",
     })
     expect(parseLabel("Banana 30g.").quantity).toEqual({
       kind: "mass",
       value: 30,
-      number: 30,
+      numeral: 30,
       raw: "30g",
     })
   })
