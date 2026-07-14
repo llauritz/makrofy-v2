@@ -17,16 +17,16 @@ import {
   advanceSuggestions,
   EMPTY_INDEX,
   EMPTY_SUGGESTIONS,
-  type Product,
   type ProductIndex,
+  type SuggestionRow,
 } from "@/lib/suggestions"
 
 // Label + kcal on top, tinted P/F/C gram pills + ink Add below, and — inside
 // the same card, below the pills — the response zone that hosts history
-// Suggestions (spec § Add flow, issue #18). Only Add commits: a Suggestion tap
-// fills the form (source 'history') and never writes. #a5988a (not
-// muted-foreground) for placeholders and the "g" unit in BOTH modes matches the
-// record screenshots (issue #4).
+// Suggestions (spec § Add flow, issues #18/#37). Only Add commits: a
+// Suggestion tap fills the form (source 'history') and never writes. #a5988a
+// (not muted-foreground) for placeholders and the "g" unit in BOTH modes
+// matches the record screenshots (issue #4).
 export function AddCard({
   onAdd,
   index = EMPTY_INDEX,
@@ -79,12 +79,14 @@ export function AddCard({
     setSuggestions((prev) => advanceSuggestions(prev, value, index))
   }
 
-  // A tap fills the numbers and the label from the Product's freshest Entry,
-  // marks the draft 'history', and collapses the zone — it commits nothing.
-  const pick = (product: Product) => {
-    setLabel(product.label)
-    setKcal(String(product.kcal))
-    setMacros(macroInputsFrom(product))
+  // A tap fills the row's numbers, marks the draft 'history', and collapses
+  // the zone — it commits nothing. A baseline row (no Quantity typed) fills
+  // its historical label too; a scaled row leaves the typed label alone — it
+  // is the truth the numbers were scaled to (#37).
+  const pick = (row: SuggestionRow) => {
+    if (row.fillLabel !== undefined) setLabel(row.fillLabel)
+    setKcal(String(row.kcal))
+    setMacros(macroInputsFrom(row))
     setSource("history")
     setSuggestions(EMPTY_SUGGESTIONS)
     labelRef.current?.focus()
@@ -169,8 +171,8 @@ function Suggestions({
   rows,
   onPick,
 }: {
-  rows: Product[]
-  onPick: (product: Product) => void
+  rows: SuggestionRow[]
+  onPick: (row: SuggestionRow) => void
 }) {
   return (
     <AnimatePresence initial={false}>
@@ -184,9 +186,9 @@ function Suggestions({
           className="overflow-hidden"
         >
           <ul className="mt-2 flex flex-col gap-1.5 pt-1">
-            {rows.map((product) => (
-              <li key={product.key}>
-                <SuggestionRow product={product} onPick={() => onPick(product)} />
+            {rows.map((row) => (
+              <li key={row.key}>
+                <Suggestion row={row} onPick={() => onPick(row)} />
               </li>
             ))}
           </ul>
@@ -196,11 +198,14 @@ function Suggestions({
   )
 }
 
-function SuggestionRow({
-  product,
+// One Suggestion row: label, ×votes, and — on a scaled row (#37) — the muted
+// base hint ("30g · 90") naming the portion the numbers scaled from. Plain
+// muted text, never dashed: dashed styling means AI Flagged values.
+function Suggestion({
+  row,
   onPick,
 }: {
-  product: Product
+  row: SuggestionRow
   onPick: () => void
 }) {
   return (
@@ -208,21 +213,26 @@ function SuggestionRow({
       type="button"
       onClick={onPick}
       whileTap={{ scale: 0.98 }}
-      aria-label={`Use ${product.label}`}
+      aria-label={`Use ${row.label}`}
       className="w-full rounded-2xl bg-input px-3 py-2 text-left"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="truncate text-sm font-medium">{product.label}</span>
+            <span className="truncate text-sm font-medium">{row.label}</span>
             <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-              ×{product.useCount}
+              ×{row.useCount}
             </span>
+            {row.hint && (
+              <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                {row.hint}
+              </span>
+            )}
           </div>
-          <MacroChips nutrients={product} size="sm" />
+          <MacroChips nutrients={row} size="sm" />
         </div>
         <div className="shrink-0 text-sm font-semibold tabular-nums">
-          {product.kcal}
+          {row.kcal}
           <span className="ml-1 text-[11px] font-normal text-muted-foreground">
             kcal
           </span>

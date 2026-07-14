@@ -75,7 +75,122 @@ describe("buildProductIndex", () => {
       ],
       NOW,
     )
-    expect(products[0]).toMatchObject({ label: "Banana", kcal: 105, protein: 1.3 })
+    expect(products[0].label).toBe("Banana")
+    expect(products[0].readings[0].base).toMatchObject({
+      label: "Banana",
+      kcal: 105,
+      protein: 1.3,
+    })
+  })
+
+  it("merges the same food measured the same way — across units and positions", () => {
+    const { products } = buildProductIndex(
+      [
+        entry("Banana 30g", { kcal: 90 }),
+        entry("30g Banana", { kcal: 90 }),
+        entry("Banana 0.03kg", { kcal: 90 }),
+      ],
+      NOW,
+    )
+    expect(products).toHaveLength(1)
+    expect(products[0]).toMatchObject({ kind: "mass", label: "Banana", useCount: 3 })
+  })
+
+  it("treats a quantityless label as a count of 1 — plain and counted share", () => {
+    const { products } = buildProductIndex(
+      [entry("Banana", { kcal: 105 }), entry("2 Banana", { kcal: 200, ageDays: 1 })],
+      NOW,
+    )
+    expect(products).toHaveLength(1)
+    expect(products[0]).toMatchObject({ kind: "count", useCount: 2 })
+  })
+
+  it("splits the same label measured differently — mass and count differ", () => {
+    const { products } = buildProductIndex(
+      [entry("Banana 30g", { kcal: 90 }), entry("2 Banana", { kcal: 200 })],
+      NOW,
+    )
+    expect(products.map((p) => p.kind).sort()).toEqual(["count", "mass"])
+  })
+})
+
+describe("buildProductIndex — Readings (#37)", () => {
+  it("merges per-unit rates within ±5% into one Reading anchored on the freshest Entry", () => {
+    const { products } = buildProductIndex(
+      [
+        entry("Banana, 30g", { kcal: 90, protein: 0.9, ageDays: 5 }),
+        entry("Banana 40g", { kcal: 120, protein: 1.2, ageDays: 1 }),
+      ],
+      NOW,
+    )
+    expect(products).toHaveLength(1)
+    expect(products[0].readings).toHaveLength(1)
+    const reading = products[0].readings[0]
+    expect(reading.votes).toBe(2)
+    expect(reading.rate.kcal).toBeCloseTo(3, 5)
+    expect(reading.rate.protein).toBeCloseTo(0.03, 5)
+    expect(reading.base).toMatchObject({
+      label: "Banana 40g",
+      quantityRaw: "40g",
+      quantityValue: 40,
+      kcal: 120,
+      protein: 1.2,
+    })
+  })
+
+  it("keeps conflicting rates as competing Readings — most-attested first, freshest breaks ties", () => {
+    // The banana-typo case: 200 kcal then 50 kcal for the same plain label.
+    const tie = buildProductIndex(
+      [
+        entry("banana", { kcal: 200, ageDays: 2 }),
+        entry("banana", { kcal: 50, ageDays: 1 }),
+      ],
+      NOW,
+    ).products[0]
+    expect(tie.readings.map((r) => r.base.kcal)).toEqual([50, 200])
+    expect(tie.readings.map((r) => r.votes)).toEqual([1, 1])
+
+    // The spec's Rate vote: 30g=90 ×2 and 40g=120 ×2 share a bucket (3.0/g,
+    // four attestations) and beat 50g=130 ×3 (2.6/g) — even though the 2.6
+    // bucket has the freshest Entry.
+    const voted = buildProductIndex(
+      [
+        entry("oats 30g", { kcal: 90, ageDays: 6 }),
+        entry("oats 30g", { kcal: 90, ageDays: 5 }),
+        entry("oats 40g", { kcal: 120, ageDays: 4 }),
+        entry("oats 40g", { kcal: 120, ageDays: 3 }),
+        entry("oats 50g", { kcal: 130, ageDays: 2 }),
+        entry("oats 50g", { kcal: 130, ageDays: 1 }),
+        entry("oats 50g", { kcal: 130, ageDays: 0 }),
+      ],
+      NOW,
+    ).products[0]
+    expect(voted.readings.map((r) => r.votes)).toEqual([4, 3])
+    expect(voted.readings[0].rate.kcal).toBeCloseTo(3, 5)
+    expect(voted.readings[1].rate.kcal).toBeCloseTo(2.6, 5)
+  })
+
+  it("never lets zero-kcal Entries vote — they attest use, not a Rate", () => {
+    const { products } = buildProductIndex(
+      [
+        entry("banana", { kcal: 100, ageDays: 3 }),
+        entry("banana", { kcal: 0, ageDays: 1 }),
+      ],
+      NOW,
+    )
+    expect(products[0].useCount).toBe(2)
+    expect(products[0].readings).toHaveLength(1)
+    expect(products[0].readings[0]).toMatchObject({ votes: 1 })
+    expect(products[0].readings[0].base.kcal).toBe(100)
+  })
+
+  it("leaves a Product whose Entries never voted with no Readings at all", () => {
+    const { products } = buildProductIndex(
+      [entry("tea"), entry("tea", { ageDays: 1 })],
+      NOW,
+    )
+    expect(products[0].readings).toEqual([])
+    expect(products[0].useCount).toBe(2)
   })
 
   it("scores frecency as a ~3-week half-life decay summed over uses", () => {
@@ -194,5 +309,112 @@ describe("advanceSuggestions (sticky word-by-word)", () => {
     expect(s.rows).toHaveLength(1)
     s = advanceSuggestions(s, "", index)
     expect(s).toEqual(EMPTY_SUGGESTIONS)
+  })
+})
+
+describe("advanceSuggestions — competing Reading rows (#37)", () => {
+  it("offers conflicting Readings as separate rows, freshest tie-break first", () => {
+    // The banana-typo case: 200 kcal then 50 kcal under the same plain label
+    // must compete as two Suggestions, never collapse into one ×2 row.
+    const index = buildProductIndex(
+      [
+        entry("banana", { kcal: 200, ageDays: 2 }),
+        entry("banana", { kcal: 50, ageDays: 1 }),
+      ],
+      NOW,
+    )
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "banana", index)
+    expect(s.rows.map((r) => r.kcal)).toEqual([50, 200])
+    expect(s.rows.map((r) => r.useCount)).toEqual([1, 1])
+    // No Quantity typed — the #18 baseline: a tap fills label and numbers.
+    expect(s.rows[0].fillLabel).toBe("banana")
+    expect(s.rows[0].hint).toBeUndefined()
+    expect(s.rows[0].key).not.toBe(s.rows[1].key)
+  })
+
+  it("caps the expanded rows at MAX_ROWS, best Products first", () => {
+    const index = buildProductIndex(
+      [
+        entry("apple pie", { kcal: 100, ageDays: 0 }),
+        entry("apple pie", { kcal: 300, ageDays: 1 }),
+        entry("apple juice", { kcal: 50, ageDays: 2 }),
+        entry("apple sauce", { kcal: 60, ageDays: 3 }),
+        entry("apple tart", { kcal: 70, ageDays: 4 }),
+      ],
+      NOW,
+    )
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "apple", index)
+    expect(s.rows.map((r) => r.kcal)).toEqual([100, 300, 50, 60])
+  })
+})
+
+describe("advanceSuggestions — scaled rows (#37)", () => {
+  // History says "Banana, 30g" = 90 kcal (1.1 g protein).
+  const index = buildProductIndex(
+    [entry("Banana, 30g", { kcal: 90, protein: 1.1, ageDays: 1 })],
+    NOW,
+  )
+
+  it("scales numbers from the Reading's rate to the typed Quantity", () => {
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "Banana 40g", index)
+    expect(s.rows).toHaveLength(1)
+    expect(s.rows[0]).toMatchObject({
+      label: "Banana 40g",
+      kcal: 120,
+      protein: 1.5, // 1.1 × 40/30 = 1.4667 → one decimal
+      hint: "30g · 90",
+    })
+    // Quantity typed — the typed label is the truth: a tap fills numbers only.
+    expect(s.rows[0].fillLabel).toBeUndefined()
+    // Blanks stay blank: the base never logged fat or carbs.
+    expect(s.rows[0].fat).toBeUndefined()
+    expect(s.rows[0].carbs).toBeUndefined()
+  })
+
+  it("accepts the Quantity at either end", () => {
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "40g Banana", index)
+    expect(s.rows[0]).toMatchObject({ label: "Banana 40g", kcal: 120 })
+  })
+
+  it("rounds scaled kcal to the nearest integer", () => {
+    const odd = buildProductIndex([entry("rice 30g", { kcal: 95 })], NOW)
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "rice 40g", odd)
+    expect(s.rows[0].kcal).toBe(127) // 95 × 40/30 = 126.67
+  })
+
+  it("rescales live after a fill — edit 30g to 60g, a second-tap row appears", () => {
+    let s = advanceSuggestions(EMPTY_SUGGESTIONS, "Banana 30g", index)
+    expect(s.rows[0].kcal).toBe(90)
+    s = advanceSuggestions(s, "Banana 60g", index)
+    expect(s.rows[0].kcal).toBe(180)
+  })
+
+  it("matches label-only and scales every Product by its own Rate", () => {
+    // Mass banana at 3 kcal/g; count banana at 100 kcal each (more frecent).
+    const both = buildProductIndex(
+      [
+        entry("Banana 30g", { kcal: 90, ageDays: 3 }),
+        entry("2 Banana", { kcal: 200, ageDays: 0 }),
+        entry("2 Banana", { kcal: 200, ageDays: 1 }),
+      ],
+      NOW,
+    )
+    // A bare number is unit-blind: both Products scale, frecency ranks.
+    let s = advanceSuggestions(EMPTY_SUGGESTIONS, "Banana 10", both)
+    expect(s.rows.map((r) => r.kcal)).toEqual([1000, 30])
+    // A typed unit boosts the same-kind Product first — and never filters.
+    s = advanceSuggestions(s, "Banana 30g", both)
+    expect(s.rows.map((r) => r.kcal)).toEqual([90, 3000])
+  })
+
+  it("never invents numbers for a Product that has no Readings", () => {
+    const blank = buildProductIndex(
+      [entry("tea"), entry("tea", { ageDays: 1 })],
+      NOW,
+    )
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "tea 200ml", blank)
+    expect(s.rows[0].kcal).toBe(0)
+    expect(s.rows[0].useCount).toBe(2)
+    expect(s.rows[0].hint).toBeUndefined()
   })
 })

@@ -31,7 +31,7 @@ _Avoid_: anonymous user (auth-implementation term)
 What happens when a Guest signs into an account that already has data: both sets of Entries are kept, combined without prompting.
 
 **Suggestion**:
-A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from the Product's Rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills numbers only — the typed label stays.
+A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. When a Product's history disagrees on its per-unit value, each distinct value competes as its own Suggestion — most-attested first, freshest breaking ties — never collapsed into one winning row. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from its per-unit rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills numbers only — the typed label stays.
 _Avoid_: favorite (V1 concept, superseded), autofill
 
 **Frecency**:
