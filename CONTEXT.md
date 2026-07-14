@@ -15,6 +15,10 @@ _Avoid_: date (for the concept; fine as a field name)
 **Backfill**:
 Logging an Entry onto any Day other than today via date stepping.
 
+**Coverage**:
+How much of a Day's real food intake the user says made it into the log — *Some*, *Most*, or *Everything*. Governs only a Day's admission to aggregate stats, never the live day view; an unlabeled Day is treated as fully covered.
+_Avoid_: confidence, completeness, quality
+
 **Goal**:
 The daily calorie (and optional macro) target the progress ring measures against. Set once at onboarding, editable after.
 _Avoid_: target, budget
