@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react"
 import type { Entry, EntryEdit } from "@/data/entries"
 import { SPRING } from "./anim"
 import { EntryEditor } from "./EntryEditor"
-import { MACROS, macroTint } from "./macros"
+import { MacroChips } from "./MacroChips"
 
 // The day's Entries, newest first (the parent reverses log order) with the
 // deferred-deletes already hidden. Spec conventions: no times; macro chips
@@ -74,7 +74,6 @@ export function EntryList({
 
 function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
   const noKcal = entry.kcal === 0
-  const chips = MACROS.filter((m) => (entry[m.field] ?? 0) > 0)
   return (
     <button
       type="button"
@@ -90,23 +89,7 @@ function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-[15px] font-medium">{entry.label}</div>
-          {chips.length > 0 && (
-            <div className="mt-1.5 flex gap-1.5">
-              {chips.map((m) => (
-                <span
-                  key={m.key}
-                  className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums"
-                  style={{ backgroundColor: macroTint(m.mark, 13) }}
-                >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: m.mark }}
-                  />
-                  {m.letter} {entry[m.field]}g
-                </span>
-              ))}
-            </div>
-          )}
+          <MacroChips nutrients={entry} />
         </div>
         <div
           className={
