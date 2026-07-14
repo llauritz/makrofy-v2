@@ -1,0 +1,32 @@
+# Runs typecheck, lint, and the full emulator-backed test suite on every PR
+# (and on pushes to main) so nothing red merges. The Firestore emulator needs
+# JDK 21+ (scripts/emulators.mjs prepends JAVA_HOME/bin over the runner's older
+# system Java); firebase-tools is a devDependency, so the suite is fully
+# self-contained and needs no secrets — it runs on fork PRs too.
+
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
