@@ -7,6 +7,7 @@ import {
   updateEntry,
   type Entry,
   type EntryEdit,
+  type EntrySource,
 } from "@/data/entries"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import {
@@ -14,6 +15,7 @@ import {
   useGoal,
   useIdentity,
   useLoggedDays,
+  useProductIndex,
   useSyncStatus,
 } from "@/data/hooks"
 import { refreshIdentity } from "@/data/identity"
@@ -55,6 +57,7 @@ export function MainScreen() {
   const dayEntries = useDay(uid, selectedDay)
   const goal = useGoal(uid)
   const loggedDays = useLoggedDays(uid)
+  const productIndex = useProductIndex(uid)
   const syncStatus = useSyncStatus(uid)
 
   const clearTimer = () => {
@@ -87,9 +90,9 @@ export function MainScreen() {
   const step = (delta: -1 | 1) => goToDay(stepDay(selectedDay, delta))
   const swipe = useDaySwipe(step)
 
-  const handleAdd = (draft: EntryDraft) => {
+  const handleAdd = (draft: EntryDraft, source: EntrySource) => {
     if (!uid) return
-    addEntry(db, uid, { date: selectedDay, source: "manual", ...draft })
+    addEntry(db, uid, { date: selectedDay, source, ...draft })
   }
 
   const handleSave = (id: string, edit: EntryEdit) => {
@@ -134,7 +137,7 @@ export function MainScreen() {
           />
           {/* DayNav hidden for now — restore in a later ticket. Day nav still
               works via swipe (useDaySwipe) and the WeekStrip chips above. */}
-          <AddCard onAdd={handleAdd} disabled={!uid} />
+          <AddCard onAdd={handleAdd} index={productIndex} disabled={!uid} />
           <EntryList
             entries={newestFirst}
             editingId={editingId}

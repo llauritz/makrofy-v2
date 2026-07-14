@@ -19,6 +19,12 @@ import {
 import { listenToGoal, type Goal, type GoalStatus } from "@/data/goal"
 import { auth, db } from "@/lib/firebase"
 import { resolveSyncStatus, type SnapshotMeta, type SyncStatus } from "@/lib/sync"
+import {
+  buildProductIndex,
+  EMPTY_INDEX,
+  type HistoryEntry,
+  type ProductIndex,
+} from "@/lib/suggestions"
 
 /** The app's current Firebase uid, or null until the Guest identity resolves. */
 export function useIdentity(): string | null {
@@ -190,4 +196,39 @@ export function useLoggedDays(uid: string | null): Set<string> {
     )
   }, [uid])
   return days
+}
+
+/** Adapt a Firestore Entry to the nutrients-plus-log-time shape the index reads. */
+function toHistoryEntry(entry: Entry): HistoryEntry {
+  return {
+    label: entry.label,
+    kcal: entry.kcal,
+    protein: entry.protein,
+    fat: entry.fat,
+    carbs: entry.carbs,
+    createdAtMs: entry.createdAt.toMillis(),
+  }
+}
+
+/**
+ * The typeahead's in-memory Product index (ADR 0005), rebuilt from the full
+ * history whenever it changes — its own subscription on the same entries
+ * collection useLoggedDays watches (the SDK cache serves both, so no extra
+ * server read), so a delete simply falls out and no favorites collection can
+ * drift. The rebuild is a cheap reduction over at most a few thousand Entries
+ * and only fires on a data change, never on a keystroke: the add card searches
+ * this index locally as the user types.
+ */
+export function useProductIndex(uid: string | null): ProductIndex {
+  const [index, setIndex] = React.useState<ProductIndex>(EMPTY_INDEX)
+  React.useEffect(() => {
+    if (!uid) {
+      setIndex(EMPTY_INDEX)
+      return
+    }
+    return listenToAllEntries(db, uid, (entries) =>
+      setIndex(buildProductIndex(entries.map(toHistoryEntry), Date.now())),
+    )
+  }, [uid])
+  return index
 }
