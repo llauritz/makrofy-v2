@@ -5,23 +5,24 @@ import {
   type MacroFillResult,
 } from "./macro-fill"
 
-// The Gemini client behind AI macro-fill (spec § AI macro-fill, #21), exactly
-// as the #20 spike validated it: `gemini-3.1-flash-lite` on the Vertex AI
-// backend's `global` endpoint (us-central1 404s for this model), Google
-// Search grounding and the four-tier responseSchema together in ONE request
-// (the Gemini-3 combined capability), behind App Check (AI Logic is the one
+// The Gemini client behind AI macro-fill (spec § AI macro-fill, #21), on the
+// stack the #20 spike validated: a Gemini-3 model on the Vertex AI backend's
+// `global` endpoint (us-central1 404s for these models), Google Search
+// grounding and the four-tier responseSchema together in ONE request (the
+// Gemini-3 combined capability), behind App Check (AI Logic is the one
 // auto-enforced product). Everything is loaded lazily on the first ✨ tap —
 // most sessions never pay for the AI SDK or the reCAPTCHA script.
 
-const MODEL_ID = "gemini-3.1-flash-lite"
+// Owner escalated from `gemini-3.1-flash-lite` to the latest model
+// (2026-07-16, spec § AI macro-fill amended). Same Gemini-3 capability set,
+// same $14/1k grounding fee; pricier tokens (~$0.002/call — grounding still
+// dominates).
+const MODEL_ID = "gemini-3.5-flash"
 
-// The reCAPTCHA Enterprise site key for production App Check attestation.
-// Public by design (it ships in the bundle, like firebaseConfig above it in
-// firebase.ts) — but its value was never recorded in #12's resolution, so it
-// must be pasted here from the Firebase console (App Check → yaffle-web)
-// before the AI path works on goyaffle.web.app. Local dev doesn't need it:
-// the `local-dev` debug token in .env.local takes over below.
-const RECAPTCHA_ENTERPRISE_SITE_KEY = "RECAPTCHA_SITE_KEY_PENDING"
+// The reCAPTCHA Enterprise site key for production App Check attestation —
+// public by design (it ships in the bundle, like firebaseConfig). Local dev
+// doesn't use it: the `local-dev` debug token in .env.local takes over below.
+const RECAPTCHA_ENTERPRISE_SITE_KEY = "6LcoOE4tAAAAAOWYJ_eLVGQjIRCqlgP0dHeM9az-"
 
 /** One model answer: the validated four-tier result plus its display duty. */
 export interface AiFillReply {
