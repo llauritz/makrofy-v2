@@ -19,20 +19,18 @@ import {
   useSyncStatus,
 } from "@/data/hooks"
 import { refreshIdentity } from "@/data/identity"
-import { localDay, stepDay } from "@/lib/day"
+import { localDay, stepWithinStrip } from "@/lib/day"
 import { auth, db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
 import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
-// DayNav (the "< Today >" bar) hidden for now — restore in a later ticket.
-// import { DayNav } from "./DayNav"
+import { DayStrip } from "./DayStrip"
 import { EntryList } from "./EntryList"
 import type { EntryDraft } from "./fields"
 import { Header } from "./Header"
 import { SummaryCard } from "./SummaryCard"
 import { summarize } from "./summary"
 import { UndoSnackbar } from "./UndoSnackbar"
-import { WeekStrip } from "./WeekStrip"
 
 // Undo window for a deleted Entry (ADR 0004 — in-memory, deferred).
 const DELETE_UNDO_MS = 6000
@@ -87,8 +85,13 @@ export function MainScreen() {
     setEditingId(null)
     setSelectedDay(day)
   }
-  const step = (delta: -1 | 1) => goToDay(stepDay(selectedDay, delta))
-  const swipe = useDaySwipe(step)
+  // The swipe steps ±1 Day, bounded to the strip: it stops at the 14-day floor
+  // and, forward, advances the frontier (the calendar ticket lifts the floor).
+  const swipeStep = (delta: -1 | 1) => {
+    const next = stepWithinStrip(selectedDay, delta)
+    if (next) goToDay(next)
+  }
+  const swipe = useDaySwipe(swipeStep)
 
   const handleAdd = (draft: EntryDraft, source: EntrySource) => {
     if (!uid) return
@@ -129,14 +132,16 @@ export function MainScreen() {
         onReauth={reauth}
       />
       <main className="flex flex-1 flex-col">
-        <div {...swipe}>
-          <WeekStrip
-            selectedDay={selectedDay}
-            loggedDays={loggedDays}
-            onSelect={goToDay}
-          />
-          {/* DayNav hidden for now — restore in a later ticket. Day nav still
-              works via swipe (useDaySwipe) and the WeekStrip chips above. */}
+        <DayStrip
+          selectedDay={selectedDay}
+          loggedDays={loggedDays}
+          onSelect={goToDay}
+        />
+        {/* The log is the swipe surface: touch-pan-y lets the browser own
+            vertical scroll while horizontal gestures reach the pointer
+            handlers un-cancelled — the fix for the dead V1 swipe (#33). The
+            Day strip owns its own horizontal scroll, so it stays outside. */}
+        <div {...swipe} className="touch-pan-y">
           <AddCard onAdd={handleAdd} index={productIndex} uid={uid} />
           <EntryList
             entries={newestFirst}

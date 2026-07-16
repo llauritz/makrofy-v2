@@ -183,7 +183,7 @@ export function useGoalStatus(uid: string | null): GoalStatus {
 }
 
 /**
- * The set of Days that have at least one Entry — feeds the week strip's dots.
+ * The set of Days that have at least one Entry — feeds the Day strip's dots.
  * Derived in memory from the full-history listener (ADR 0005), the same one
  * typeahead and stats will read.
  */

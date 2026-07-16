@@ -62,36 +62,67 @@ export interface DayCell {
   isToday: boolean
   isFuture: boolean
   isSelected: boolean
+  /** The one dashed future Day at the window's forward edge. */
+  isFrontier: boolean
+}
+
+/** How far back the Day strip reaches; older Days are the calendar's job. */
+export const STRIP_PAST_DAYS = 14
+
+/**
+ * The strip's floor: the oldest Day it reaches, `STRIP_PAST_DAYS` before today.
+ * The one home for the bound so the window's leading edge and the swipe's guard
+ * can never disagree (#34 lifts it for the calendar).
+ */
+export function stripFloor(now: Date = new Date()): string {
+  return stepDay(localDay(now), -STRIP_PAST_DAYS)
 }
 
 /**
- * The week strip's 7-day window: a stable run from five days ago through
- * tomorrow, anchored on *today* (index 5) so exactly one future day is always
- * visible (spec § Design direction). The window does not move with the
- * selection — `selected` only flags its cell, and on a deep Backfill it may
- * flag none (the day label carries the date instead). `logged` dots are
- * layered on by the caller from the entries listener, keeping this pure.
+ * The Day strip's window (#33): a today-anchored run from `STRIP_PAST_DAYS`
+ * ago through today, plus the future frontier. The window never moves with a
+ * past selection; selecting a future Day extends it, keeping exactly one
+ * dashed frontier beyond the selection — tapping the frontier *is* the
+ * frontier advance.
  */
-export function weekWindow(selected: string, now: Date = new Date()): DayCell[] {
+export function stripWindow(selected: string, now: Date = new Date()): DayCell[] {
   const today = localDay(now)
-  return Array.from({ length: 7 }, (_, i) => {
-    const day = stepDay(today, i - 5)
+  const first = stripFloor(now)
+  const frontier = stepDay(selected > today ? selected : today, 1)
+  const length = dayDiff(frontier, first) + 1
+  return Array.from({ length }, (_, i) => {
+    const day = stepDay(first, i)
     const d = parseDay(day)
     return {
       day,
       weekday: WEEKDAY_NARROW[d.getDay()],
       dayNum: d.getDate(),
       isToday: day === today,
-      isFuture: isFuture(day, now),
+      isFuture: day > today,
       isSelected: day === selected,
+      isFrontier: day === frontier,
     }
   })
 }
 
 /**
+ * The swipe's step, bounded to the strip (#33): null below the 14-day floor
+ * (deep Backfill is the calendar's job), always legal forward — stepping onto
+ * the frontier is how a swipe advances it.
+ */
+export function stepWithinStrip(
+  day: string,
+  delta: -1 | 1,
+  now: Date = new Date(),
+): string | null {
+  const next = stepDay(day, delta)
+  return next < stripFloor(now) ? null : next
+}
+
+/**
  * A short human name for a Day: "Today"/"Yesterday"/"Tomorrow" for the near
  * ones, else "Wed 8 Jul". Lets the selected Day stay legible even when it has
- * slid out of the week strip on a deep Backfill.
+ * slid off the Day strip on a deep Backfill (the calendar button's label, #34).
  */
 export function relativeDayLabel(day: string, now: Date = new Date()): string {
   const diff = dayDiff(day, localDay(now))
