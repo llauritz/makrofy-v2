@@ -1,4 +1,4 @@
-import type { EntryNutrients } from "@/data/entries"
+import type { EntryNutrients, FlaggableField } from "@/data/entries"
 import { MACROS } from "./macros"
 
 // Shared form plumbing for the add card and the inline editor: the P/F/C text
@@ -13,8 +13,12 @@ export interface MacroInputs {
 
 export const EMPTY_MACROS: MacroInputs = { p: "", f: "", c: "" }
 
-/** The nutrients half of an Entry the form produces (the shared Entry shape). */
-export type EntryDraft = EntryNutrients
+/**
+ * The nutrients half of an Entry the form produces (the shared Entry shape),
+ * plus the Flagged values an AI fill left unresolved at commit (ADR 0003 —
+ * only the add card ever sets these; edits never touch them).
+ */
+export type EntryDraft = EntryNutrients & { flagged?: FlaggableField[] }
 
 /** Blank → unset (an absent macro); non-numeric or negative is ignored. */
 export function parseOptional(raw: string): number | undefined {

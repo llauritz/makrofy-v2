@@ -137,7 +137,7 @@ export function MainScreen() {
           />
           {/* DayNav hidden for now — restore in a later ticket. Day nav still
               works via swipe (useDaySwipe) and the WeekStrip chips above. */}
-          <AddCard onAdd={handleAdd} index={productIndex} disabled={!uid} />
+          <AddCard onAdd={handleAdd} index={productIndex} uid={uid} />
           <EntryList
             entries={newestFirst}
             editingId={editingId}
