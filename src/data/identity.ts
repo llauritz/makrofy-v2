@@ -13,6 +13,7 @@ import {
 import type { Firestore } from "firebase/firestore"
 
 import { readAllEntries, writeEntries } from "@/data/entries"
+import { readAllOverlays, writeMissingOverlays } from "@/data/products"
 
 const RETRY_BASE_MS = 2_000
 const RETRY_MAX_MS = 60_000
@@ -26,7 +27,10 @@ const CREDENTIAL_IN_USE = new Set([
 
 // Transient failures worth retrying silently; anything else (e.g. provider
 // misconfiguration) should surface, not loop forever.
-const RETRYABLE = new Set(["auth/network-request-failed", "auth/too-many-requests"])
+const RETRYABLE = new Set([
+  "auth/network-request-failed",
+  "auth/too-many-requests",
+])
 
 /**
  * Resolve with the app's Firebase identity, minting a silent Guest
@@ -99,7 +103,10 @@ export type SignInOutcome =
  * collision is logged, never thrown: a botched sign-in must not keep the app
  * from opening.
  */
-export async function bootstrapIdentity(auth: Auth, db: Firestore): Promise<User> {
+export async function bootstrapIdentity(
+  auth: Auth,
+  db: Firestore
+): Promise<User> {
   try {
     const outcome = await completeGoogleRedirect(auth, db)
     // A union merge is silent to the user (ADR 0002) but worth a dev-log — it's
@@ -136,7 +143,7 @@ export async function startGoogleSignIn(auth: Auth): Promise<void> {
  */
 export async function completeGoogleRedirect(
   auth: Auth,
-  db: Firestore,
+  db: Firestore
 ): Promise<SignInOutcome> {
   let result
   try {
@@ -164,23 +171,27 @@ export function isCredentialInUseError(err: unknown): boolean {
 }
 
 /**
- * Copy a Guest's Entries into a pre-existing account and switch to it — the
- * union merge (ADR 0002). Copy-first and promptless: read the Guest's Entries
- * while still signed in as the Guest, sign into the existing account with its
- * Google credential, then batch-write the Entries in. Auto-ids make it a clean
- * union; the existing account's settings are left untouched (they win), and the
- * Guest's now-orphaned documents are left behind rather than risking a
- * delete-before-write. Returns the account now signed in and the copied count.
+ * Copy a Guest's Entries and curation overlay into a pre-existing account and
+ * switch to it — the union merge (ADR 0002/0009). Copy-first and promptless:
+ * read the Guest's data while still signed in as the Guest, sign into the
+ * existing account with its Google credential, then batch-write it in. Entry
+ * auto-ids make that half a clean union; the overlay unions by Product key with
+ * the existing account winning any key both hold (writeMissingOverlays), the
+ * same rule that keeps the existing account's settings. The Guest's now-orphaned
+ * documents are left behind rather than risking a delete-before-write. Returns
+ * the account now signed in and the copied Entry count.
  */
 export async function unionMergeInto(
   auth: Auth,
   db: Firestore,
   credential: AuthCredential,
-  guestUid: string,
+  guestUid: string
 ): Promise<MergeOutcome> {
   const entries = await readAllEntries(db, guestUid)
+  const overlays = await readAllOverlays(db, guestUid)
   const { user } = await signInWithCredential(auth, credential)
   await writeEntries(db, user.uid, entries)
+  await writeMissingOverlays(db, user.uid, overlays)
   return { uid: user.uid, merged: entries.length }
 }
 

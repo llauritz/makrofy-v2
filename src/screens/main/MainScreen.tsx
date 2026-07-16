@@ -37,11 +37,12 @@ const DELETE_UNDO_MS = 6000
 
 // The walking skeleton (#15): the shell wired to live data for the full manual
 // loop — add, edit, delete+undo, Backfill and Day navigation — all offline
-// capable through the Firestore cache (ADR 0001).
-export function MainScreen() {
+// capable through the Firestore cache (ADR 0001). `onOpenGlossary` lifts to the
+// app-level screen switch (#40); Settings hosts the entry point.
+export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
   const uid = useIdentity()
   const [selectedDay, setSelectedDay] = React.useState(() =>
-    localDay(new Date()),
+    localDay(new Date())
   )
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
@@ -49,7 +50,7 @@ export function MainScreen() {
   // snackbar is up; the real delete fires only when the window lapses.
   const [pending, setPending] = React.useState<Entry | null>(null)
   const timer = React.useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
+    undefined
   )
 
   const dayEntries = useDay(uid, selectedDay)
@@ -160,7 +161,14 @@ export function MainScreen() {
           <SummaryCard summary={summary} onOpenSettings={openSettings} />
         </div>
       </main>
-      <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <SettingsSheet
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        onOpenGlossary={() => {
+          setSettingsOpen(false)
+          onOpenGlossary()
+        }}
+      />
     </div>
   )
 }

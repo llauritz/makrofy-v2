@@ -1,4 +1,4 @@
-import { ArrowLeftRight } from "lucide-react"
+import { ArrowLeftRight, BookText, ChevronRight } from "lucide-react"
 import * as React from "react"
 
 import { useLanguage } from "@/components/language-provider"
@@ -28,9 +28,11 @@ import { SignInSetting } from "@/screens/settings/SignInSetting"
 export function SettingsSheet({
   open,
   onOpenChange,
+  onOpenGlossary,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onOpenGlossary: () => void
 }) {
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
@@ -48,6 +50,11 @@ export function SettingsSheet({
 
         <div className="flex flex-col gap-1 border-t pt-4">
           <SignInSetting />
+          <NavRow
+            icon={<BookText className="h-[18px] w-[18px]" />}
+            label="Food glossary"
+            onClick={onOpenGlossary}
+          />
           <InstallAppEntry />
           <StubRow
             icon={<ArrowLeftRight className="h-[18px] w-[18px]" />}
@@ -56,6 +63,30 @@ export function SettingsSheet({
         </div>
       </BottomSheetContent>
     </BottomSheet>
+  )
+}
+
+// A settings row that navigates elsewhere in the app — a live feature, unlike
+// StubRow. Tapping runs onClick (the owner closes the sheet and switches view).
+function NavRow({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-muted"
+    >
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="flex-1 text-[15px] font-medium">{label}</span>
+      <ChevronRight className="h-[18px] w-[18px] text-muted-foreground" />
+    </button>
   )
 }
 
@@ -213,7 +244,7 @@ function Segmented<T extends string>({
               "flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
               active
                 ? "bg-card text-foreground shadow-[0_1px_2px_rgba(43,32,21,0.12)]"
-                : "text-muted-foreground hover:text-foreground",
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {option.label}
@@ -226,13 +257,7 @@ function Segmented<T extends string>({
 
 // A settings slot whose feature hasn't shipped yet — visible so the surface
 // reads as complete, inert until its ticket lands (sign-in #19, export #24).
-function StubRow({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode
-  label: string
-}) {
+function StubRow({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div
       aria-disabled="true"

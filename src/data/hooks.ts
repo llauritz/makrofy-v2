@@ -17,23 +17,30 @@ import {
   type Entry,
 } from "@/data/entries"
 import { listenToGoal, type Goal, type GoalStatus } from "@/data/goal"
+import { listenToOverlays } from "@/data/products"
 import { auth, db } from "@/lib/firebase"
-import { resolveSyncStatus, type SnapshotMeta, type SyncStatus } from "@/lib/sync"
+import {
+  resolveSyncStatus,
+  type SnapshotMeta,
+  type SyncStatus,
+} from "@/lib/sync"
 import {
   buildProductIndex,
   EMPTY_INDEX,
+  EMPTY_OVERLAYS,
   type HistoryEntry,
+  type OverlayMap,
   type ProductIndex,
 } from "@/lib/suggestions"
 
 /** The app's current Firebase uid, or null until the Guest identity resolves. */
 export function useIdentity(): string | null {
   const [uid, setUid] = React.useState<string | null>(
-    () => auth.currentUser?.uid ?? null,
+    () => auth.currentUser?.uid ?? null
   )
   React.useEffect(
     () => onAuthStateChanged(auth, (user) => setUid(user?.uid ?? null)),
-    [],
+    []
   )
   return uid
 }
@@ -55,11 +62,11 @@ export interface AuthUser {
  */
 export function useAuthUser(): AuthUser | null {
   const [user, setUser] = React.useState<AuthUser | null>(() =>
-    summarizeUser(auth.currentUser),
+    summarizeUser(auth.currentUser)
   )
   React.useEffect(
     () => onIdTokenChanged(auth, (u) => setUser(summarizeUser(u))),
-    [],
+    []
   )
   return user
 }
@@ -192,7 +199,7 @@ export function useLoggedDays(uid: string | null): Set<string> {
   React.useEffect(() => {
     if (!uid) return
     return listenToAllEntries(db, uid, (entries) =>
-      setDays(new Set(entries.map((entry) => entry.date))),
+      setDays(new Set(entries.map((entry) => entry.date)))
     )
   }, [uid])
   return days
@@ -211,24 +218,45 @@ function toHistoryEntry(entry: Entry): HistoryEntry {
 }
 
 /**
- * The typeahead's in-memory Product index (ADR 0005), rebuilt from the full
- * history whenever it changes — its own subscription on the same entries
- * collection useLoggedDays watches (the SDK cache serves both, so no extra
- * server read), so a delete simply falls out and no favorites collection can
- * drift. The rebuild is a cheap reduction over at most a few thousand Entries
- * and only fires on a data change, never on a keystroke: the add card searches
- * this index locally as the user types.
+ * The Product index (ADR 0005), the source for both the typeahead and the
+ * Glossary. Two live subscriptions on the same user — the full Entry history
+ * and the curation overlay (issue #40, ADR 0009) — are folded together by
+ * buildProductIndex: history stays derived, the overlay's stored corrections
+ * apply as the final step. The SDK cache serves both listeners, so no extra
+ * server read, and a deleted Entry or a merged Product simply falls out with no
+ * collection to drift. The rebuild is a cheap reduction over at most a few
+ * thousand Entries and only fires on a data change, never on a keystroke.
  */
 export function useProductIndex(uid: string | null): ProductIndex {
-  const [index, setIndex] = React.useState<ProductIndex>(EMPTY_INDEX)
+  // The history is stored with the clock read the moment it arrived, so the
+  // frecency `now` is captured in the listener callback — never during render
+  // (an impure call there is disallowed and would also destabilize the memo).
+  const [feed, setFeed] = React.useState<{
+    entries: HistoryEntry[]
+    nowMs: number
+  }>({ entries: [], nowMs: 0 })
+  const [overlays, setOverlays] = React.useState<OverlayMap>(EMPTY_OVERLAYS)
   React.useEffect(() => {
     // No reset on a null uid (matching the sibling hooks): uid only goes null
-    // for the moment between sign-out and the fresh Guest, whose listener
-    // then replaces the index wholesale.
+    // for the moment between sign-out and the fresh Guest, whose listeners then
+    // replace both feeds wholesale.
     if (!uid) return
-    return listenToAllEntries(db, uid, (entries) =>
-      setIndex(buildProductIndex(entries.map(toHistoryEntry), Date.now())),
+    return listenToAllEntries(db, uid, (es) =>
+      setFeed({ entries: es.map(toHistoryEntry), nowMs: Date.now() })
     )
   }, [uid])
-  return index
+  React.useEffect(() => {
+    if (!uid) return
+    return listenToOverlays(db, uid, setOverlays)
+  }, [uid])
+  // Fold history + overlay into the index, rebuilding when either changes. An
+  // overlay-only change reuses the last history clock — frecency is unmoved by a
+  // correction, and a few minutes is nothing against the 3-week half-life.
+  return React.useMemo(
+    () =>
+      feed.entries.length === 0
+        ? EMPTY_INDEX
+        : buildProductIndex(feed.entries, feed.nowMs, overlays),
+    [feed, overlays]
+  )
 }
