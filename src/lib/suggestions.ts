@@ -75,6 +75,8 @@ export interface Reading {
   votes: number
   rate: Rate
   base: ReadingBase
+  /** Pinned as the Product's Rate regardless of votes, until unpinned (#40). */
+  pinned?: boolean
 }
 
 /**
@@ -97,6 +99,8 @@ export interface Product {
   score: number
   /** The freshest Entry as logged — what a Reading-less Product's row shows. */
   freshest: HistoryEntry
+  /** Labels absorbed into this Product by a merge; empty when unmerged (#40). */
+  aliases: Alias[]
 }
 
 export interface ProductIndex {
@@ -106,6 +110,70 @@ export interface ProductIndex {
 
 /** The index before any history has loaded (or for a signed-out app). */
 export const EMPTY_INDEX: ProductIndex = { products: [] }
+
+// ---------------------------------------------------------------------------
+// The stored curation overlay (issue #40, ADR 0009). Logged Entries are
+// untouchable, and the index stays derived (ADR 0005) — Glossary curation is
+// stored as per-Product corrections in /users/{uid}/products/{key} and applied
+// here as the derivation's final step. All timestamps are plain ms so the core
+// stays Firestore-free.
+// ---------------------------------------------------------------------------
+
+/**
+ * One stored Reading correction: past votes whose per-unit kcal rate sits
+ * within RATE_TOLERANCE of `from` now attest `rate` instead — the Reading
+ * keeps its votes and its tiebreak freshens to the edit (CONTEXT.md
+ * "Reading"). `from: null` seeds a fresh ×1 Reading on a rate-less Product.
+ */
+export interface ReadingEdit {
+  from: number | null
+  /** The corrected per-unit value the votes now attest. */
+  rate: Rate
+  atMs: number
+}
+
+/**
+ * One stored Reading deletion: past votes at ~`from` are silenced. A future
+ * Entry re-attests the same value as a fresh ×1 Reading (CONTEXT.md).
+ */
+export interface ReadingDeletion {
+  from: number
+  atMs: number
+}
+
+/**
+ * A label absorbed into another Product by a merge — a live mapping: Entries
+ * under the absorbed key (past and future) count toward the survivor
+ * (CONTEXT.md "Alias"). Removing the Alias unmerges.
+ */
+export interface Alias {
+  /** The absorbed Product's key. */
+  key: string
+  /** The absorbed Product's display label at merge time, for the detail view. */
+  label: string
+  atMs: number
+}
+
+/** The stored curation overlay for one Product (issue #40, ADR 0009). */
+export interface ProductOverlay {
+  /** The Product key this overlay corrects — mirrors the doc id. */
+  key: string
+  edits?: ReadingEdit[]
+  deletions?: ReadingDeletion[]
+  /** The pinned Reading's per-unit kcal rate; that Reading is the Rate. */
+  pinnedRate?: number
+  aliases?: Alias[]
+  /**
+   * Timestamped forget (Product delete): Entries logged at or before this
+   * never count; later Entries recreate the Product fresh.
+   */
+  deletedAtMs?: number
+}
+
+/** Every stored overlay, by Product key. */
+export type OverlayMap = ReadonlyMap<string, ProductOverlay>
+
+export const EMPTY_OVERLAYS: OverlayMap = new Map()
 
 // A use's contribution to frecency: 1 today, halving every HALF_LIFE_DAYS.
 function decay(ageDays: number): number {
@@ -135,7 +203,27 @@ interface Voter {
 export function buildProductIndex(
   entries: readonly HistoryEntry[],
   nowMs: number,
+  overlays: OverlayMap = EMPTY_OVERLAYS
 ): ProductIndex {
+  // Merge mappings from the overlay: an absorbed key routes every one of its
+  // Entries to the survivor's group (CONTEXT.md "Alias").
+  const aliasToSurvivor = new Map<string, string>()
+  for (const o of overlays.values()) {
+    for (const a of o.aliases ?? []) aliasToSurvivor.set(a.key, o.key)
+  }
+  // The canonical stripped label per key — the freshest label among the Entries
+  // natively keyed there. A survivor keeps its own label; an absorbed typo
+  // never contributes one, so it can never resurface.
+  const canonicalLabel = new Map<string, { label: string; ms: number }>()
+  for (const e of entries) {
+    const { label, quantity } = parseLabel(e.label)
+    const key = `${quantity?.kind ?? "count"}:${dedupKey(label)}`
+    const cur = canonicalLabel.get(key)
+    if (!cur || e.createdAtMs > cur.ms) {
+      canonicalLabel.set(key, { label, ms: e.createdAtMs })
+    }
+  }
+
   const groups = new Map<
     string,
     {
@@ -150,7 +238,28 @@ export function buildProductIndex(
   for (const e of entries) {
     const { label, quantity } = parseLabel(e.label)
     const kind = quantity?.kind ?? "count"
-    const key = `${kind}:${dedupKey(label)}`
+    const naturalKey = `${kind}:${dedupKey(label)}`
+    const key = aliasToSurvivor.get(naturalKey) ?? naturalKey
+    // A Product delete is a timestamped forget (CONTEXT.md "Glossary"): every
+    // Entry at or before the delete drops out entirely — it never counts, votes
+    // or resurrects the Product. Only Entries logged afterwards remain, and they
+    // rebuild it fresh (all its prior overlay corrections gate themselves out,
+    // and the data layer cleared them on delete anyway).
+    const deletedAtMs = overlays.get(key)?.deletedAtMs
+    if (deletedAtMs !== undefined && e.createdAtMs <= deletedAtMs) continue
+    // An absorbed Entry takes on the survivor's canonical label (keeping its
+    // own Quantity token), so counts and Readings pool under the survivor while
+    // the typo never shows anywhere — including a no-Quantity tap-fill.
+    const absorbed = key !== naturalKey
+    const strippedLabel = absorbed
+      ? (canonicalLabel.get(key)?.label ?? label)
+      : label
+    const eff: HistoryEntry = absorbed
+      ? {
+          ...e,
+          label: quantity ? `${strippedLabel} ${quantity.raw}` : strippedLabel,
+        }
+      : e
     // Clamp future skew (an estimated server timestamp can read slightly ahead)
     // to "now" so it never scores above a genuine present-day use.
     const ageDays = Math.max(0, (nowMs - e.createdAtMs) / DAY_MS)
@@ -159,8 +268,8 @@ export function buildProductIndex(
     if (!g) {
       g = {
         kind,
-        freshest: e,
-        freshestLabel: label,
+        freshest: eff,
+        freshestLabel: strippedLabel,
         useCount: 0,
         score: 0,
         voters: [],
@@ -169,28 +278,132 @@ export function buildProductIndex(
     }
     g.useCount += 1
     g.score += weight
-    if (e.createdAtMs > g.freshest.createdAtMs) {
-      g.freshest = e
-      g.freshestLabel = label
+    if (eff.createdAtMs > g.freshest.createdAtMs) {
+      g.freshest = eff
+      g.freshestLabel = strippedLabel
     }
-    if (e.kcal > 0) {
-      g.voters.push({ entry: e, quantity: quantity ?? COUNT_OF_ONE })
+    if (eff.kcal > 0) {
+      g.voters.push({ entry: eff, quantity: quantity ?? COUNT_OF_ONE })
     }
   }
 
-  const products = [...groups].map(([key, g]) => ({
-    key,
-    kind: g.kind,
-    // Display label: dropping the trailing punctuation a stripped Quantity
-    // leaves behind ("Banana, 30g" → "Banana," → "Banana").
-    label: g.freshestLabel.replace(TRAILING_PUNCTUATION, ""),
-    readings: deriveReadings(g.voters),
-    useCount: g.useCount,
-    score: g.score,
-    freshest: g.freshest,
-  }))
+  const products = [...groups].map(([key, g]) => {
+    const overlay = overlays.get(key)
+    return {
+      key,
+      kind: g.kind,
+      // Display label: dropping the trailing punctuation a stripped Quantity
+      // leaves behind ("Banana, 30g" → "Banana," → "Banana").
+      label: g.freshestLabel.replace(TRAILING_PUNCTUATION, ""),
+      readings: applyPin(
+        deriveReadings(applyReadingOverlay(g.voters, overlay, g.freshestLabel)),
+        overlay?.pinnedRate
+      ),
+      useCount: g.useCount,
+      score: g.score,
+      freshest: g.freshest,
+      aliases: overlay?.aliases ?? [],
+    }
+  })
   products.sort((a, b) => b.score - a.score)
   return { products }
+}
+
+// Fold a Product's stored Reading corrections (issue #40) into its voters
+// before they are folded into Readings. Deletions silence the votes they
+// cover; edits rewrite theirs to the new value and freshen the tiebreak; a
+// from-null edit seeds one fresh ×1 voter (the rate-less Product finally
+// getting a value). A correction only reaches votes logged at or before it —
+// a later Entry at the old value is a fresh observation it never touches.
+function applyReadingOverlay(
+  voters: Voter[],
+  overlay: ProductOverlay | undefined,
+  freshestLabel: string
+): Voter[] {
+  if (!overlay) return voters
+  let result = voters
+  for (const del of overlay.deletions ?? []) {
+    result = result.filter(
+      (v) =>
+        !(
+          v.entry.createdAtMs <= del.atMs &&
+          Math.abs(perUnitKcal(v) - del.from) <= del.from * RATE_TOLERANCE
+        )
+    )
+  }
+  for (const edit of overlay.edits ?? []) {
+    if (edit.from === null) {
+      result = [...result, syntheticVoter(edit.rate, edit.atMs, freshestLabel)]
+      continue
+    }
+    const from = edit.from
+    result = result.map((v) =>
+      v.entry.createdAtMs <= edit.atMs &&
+      Math.abs(perUnitKcal(v) - from) <= from * RATE_TOLERANCE
+        ? rewriteVoter(v, edit.rate, edit.atMs)
+        : v
+    )
+  }
+  return result
+}
+
+const perUnitKcal = (v: Voter): number => v.entry.kcal / v.quantity.value
+
+// A Pin forces one Reading to be the Product's Rate regardless of votes
+// (CONTEXT.md "Pin"): the Reading whose rate matches is flagged and lifted to
+// the front, the outvoted Readings staying visible beneath it. No pin, or a
+// pin whose Reading no longer exists (its votes edited/deleted away), leaves
+// the vote order untouched.
+function applyPin(
+  readings: Reading[],
+  pinnedRate: number | undefined
+): Reading[] {
+  if (pinnedRate === undefined) return readings
+  const pinnedIndex = readings.findIndex(
+    (r) => Math.abs(r.rate.kcal - pinnedRate) <= pinnedRate * RATE_TOLERANCE
+  )
+  if (pinnedIndex < 0) return readings
+  const pinned = { ...readings[pinnedIndex], pinned: true }
+  return [
+    pinned,
+    ...readings.slice(0, pinnedIndex),
+    ...readings.slice(pinnedIndex + 1),
+  ]
+}
+
+// A voter carrying a corrected per-unit rate: the portion (quantity) is kept,
+// the numbers are the rate scaled back up to it, and the log time freshens to
+// the edit so the Reading sorts as the freshest of its vote count.
+function rewriteVoter(v: Voter, rate: Rate, atMs: number): Voter {
+  const up = (n: number | undefined) =>
+    n === undefined ? undefined : n * v.quantity.value
+  return {
+    quantity: v.quantity,
+    entry: {
+      label: v.entry.label,
+      kcal: rate.kcal * v.quantity.value,
+      protein: up(rate.protein),
+      fat: up(rate.fat),
+      carbs: up(rate.carbs),
+      createdAtMs: atMs,
+    },
+  }
+}
+
+// A ×1 voter for a from-null edit: the rate as a single-unit portion, labelled
+// with the Product's freshest label so a baseline Suggestion can still fill it.
+function syntheticVoter(rate: Rate, atMs: number, label: string): Voter {
+  return {
+    quantity: COUNT_OF_ONE,
+    entry: {
+      label,
+      kcal: rate.kcal,
+      protein: rate.protein,
+      fat: rate.fat,
+      carbs: rate.carbs,
+      createdAtMs: atMs,
+    },
+  }
 }
 
 // Fold one Product's voters into Readings. Freshest-first, so each Reading is
@@ -198,13 +411,13 @@ export function buildProductIndex(
 // RATE_TOLERANCE of that anchor's per-unit rate pile onto it.
 function deriveReadings(voters: Voter[]): Reading[] {
   const sorted = [...voters].sort(
-    (a, b) => b.entry.createdAtMs - a.entry.createdAtMs,
+    (a, b) => b.entry.createdAtMs - a.entry.createdAtMs
   )
   const readings: Reading[] = []
   for (const v of sorted) {
     const rate = v.entry.kcal / v.quantity.value
     const home = readings.find(
-      (r) => Math.abs(rate - r.rate.kcal) <= r.rate.kcal * RATE_TOLERANCE,
+      (r) => Math.abs(rate - r.rate.kcal) <= r.rate.kcal * RATE_TOLERANCE
     )
     if (home) {
       home.votes += 1
@@ -235,7 +448,7 @@ function deriveReadings(voters: Voter[]): Reading[] {
   // Most-attested first, freshness breaking ties — each base is the freshest
   // Entry of its Reading, so its log time is the Reading's.
   readings.sort(
-    (a, b) => b.votes - a.votes || b.base.createdAtMs - a.base.createdAtMs,
+    (a, b) => b.votes - a.votes || b.base.createdAtMs - a.base.createdAtMs
   )
   return readings
 }
@@ -253,22 +466,43 @@ export function currentSearchWord(input: string): string {
 /**
  * Every Product matching one search word: those whose stripped label contains
  * a word the search word prefixes (so "brea" finds "chicken breast"),
- * frecency-ranked. The word normalizes the way Product labels did — lower-
- * cased, trailing punctuation dropped — so retyping "Banana," still finds
- * Banana. Below MIN_WORD_CHARS nothing searches — the caller keeps whatever
- * was showing (see the sticky reducer). Matching is label-only, and nothing
- * caps here: a typed Quantity never filters, and its unit-boost must be able
- * to lift a Product into view before advanceSuggestions trims to MAX_ROWS.
+ * frecency-ranked. An absorbed label matches too — typing a merged-away typo
+ * still surfaces its survivor (CONTEXT.md "Alias"). The word normalizes the way
+ * Product labels did — lower-cased, trailing punctuation dropped — so retyping
+ * "Banana," still finds Banana. Below MIN_WORD_CHARS nothing searches — the
+ * caller keeps whatever was showing (see the sticky reducer). Matching is
+ * label-only, and nothing caps here: a typed Quantity never filters, and its
+ * unit-boost must be able to lift a Product into view before advanceSuggestions
+ * trims to MAX_ROWS.
  */
 export function matchProducts(index: ProductIndex, word: string): Product[] {
   const w = word.toLowerCase().replace(TRAILING_PUNCTUATION, "")
   if (w.length < MIN_WORD_CHARS) return []
-  return index.products.filter((p) =>
-    p.label
-      .toLowerCase()
-      .split(/\s+/)
-      .some((token) => token.startsWith(w)),
+  return index.products.filter((p) => productMatchesWord(p, word))
+}
+
+/**
+ * Whether one search word prefixes any word of a Product's label or of one of
+ * its absorbed alias labels — the shared label/alias matcher behind both the
+ * typeahead (matchProducts) and the Glossary search (searchGlossary), so the
+ * two can never drift. The word normalizes the way Product labels did (lower-
+ * cased, trailing punctuation dropped), so retyping "Banana," still matches.
+ */
+export function productMatchesWord(product: Product, word: string): boolean {
+  const w = word.toLowerCase().replace(TRAILING_PUNCTUATION, "")
+  if (w === "") return false
+  return (
+    labelHasPrefix(product.label, w) ||
+    product.aliases.some((a) => labelHasPrefix(a.label, w))
   )
+}
+
+// Whether any whitespace-delimited word of a label starts with the search word.
+function labelHasPrefix(label: string, word: string): boolean {
+  return label
+    .toLowerCase()
+    .split(/\s+/)
+    .some((token) => token.startsWith(word))
 }
 
 /**
@@ -309,7 +543,7 @@ export const EMPTY_SUGGESTIONS: SuggestState = { word: "", rows: [] }
 export function advanceSuggestions(
   prev: SuggestState,
   input: string,
-  index: ProductIndex,
+  index: ProductIndex
 ): SuggestState {
   if (input.trim() === "") return EMPTY_SUGGESTIONS
   const { label, quantity } = parseLabel(input)
@@ -329,7 +563,7 @@ export function advanceSuggestions(
 // flow, #37). A bare number carries no unit and boosts nothing.
 function rankForQuantity(
   products: Product[],
-  typed: Quantity | null,
+  typed: Quantity | null
 ): Product[] {
   if (!typed || typed.kind === "count") return products
   return [
@@ -346,7 +580,7 @@ function rankForQuantity(
 // Rate to scale by, so its row is always the unscaled freshest Entry.
 function productRows(
   product: Product,
-  typed: Quantity | null,
+  typed: Quantity | null
 ): SuggestionRow[] {
   if (product.readings.length === 0) {
     const e = product.freshest

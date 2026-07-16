@@ -13,6 +13,7 @@ import {
 import { doc, getDoc, waitForPendingWrites } from "firebase/firestore"
 import { addEntry, readAllEntries } from "@/data/entries"
 import { setGoal } from "@/data/goal"
+import { readAllOverlays, setPin } from "@/data/products"
 import {
   ensureIdentity,
   isCredentialInUseError,
@@ -34,7 +35,10 @@ const SECOND_DEVICE =
 const googleCred = (claims = SECOND_DEVICE) =>
   GoogleAuthProvider.credential(claims)
 
-async function readGoalKcal(ctx: EmulatorApp, uid: string): Promise<number | undefined> {
+async function readGoalKcal(
+  ctx: EmulatorApp,
+  uid: string
+): Promise<number | undefined> {
   const snap = await getDoc(doc(ctx.db, "users", uid, "settings", "goal"))
   return snap.exists() ? (snap.data() as { kcal: number }).kcal : undefined
 }
@@ -100,7 +104,9 @@ describe("Google sign-in — linking onto the same UID", () => {
 
     const linked = await linkWithCredential(
       ctx.auth.currentUser!,
-      googleCred('{"sub":"solo-user","email":"solo@example.com","email_verified":true}'),
+      googleCred(
+        '{"sub":"solo-user","email":"solo@example.com","email_verified":true}'
+      )
     )
 
     // Same UID — the Guest's data is already in place, nothing moved.
@@ -165,7 +171,7 @@ describe("Google sign-in — second-device collision, union merge", () => {
       guestApp.auth,
       guestApp.db,
       googleCred(),
-      guestUid,
+      guestUid
     )
 
     // Signed into the existing account; one Guest Entry carried over.
@@ -174,10 +180,36 @@ describe("Google sign-in — second-device collision, union merge", () => {
 
     // Both Entry sets present — no data loss.
     const merged = await readAllEntries(guestApp.db, existingUid)
-    expect(merged.map((e) => e.label).sort()).toEqual(["apple", "oats", "toast"])
+    expect(merged.map((e) => e.label).sort()).toEqual([
+      "apple",
+      "oats",
+      "toast",
+    ])
 
     // Existing settings win: the Guest's 1500 goal is discarded.
     expect(await readGoalKcal(guestApp, existingUid)).toBe(2222)
+  })
+
+  it("unions the curation overlay too, the existing account winning per key", async () => {
+    await clearFirestoreData()
+    const existingUid = await seedExistingAccount(["oats"], 2000)
+    // The existing account has already pinned count:oats.
+    setPin(existingApp.db, existingUid, "count:oats", 380)
+    await waitForPendingWrites(existingApp.db)
+
+    const guestUid = await seedGuest([], 2000)
+    // The Guest disagrees on count:oats and has a unique opinion on count:egg.
+    setPin(guestApp.db, guestUid, "count:oats", 999)
+    setPin(guestApp.db, guestUid, "count:egg", 78)
+    await waitForPendingWrites(guestApp.db)
+
+    await unionMergeInto(guestApp.auth, guestApp.db, googleCred(), guestUid)
+
+    const overlays = await readAllOverlays(guestApp.db, existingUid)
+    const byKey = new Map(overlays.map((o) => [o.key, o]))
+    // Conflict: the existing account's pin stands; the Guest's unique one lands.
+    expect(byKey.get("count:oats")?.pinnedRate).toBe(380)
+    expect(byKey.get("count:egg")?.pinnedRate).toBe(78)
   })
 
   it("recognises the real collision error a sign-in throws", async () => {
@@ -218,7 +250,9 @@ describe("Google sign-in — second-device collision, union merge", () => {
     await unionMergeInto(guestApp.auth, guestApp.db, googleCred(), guestUid)
 
     const merged = await readAllEntries(guestApp.db, existingUid)
-    const bar = await waitFor(() => merged.find((e) => e.label === "protein bar"))
+    const bar = await waitFor(() =>
+      merged.find((e) => e.label === "protein bar")
+    )
     expect(bar).toMatchObject({
       date: "2026-07-11",
       kcal: 210,

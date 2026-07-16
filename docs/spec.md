@@ -10,8 +10,9 @@ A one-person calorie/macro tracker. Screens:
 
 - **Main**: header (Fraunces wordmark, sync indicator, settings) · Day strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
 - **Statistics dashboard** (from the stats button) with a **week report subpage**; a **morning glance strip** appears on the main screen once per morning.
+- **Food glossary** (from Settings): the browsable, alphabetical Product index and the home of all curation — correct/pin/delete Readings, merge/delete Products (#40).
 - **Onboarding**: one goal screen, prefilled, straight in.
-- **Settings**: goal, theme, language, sign-in, install app, export/import.
+- **Settings**: goal, theme, language, sign-in, food glossary, install app, export/import.
 
 ## Stack
 
@@ -19,7 +20,7 @@ Vite SPA + PWA — React 19, TypeScript, Tailwind 4 (scaffold in place; no Next.
 
 ## Data & sync
 
-Normative: **ADRs 0001–0006** (`docs/adr/`). Gist:
+Normative: **ADRs 0001–0009** (`docs/adr/`). Gist:
 
 - **The Firestore SDK is the store** (ADR 0001): `persistentLocalCache` + multi-tab manager; no local DB, no custom sync layer. Offline use, queued writes, and last-write-wins come from the SDK. The service worker never caches Firestore traffic.
 - **Entry schema** (ADR 0003), one flat collection `/users/{uid}/entries/{autoId}`:
@@ -39,6 +40,7 @@ Normative: **ADRs 0001–0006** (`docs/adr/`). Gist:
 - **Per-Day metadata sidecar** (ADR 0006): a `days` collection `/users/{uid}/days/{YYYY-MM-DD}` holds user-authored per-Day annotations — first field **Coverage**. A non-authoritative overlay: absence means no metadata, never no Day; stats still range-query Entries; it never holds cached aggregates.
 - **Deletes are native** (ADR 0004): real document deletes, LWW, no tombstones; undo is an in-memory deferred delete.
 - **Typeahead index is derived** (ADR 0005): built in memory from the entries listener; no history/favorites collection.
+- **Glossary curation overlay** (ADR 0009): the Product index stays derived, but the user's corrections — Reading edits/deletions, Pins, Aliases, Product deletes — persist in a `products` collection `/users/{uid}/products/{key}` and apply as the derivation's final step. Logged Entries are never touched; corrections carry a timestamp and reach only the votes logged at or before them.
 - **Security rules**: `/users/{userId}/{document=**}` UID-match (`docs/research/firebase-backend-validation.md`).
 - **No weights collection** — weight tracking is out of V2 entirely (arrives scale-fed with Health Connect in V3).
 
@@ -116,11 +118,11 @@ Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10) + `docs/resea
 
 ## Onboarding & settings
 
-One goal screen on first run, **prefilled 2000 kcal**, one tap into the app. Settings: goal edit · theme (system default, device-local) · language (device-local) · sign-in · install app · export/import.
+One goal screen on first run, **prefilled 2000 kcal**, one tap into the app. Settings: goal edit · theme (system default, device-local) · language (device-local) · sign-in · food glossary (#40) · install app · export/import.
 
 ## Export / import
 
-V2 JSON only (`"format": "makrofy/2"`): all Entries (full schema) + Goal. Import previews new-vs-duplicate by Entry id, writes through the normal entries module. **No V1 support** — no V1 data survives and V2 carries zero V1 requirements ([#11](https://github.com/llauritz/makrofy-v2/issues/11)).
+V2 JSON only (`"format": "makrofy/2"`): all Entries (full schema) + Goal + the `days` (ADR 0006) and `products` curation overlays (ADR 0009), or those annotations are lost on migration. Import previews new-vs-duplicate by Entry id, writes through the normal entries module. **No V1 support** — no V1 data survives and V2 carries zero V1 requirements ([#11](https://github.com/llauritz/makrofy-v2/issues/11)).
 
 ## i18n
 
