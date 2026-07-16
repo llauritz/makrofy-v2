@@ -4,7 +4,7 @@
 // stretches, so `layout` is only ever used as `layout="position"`.
 
 // The one spring behind all space-making: box resizes, sibling reflow, the
-// week strip's selection ring, the undo snackbar's entrance. Tune the feel
+// Day strip's selection pill, the undo snackbar's entrance. Tune the feel
 // here, not in each component. (The summary ring uses its own slower spring;
 // it is a different gesture.)
 export const SPRING = { type: "spring", stiffness: 500, damping: 40 } as const
