@@ -8,7 +8,7 @@ The consolidated output of the [V2 wayfinder map](https://github.com/llauritz/ma
 
 A one-person calorie/macro tracker. Screens:
 
-- **Main**: header (Fraunces wordmark, sync indicator, settings) · week strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
+- **Main**: header (Fraunces wordmark, sync indicator, settings) · Day strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
 - **Statistics dashboard** (from the stats button) with a **week report subpage**; a **morning glance strip** appears on the main screen once per morning.
 - **Onboarding**: one goal screen, prefilled, straight in.
 - **Settings**: goal, theme, language, sign-in, install app, export/import.
@@ -54,7 +54,7 @@ Normative: [#4](https://github.com/llauritz/makrofy-v2/issues/4) (full token spe
 - **Surfaces** — light: bg `#f6f1e6` · card `#fffdf7` · ink `#2b2015` · muted `#7d7060` · border `#eee5d2` · input tint `#f3ecdd`; dark: bg `#17110c` · card `#2a211a` · text `#f3ece2` · muted `#a5988a` · border `#3a2f22` · input tint `#211a12`.
 - **No accent hue**: primary CTA and the progress ring are ink. Shape: `rounded-full` pills, `rounded-2xl/3xl` cards.
 - **Macro coding, fixed order P/F/C = blue/yellow/red** (CVD-validated). Marks light `#2f6bc4`/`#b8830a`/`#c03b2e`, dark `#5b91e4`/`#b98a20`/`#cf6152`; text-grade light `#2f6bc4`/`#96690a`/`#c03b2e`, dark `#5b91e4`/`#b98a20`/`#e07d6e`.
-- **Conventions**: no entry times; 0-kcal entries dashed + muted; exactly one future day visible in the week strip (dashed + dimmed); ring is a plain single-hue kcal meter (segmented plate-ring rejected); both modes designed together; keep `color-scheme: light`/`dark` on `:root`/`.dark` in `src/index.css`.
+- **Conventions**: no entry times; 0-kcal entries dashed + muted; exactly one future day visible in the Day strip (the dashed + dimmed frontier); ring is a plain single-hue kcal meter (segmented plate-ring rejected); both modes designed together; keep `color-scheme: light`/`dark` on `:root`/`.dark` in `src/index.css`.
 
 ## Motion — "space and fade"
 
@@ -64,7 +64,7 @@ Normative: **ADR 0007**. Tokens live in `src/screens/main/anim.ts`; the card pri
 - **Nothing ever stretches**: non-uniform scaling is banned everywhere, including Motion's layout-scale size interpolation — `layout` is only ever used as `layout="position"` (ADR 0007). Uniform scale stays legal (tap-shrink, ≤2 % enter/exit garnish).
 - **Content swaps are fade-throughs**: old content fades out fast (~80 ms) at the old size → the box springs to the new size, **top edge anchored, growing downward**, pushing lower cards in lockstep → new content fades in (~150 ms) as the box settles. Cards above never move; no custom scrolling (the keyboard's scroll-into-view covers focused inputs).
 - **Overlays** (undo snackbar, sheets) float above the layout, so space-making doesn't apply: they may enter with a directional slide + fade.
-- **Indicators** (week-strip selection ring, summary arc) may **travel/sweep** — continuity is their message. Travel is only legal between same-size anchors; if anchors diverge in size it must degrade to a cross-fade.
+- **Indicators** (Day-strip selection pill, summary arc) may **travel/sweep** — continuity is their message. Travel is only legal between same-size anchors; if anchors diverge in size it must degrade to a cross-fade.
 - **Reduced motion**: `MotionConfig reducedMotion="user"` app-wide — movement snaps, fades remain.
 
 ## Add flow — "Inline fill"
