@@ -18,9 +18,9 @@ import { cn } from "@/lib/utils"
 import { InstallAppEntry } from "@/pwa/InstallApp"
 import { SignInSetting } from "@/screens/settings/SignInSetting"
 
-// The real settings surface (#17): goal · theme · language, then the slots that
-// fill in as their tickets land — sign-in (#19), install (#23, live now) and
-// export/import (#24). Self-contained like a screen: it reads and writes the
+// The real settings surface (#17): goal · glossary · theme · language, then the
+// slots that fill in as their tickets land — sign-in (#19), install (#23, live
+// now) and export/import (#24). Self-contained like a screen: it reads and writes the
 // synced Goal and the device-local theme/language directly. Controlled by its
 // owner (MainScreen) so several affordances can open it — the header gear, the
 // header sync indicator, and the summary ring. The goal is the one synced
@@ -45,16 +45,18 @@ export function SettingsSheet({
         </div>
 
         <GoalSetting />
+        {/* The Glossary is the app's second surface, not a footer link — it sits
+            right under the goal, above the device-local theme/language prefs. */}
+        <NavRow
+          icon={<BookText className="h-[18px] w-[18px]" />}
+          label="Food glossary"
+          onClick={onOpenGlossary}
+        />
         <ThemeSetting />
         <LanguageSetting />
 
         <div className="flex flex-col gap-1 border-t pt-4">
           <SignInSetting />
-          <NavRow
-            icon={<BookText className="h-[18px] w-[18px]" />}
-            label="Food glossary"
-            onClick={onOpenGlossary}
-          />
           <InstallAppEntry />
           <StubRow
             icon={<ArrowLeftRight className="h-[18px] w-[18px]" />}
