@@ -1,15 +1,30 @@
 import * as React from "react"
-import { motion } from "motion/react"
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from "motion/react"
 
-import { stripWindow } from "@/lib/day"
+import { stripWindow, type DayCell } from "@/lib/day"
 import { SPRING } from "./anim"
 
 // The sole day navigator (#33, ADR 0008): a free-scrolling rail of Day chips —
-// 14 days back through today plus one dashed, dimmed frontier Day. Selection
-// is a single filled ink pill that travels between chips; today, when not
-// selected, keeps a soft accent tint so it stays findable. Tapping the
-// frontier selects it and reveals the next future Day; a dot marks Days with
-// Entries.
+// 14 days back through today plus one dashed, dimmed frontier Day. Today, when
+// not selected, keeps a soft accent tint so it stays findable; a dot marks Days
+// with Entries; tapping the frontier selects it and reveals the next future Day.
+//
+// Selection is a single filled ink pill that *travels* between chips. Rather
+// than fade each chip's text between palettes — which flashes invisible while
+// the fill is elsewhere — the strip is drawn twice: a base layer in ink, and an
+// inverted (background-ink) copy that is only ever seen through the pill's
+// window. The pill is an overflow-clipped mask; its inner copy is counter-
+// translated by the same spring, so the two layers stay pixel-aligned and the
+// pill simply uncovers whichever chip it slides over. No color ever flips and
+// nothing fades. Travel is legal only because every chip is the same fixed size
+// (w-11); if chip sizes ever diverge the mask must become a cross-fade (spec
+// § Motion, ADR 0007).
 export function DayStrip({
   selectedDay,
   loggedDays,
@@ -20,9 +35,38 @@ export function DayStrip({
   onSelect: (day: string) => void
 }) {
   const cells = stripWindow(selectedDay)
-  const railRef = React.useRef<HTMLDivElement>(null)
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const rowRef = React.useRef<HTMLDivElement>(null)
   const mounted = React.useRef(false)
+  const shouldReduce = useReducedMotion()
   const selectedIsFuture = cells.find((c) => c.isSelected)?.isFuture ?? false
+
+  // The pill's horizontal offset within the rail's content; the inverted copy
+  // rides the negative of it, cancelling the pill's own travel so it holds
+  // still behind the moving window. One source value keeps them in lockstep.
+  const pillX = useMotionValue(0)
+  const innerX = useTransform(pillX, (v) => -v)
+  const [pill, setPill] = React.useState<{
+    top: number
+    width: number
+    height: number
+  } | null>(null)
+
+  // Slide the pill onto the selected chip. Chips are uniform, so the selected
+  // button's box is the pill's box; only x differs per selection. Snap on first
+  // paint and under reduced motion (spec § Motion: movement snaps); else spring.
+  React.useLayoutEffect(() => {
+    const btn =
+      rowRef.current?.querySelector<HTMLElement>('[aria-current="date"]')
+    if (!btn) return // off-strip selection (#34) has no chip to mask
+    setPill({ top: btn.offsetTop, width: btn.offsetWidth, height: btn.offsetHeight })
+    if (!mounted.current || shouldReduce) {
+      pillX.set(btn.offsetLeft)
+      return
+    }
+    const controls = animate(pillX, btn.offsetLeft, SPRING)
+    return () => controls.stop()
+  }, [selectedDay, shouldReduce, pillX])
 
   // Keep the action in view: on open, jump (no animation) so today hugs the
   // right edge with the frontier beyond it and the past off-screen left;
@@ -30,37 +74,31 @@ export function DayStrip({
   // target is the freshly revealed frontier instead — it sits beside the
   // selection, so the reveal and the selection both stay visible.
   React.useLayoutEffect(() => {
-    const rail = railRef.current
-    if (!rail) return
+    const scroller = scrollRef.current
+    if (!scroller) return
     if (!mounted.current) {
       mounted.current = true
-      rail.scrollLeft = rail.scrollWidth
+      scroller.scrollLeft = scroller.scrollWidth
       return
     }
     const target = selectedIsFuture
-      ? (rail.lastElementChild as HTMLElement | null)
-      : rail.querySelector<HTMLElement>('[aria-current="date"]')
-    // Match the app-wide reduced-motion contract (spec § Motion): movement
-    // snaps, fades remain. MotionConfig can't reach this native scroll, so
-    // gate it by hand.
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? (rowRef.current?.lastElementChild as HTMLElement | null)
+      : rowRef.current?.querySelector<HTMLElement>('[aria-current="date"]')
     target?.scrollIntoView({
-      behavior: reduced ? "auto" : "smooth",
+      behavior: shouldReduce ? "auto" : "smooth",
       inline: "nearest",
       block: "nearest",
     })
-  }, [selectedDay, selectedIsFuture])
+  }, [selectedDay, selectedIsFuture, shouldReduce])
 
   return (
     <div
-      ref={railRef}
-      className="flex gap-1 overflow-x-auto px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      ref={scrollRef}
+      className="relative overflow-x-auto px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      {cells.map((cell) => {
-        const logged = loggedDays.has(cell.day)
-        // Future chips dim, unless they are the one you're viewing.
-        const dim = cell.isFuture && !cell.isSelected
-        return (
+      {/* Base layer — every chip in ink, always in its unselected palette. */}
+      <div ref={rowRef} className="flex w-max gap-1">
+        {cells.map((cell) => (
           <button
             key={cell.day}
             type="button"
@@ -68,59 +106,92 @@ export function DayStrip({
             aria-current={cell.isSelected ? "date" : undefined}
             onClick={() => onSelect(cell.day)}
             className={
-              "relative flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-full py-2 " +
+              "flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-full py-2 " +
               (cell.isFrontier
                 ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-                : cell.isToday && !cell.isSelected
+                : cell.isToday
                   ? "bg-accent"
                   : "") +
-              (dim ? " opacity-60" : "")
+              (cell.isFuture && !cell.isSelected ? " opacity-60" : "")
             }
           >
-            {/* The filled ink selection pill. Travel between chips is legal
-                only because every chip is the same fixed size (w-11); if chip
-                sizes ever diverge it must become a cross-fade (spec § Motion,
-                ADR 0007). */}
-            {cell.isSelected && (
-              <motion.span
-                layoutId="day-selection"
-                transition={SPRING}
-                className="pointer-events-none absolute inset-0 rounded-full bg-foreground"
-              />
-            )}
-            <span
-              className={
-                "relative text-[10px] " +
-                (cell.isSelected
-                  ? "text-background opacity-70"
-                  : cell.isToday
-                    ? "text-accent-foreground"
-                    : "text-muted-foreground")
-              }
-            >
-              {cell.weekday}
-            </span>
-            <span
-              className={
-                "relative text-sm font-semibold tabular-nums" +
-                (cell.isSelected ? " text-background" : "")
-              }
-            >
-              {cell.dayNum}
-            </span>
-            <span
-              className={
-                "relative h-1 w-1 rounded-full " +
-                (logged
-                  ? cell.isSelected
-                    ? "bg-background/70"
-                    : "bg-[#b9ab92] dark:bg-[#5a4c3b]"
-                  : "bg-transparent")
-              }
-            />
+            <ChipFace cell={cell} logged={loggedDays.has(cell.day)} inverted={false} />
           </button>
-        )
-      })}
+        ))}
+      </div>
+
+      {/* Mask layer — the ink pill, clipping an inverted copy of the same row.
+          Only the chip under the pill is ever visible here. */}
+      {pill && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute left-0 overflow-hidden rounded-full bg-foreground"
+          style={{ top: pill.top, width: pill.width, height: pill.height, x: pillX }}
+        >
+          <motion.div
+            className="absolute top-0 left-0 flex w-max gap-1 px-4"
+            style={{ x: innerX }}
+          >
+            {cells.map((cell) => (
+              <div
+                key={cell.day}
+                className="flex w-11 shrink-0 flex-col items-center gap-0.5 py-2"
+              >
+                <ChipFace cell={cell} logged={loggedDays.has(cell.day)} inverted />
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
+      )}
     </div>
+  )
+}
+
+// The weekday / day-number / logged-dot stack, in one of two palettes. `false`
+// is the base ink face; `inverted` is the background-ink face shown through the
+// selection pill. Kept in one place so the two layers can never drift in
+// layout — only in color.
+function ChipFace({
+  cell,
+  logged,
+  inverted,
+}: {
+  cell: DayCell
+  logged: boolean
+  inverted: boolean
+}) {
+  return (
+    <>
+      <span
+        className={
+          "text-[10px] " +
+          (inverted
+            ? "text-background opacity-70"
+            : cell.isToday
+              ? "text-accent-foreground"
+              : "text-muted-foreground")
+        }
+      >
+        {cell.weekday}
+      </span>
+      <span
+        className={
+          "text-sm font-semibold tabular-nums" +
+          (inverted ? " text-background" : "")
+        }
+      >
+        {cell.dayNum}
+      </span>
+      <span
+        className={
+          "h-1 w-1 rounded-full " +
+          (logged
+            ? inverted
+              ? "bg-background/70"
+              : "bg-[#b9ab92] dark:bg-[#5a4c3b]"
+            : "bg-transparent")
+        }
+      />
+    </>
   )
 }
