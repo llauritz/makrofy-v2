@@ -50,8 +50,20 @@ A Product's per-unit calories and macros: its most-attested Reading's value, fre
 _Avoid_: price, factor
 
 **Reading**:
-One distinct per-unit value observed in a Product's Entry history, carrying its vote count — implied rates within ±5% of a fresher one merge into its Reading. Readings compete as Suggestions, most-attested first, freshest breaking ties: an outvoted Reading is still offered, never suppressed.
+One distinct per-unit value observed in a Product's Entry history, carrying its vote count — implied rates within ±5% of a fresher one merge into its Reading. Readings compete as Suggestions, most-attested first, freshest breaking ties: an outvoted Reading is still offered, never suppressed. Editing a Reading keeps its votes; deleting one silences its past votes (fresh Entries can re-attest the same value).
 _Avoid_: bucket, attestation
+
+**Pin**:
+An explicit override marking one Reading as the Product's Rate regardless of votes, until unpinned. Outvoted Readings stay visible beneath it.
+_Avoid_: lock
+
+**Alias**:
+A label absorbed into another Product by a merge — a live mapping: the old label keeps matching, and future Entries logged under it count toward the survivor. Unmerging removes the Alias.
+_Avoid_: synonym
+
+**Glossary**:
+The user's browsable, alphabetical index of every Product with its Rate and use count. All curation happens here — editing, deleting and pinning Readings, merging and deleting Products — and none of it ever changes logged Entries or past Days. Deleting a Product forgets its past; logging it again recreates it fresh.
+_Avoid_: food database, catalog, favorites
 
 **AI fill**:
 The Gemini-backed path that fills the add card's numbers from the typed label. It never rewrites the label; only Add commits. Committed AI-filled Entries carry the ✨ marker.

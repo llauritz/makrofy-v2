@@ -28,3 +28,6 @@ makrofy-v1/
 
 # Firebase hosting deploy cache
 .firebase/
+
+# Local agent worktrees (never commit — they are embedded checkouts)
+.claude/worktrees/
