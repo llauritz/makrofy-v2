@@ -142,7 +142,7 @@ export function MainScreen() {
             handlers un-cancelled — the fix for the dead V1 swipe (#33). The
             Day strip owns its own horizontal scroll, so it stays outside. */}
         <div {...swipe} className="touch-pan-y">
-          <AddCard onAdd={handleAdd} index={productIndex} disabled={!uid} />
+          <AddCard onAdd={handleAdd} index={productIndex} uid={uid} />
           <EntryList
             entries={newestFirst}
             editingId={editingId}

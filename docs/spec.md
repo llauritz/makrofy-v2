@@ -80,7 +80,7 @@ Normative: [#5](https://github.com/llauritz/makrofy-v2/issues/5); screenshots `d
 
 Normative: [#3](https://github.com/llauritz/makrofy-v2/issues/3) + `docs/research/gemini-firebase-ai-logic-macro-fill.md` (schema, worked examples, pricing).
 
-- **Model**: `gemini-3.1-flash-lite` via Firebase AI Logic with Google Search grounding (`gemini-3.5-flash` only if quality disappoints; never 2.5 — no single-call grounded structured output, pricier grounding).
+- **Model**: `gemini-3.5-flash` via Firebase AI Logic with Google Search grounding (owner escalated from `gemini-3.1-flash-lite` 2026-07-16; never 2.5 — no single-call grounded structured output, pricier grounding).
 - **Four tiers**, one flat `status`-enum response: *confident* → fill · *unsure* → fill + 2px-dashed flagged fields (tap to accept/fix) · *ambiguous* → exactly one question with answer chips (chip = second and **final** round trip) · *hopeless* → refusal + usable hint.
 - **The AI never rewrites the label**; interpretation shows in the info row; committed AI entries carry ✨ (`source: 'ai'`).
 - **Two-speed conditional grounding**: staples ungrounded ~0.5 s, silent; branded/variable foods grounded 1.8–3.8 s and **must show the Google Search Suggestions chip** at response time (Google's terms — compliance). The heuristic is prompt design.
