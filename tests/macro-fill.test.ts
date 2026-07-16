@@ -46,7 +46,9 @@ describe("parseMacroFillResponse", () => {
   })
 
   it("rejects confident with no food payload", () => {
-    expect(parseMacroFillResponse(JSON.stringify({ status: "confident" }))).toBeNull()
+    expect(
+      parseMacroFillResponse(JSON.stringify({ status: "confident" }))
+    ).toBeNull()
   })
 
   // The research note's worked example for the unsure tier ("medium banana").
@@ -146,19 +148,25 @@ describe("parseMacroFillResponse", () => {
     })
   })
 
-  it("accepts ambiguous with no chips at all (the question stands alone)", () => {
+  it("coerces ambiguous with no chips into a hopeless hint", () => {
+    // The chips ARE the answer path (#5) — a chipless question would be
+    // unanswerable in the zone, so it lands as a hint the user can act on
+    // by folding the detail into their own description.
     const text = JSON.stringify({ status: "ambiguous", question: "Which one?" })
     expect(parseMacroFillResponse(text)).toEqual({
-      status: "ambiguous",
-      question: "Which one?",
-      answerChips: [],
+      status: "hopeless",
+      hint: "Which one?",
     })
   })
 
   it("rejects ambiguous with no question", () => {
-    expect(parseMacroFillResponse(JSON.stringify({ status: "ambiguous" }))).toBeNull()
     expect(
-      parseMacroFillResponse(JSON.stringify({ status: "ambiguous", question: "  " })),
+      parseMacroFillResponse(JSON.stringify({ status: "ambiguous" }))
+    ).toBeNull()
+    expect(
+      parseMacroFillResponse(
+        JSON.stringify({ status: "ambiguous", question: "  " })
+      )
     ).toBeNull()
   })
 
@@ -170,7 +178,9 @@ describe("parseMacroFillResponse", () => {
   })
 
   it("rejects hopeless with no hint", () => {
-    expect(parseMacroFillResponse(JSON.stringify({ status: "hopeless" }))).toBeNull()
+    expect(
+      parseMacroFillResponse(JSON.stringify({ status: "hopeless" }))
+    ).toBeNull()
   })
 })
 
@@ -184,7 +194,7 @@ describe("capFinalRoundTrip", () => {
         status: "ambiguous",
         question: "Toasted or plain muesli?",
         answerChips: ["Toasted", "Plain"],
-      }),
+      })
     ).toEqual({ status: "hopeless", hint: "Toasted or plain muesli?" })
   })
 
@@ -202,7 +212,10 @@ describe("capFinalRoundTrip", () => {
       },
     }
     expect(capFinalRoundTrip(confident)).toBe(confident)
-    const hopeless = { status: "hopeless" as const, hint: "List the ingredients." }
+    const hopeless = {
+      status: "hopeless" as const,
+      hint: "List the ingredients.",
+    }
     expect(capFinalRoundTrip(hopeless)).toBe(hopeless)
   })
 })
@@ -218,7 +231,7 @@ describe("flagsFromUncertain", () => {
 
   it("maps each macro onto its own pill", () => {
     expect(flagsFromUncertain(["protein_g", "carbs_g", "fat_g"])).toEqual(
-      new Set(["p", "c", "f"]),
+      new Set(["p", "c", "f"])
     )
   })
 })
@@ -250,7 +263,12 @@ describe("fillValuesFrom", () => {
       carbs_g: 32,
       fat_g: 9.25,
     }
-    expect(fillValuesFrom(food)).toEqual({ kcal: "230", p: "5", f: "9.3", c: "32" })
+    expect(fillValuesFrom(food)).toEqual({
+      kcal: "230",
+      p: "5",
+      f: "9.3",
+      c: "32",
+    })
   })
 })
 
@@ -287,12 +305,12 @@ describe("followUpPrompt", () => {
     const prompt = followUpPrompt(
       "bowl of cereal",
       "Which cereal is it — and roughly how much?",
-      "Cornflakes, 40 g",
+      "Cornflakes, 40 g"
     )
     expect(prompt).toBe(
       'Food: "bowl of cereal"\n' +
         'Your clarifying question: "Which cereal is it — and roughly how much?"\n' +
-        'The answer: "Cornflakes, 40 g"',
+        'The answer: "Cornflakes, 40 g"'
     )
   })
 })

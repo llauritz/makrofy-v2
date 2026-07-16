@@ -30,7 +30,7 @@ export function parseOptional(raw: string): number | undefined {
 
 /** Map the macro inputs onto their Entry fields (p→protein, f→fat, c→carbs). */
 export function parseMacros(
-  inputs: MacroInputs,
+  inputs: MacroInputs
 ): Pick<EntryDraft, "protein" | "fat" | "carbs"> {
   const out: Pick<EntryDraft, "protein" | "fat" | "carbs"> = {}
   for (const m of MACROS) out[m.field] = parseOptional(inputs[m.key])

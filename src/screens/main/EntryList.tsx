@@ -109,12 +109,17 @@ function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="truncate text-[15px] font-medium">{entry.label}</span>
+            <span className="truncate text-[15px] font-medium">
+              {entry.label}
+            </span>
             {/* The ✨ provenance marker behind the name (spec § AI macro-fill):
                 attribution showed in the card at response time, so the Entry
                 carries only this quiet mark. */}
             {entry.source === "ai" && (
-              <Sparkles aria-label="AI-assisted" className="h-3 w-3 shrink-0 text-[#a5988a]" />
+              <Sparkles
+                aria-label="AI-assisted"
+                className="h-3 w-3 shrink-0 text-[#a5988a]"
+              />
             )}
           </div>
           <MacroChips nutrients={entry} />

@@ -55,11 +55,14 @@ async function createModel(): Promise<Model> {
   // attestation — the SDK reads this global during init.
   const debugToken = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN
   if (import.meta.env.DEV && debugToken) {
-    ;(self as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }).FIREBASE_APPCHECK_DEBUG_TOKEN =
-      debugToken
+    ;(
+      self as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }
+    ).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken
   }
   appCheck.initializeAppCheck(app, {
-    provider: new appCheck.ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
+    provider: new appCheck.ReCaptchaEnterpriseProvider(
+      RECAPTCHA_ENTERPRISE_SITE_KEY
+    ),
     isTokenAutoRefreshEnabled: true,
   })
 
@@ -102,7 +105,14 @@ function buildResponseSchema(Schema: typeof import("firebase/ai").Schema) {
         description:
           "Fill ONLY when status is 'unsure': names of low-confidence fields.",
         items: Schema.enumString({
-          enum: ["servingText", "grams", "calories", "protein_g", "carbs_g", "fat_g"],
+          enum: [
+            "servingText",
+            "grams",
+            "calories",
+            "protein_g",
+            "carbs_g",
+            "fat_g",
+          ],
         }),
       }),
       question: Schema.string({
@@ -140,6 +150,7 @@ export async function fillMacros(prompt: string): Promise<AiFillReply | null> {
   const result = parseMacroFillResponse(response.text())
   if (!result) return null
   const entryPoint =
-    response.candidates?.[0]?.groundingMetadata?.searchEntryPoint?.renderedContent
+    response.candidates?.[0]?.groundingMetadata?.searchEntryPoint
+      ?.renderedContent
   return { result, attribution: entryPoint || null }
 }

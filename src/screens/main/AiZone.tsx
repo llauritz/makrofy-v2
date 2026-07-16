@@ -34,7 +34,7 @@ export function AiZone({
   onDismiss: () => void
 }) {
   return (
-    <FadeSwap swapKey={state.kind}>
+    <FadeSwap swapKey={swapKeyOf(state)}>
       <div aria-live="polite">
         <ZoneContent state={state} onAnswer={onAnswer} onDismiss={onDismiss} />
         {state.kind !== "empty" && attribution && (
@@ -43,6 +43,22 @@ export function AiZone({
       </div>
     </FadeSwap>
   )
+}
+
+// Content-aware swap key: same-kind states with different words (an offline
+// note replaced by a quota note, a fresh interpretation) still fade-through
+// (spec § Motion) instead of the text snapping in place.
+function swapKeyOf(state: AiZoneState): string {
+  switch (state.kind) {
+    case "filled":
+      return `filled:${state.anyFlagged}:${state.interpretation}`
+    case "question":
+      return `question:${state.question}`
+    case "hint":
+      return `hint:${state.hint}`
+    default:
+      return state.kind
+  }
 }
 
 function ZoneContent({
@@ -63,7 +79,9 @@ function ZoneContent({
       return (
         <InfoRow>
           <span className="truncate">{state.interpretation}</span>
-          {state.anyFlagged && <span>Best guess — tap a dashed value to adjust.</span>}
+          {state.anyFlagged && (
+            <span>Best guess — tap a dashed value to adjust.</span>
+          )}
         </InfoRow>
       )
     case "question":
@@ -72,10 +90,10 @@ function ZoneContent({
         // and a margin would collapse out of it and clip the zone.
         <div className="pt-2">
           <div className="rounded-2xl bg-input px-4 py-3">
-          <div className="flex items-start justify-between gap-2">
-            <span className="text-sm">{state.question}</span>
-            <DismissButton label="Dismiss question" onDismiss={onDismiss} />
-          </div>
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-sm">{state.question}</span>
+              <DismissButton label="Dismiss question" onDismiss={onDismiss} />
+            </div>
             {state.chips.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {state.chips.map((chip) => (
@@ -142,6 +160,9 @@ function DismissButton({
 // restyling. It arrives from the AI Logic proxy, not from user content.
 function GoogleSearchSuggestions({ html }: { html: string }) {
   return (
-    <div className="overflow-x-auto pt-2" dangerouslySetInnerHTML={{ __html: html }} />
+    <div
+      className="overflow-x-auto pt-2"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   )
 }

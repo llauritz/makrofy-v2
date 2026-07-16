@@ -1,18 +1,15 @@
 // The AI macro-fill domain: the four-tier wire contract between the add card
 // and Gemini (spec § AI macro-fill, #21; schema + worked examples in
 // docs/research/gemini-firebase-ai-logic-macro-fill.md). Kept pure and
-// Firebase-free: the model's JSON is untrusted, and the flat wire schema
-// can't express which fields belong to which status — those tier rules are
-// enforced here, client-side. The Gemini call itself lives in src/lib/ai.ts.
+// Firebase-free (the entries import below is type-only, erased at compile):
+// the model's JSON is untrusted, and the flat wire schema can't express
+// which fields belong to which status — those tier rules are enforced here,
+// client-side. The Gemini call itself lives in src/lib/ai.ts.
+import type { FlaggableField } from "@/data/entries"
 
 /** The macro fields the model may mark as low-confidence (wire names). */
 export type AiUncertainField =
-  | "servingText"
-  | "grams"
-  | "calories"
-  | "protein_g"
-  | "carbs_g"
-  | "fat_g"
+  "servingText" | "grams" | "calories" | "protein_g" | "carbs_g" | "fat_g"
 
 /** The model's reading of the food — its interpretation, never the label. */
 export interface AiFood {
@@ -97,7 +94,12 @@ export function parseMacroFillResponse(text: string): MacroFillResult | null {
   if (data.status === "ambiguous") {
     const question = parseLine(data.question)
     if (!question) return null
-    return { status: "ambiguous", question, answerChips: parseChips(data.answerChips) }
+    const answerChips = parseChips(data.answerChips)
+    // A question with nothing to tap is unanswerable in the zone (the chips
+    // ARE the answer path — #5). Shown as a hint instead, the question is
+    // still actionable: the user folds the detail into their description.
+    if (answerChips.length === 0) return { status: "hopeless", hint: question }
+    return { status: "ambiguous", question, answerChips }
   }
   if (data.status === "hopeless") {
     const hint = parseLine(data.hint)
@@ -128,7 +130,7 @@ export function capFinalRoundTrip(result: MacroFillResult): MacroFillResult {
 export function followUpPrompt(
   description: string,
   question: string,
-  answer: string,
+  answer: string
 ): string {
   return `Food: "${description}"\nYour clarifying question: "${question}"\nThe answer: "${answer}"`
 }
@@ -159,14 +161,14 @@ export function flagsFromUncertain(fields: AiUncertainField[]): Set<FormFlag> {
  * (ADR 0003), in schema field order.
  */
 export function flaggedFieldsFrom(
-  flags: ReadonlySet<FormFlag>,
-): ("kcal" | "protein" | "fat" | "carbs")[] {
-  const order = [
+  flags: ReadonlySet<FormFlag>
+): FlaggableField[] {
+  const order: readonly (readonly [FormFlag, FlaggableField])[] = [
     ["kcal", "kcal"],
     ["p", "protein"],
     ["f", "fat"],
     ["c", "carbs"],
-  ] as const
+  ]
   return order.filter(([flag]) => flags.has(flag)).map(([, field]) => field)
 }
 
@@ -246,7 +248,12 @@ function parseFood(raw: unknown): AiFood | null {
   if (typeof data.servingText !== "string") return null
   const grams = isAmount(data.grams) ? data.grams : null
   const { calories, protein_g, carbs_g, fat_g } = data
-  if (!isAmount(calories) || !isAmount(protein_g) || !isAmount(carbs_g) || !isAmount(fat_g)) {
+  if (
+    !isAmount(calories) ||
+    !isAmount(protein_g) ||
+    !isAmount(carbs_g) ||
+    !isAmount(fat_g)
+  ) {
     return null
   }
   return {

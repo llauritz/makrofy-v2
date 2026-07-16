@@ -81,7 +81,9 @@ export function AddCard({
   const [suggestions, setSuggestions] = React.useState(EMPTY_SUGGESTIONS)
   const [aiPhase, setAiPhase] = React.useState<AiPhase>(AI_IDLE)
   const [flags, setFlags] = React.useState<ReadonlySet<FormFlag>>(NO_FLAGS)
-  const [interpretation, setInterpretation] = React.useState<string | null>(null)
+  const [interpretation, setInterpretation] = React.useState<string | null>(
+    null
+  )
   const [attribution, setAttribution] = React.useState<string | null>(null)
   const online = useOnline()
   const labelRef = React.useRef<HTMLInputElement>(null)
@@ -125,7 +127,7 @@ export function AddCard({
         ...parseMacros(macros),
         ...(flagged.length > 0 ? { flagged } : {}),
       },
-      source,
+      source
     )
     reset()
     labelRef.current?.focus()
@@ -137,7 +139,12 @@ export function AddCard({
     setLabel(value)
     setSource("manual")
     setSuggestions((prev) => advanceSuggestions(prev, value, index))
-    if (aiPhase.kind !== "idle" || interpretation || attribution || flags.size > 0) {
+    if (
+      aiPhase.kind !== "idle" ||
+      interpretation ||
+      attribution ||
+      flags.size > 0
+    ) {
       clearAi()
     }
   }
@@ -158,10 +165,20 @@ export function AddCard({
 
   /**
    * One AI round trip: the offline note, the quota gate, the call, then the
-   * tier choreography. `final` marks the answer to a clarifying question —
-   * the second and FINAL trip, where another question is capped into a hint.
+   * tier choreography. `description` is the user's food text (kept for a
+   * question's follow-up turn, even when `prompt` wraps it); `final` marks
+   * the answer to a clarifying question — the second and FINAL trip, where
+   * another question is capped into a hint.
    */
-  const runFill = async (prompt: string, description: string, final: boolean) => {
+  const runFill = async ({
+    prompt,
+    description,
+    final,
+  }: {
+    prompt: string
+    description: string
+    final: boolean
+  }) => {
     if (uid === null) return
     const runId = ++aiRun.current
     setSuggestions(EMPTY_SUGGESTIONS)
@@ -180,7 +197,10 @@ export function AddCard({
       const used = await readAiUsage(db, uid, day)
       if (runId !== aiRun.current) return
       if (used >= AI_DAILY_LIMIT) {
-        setAiPhase({ kind: "hint", hint: "Daily AI limit reached — more tomorrow." })
+        setAiPhase({
+          kind: "hint",
+          hint: "Daily AI limit reached — more tomorrow.",
+        })
         return
       }
       consumeAiUse(db, uid, day)
@@ -189,13 +209,23 @@ export function AddCard({
       applyReply(reply, description, final)
     } catch {
       if (runId !== aiRun.current) return
-      setAiPhase({ kind: "hint", hint: "Couldn't reach the AI — try again in a moment." })
+      setAiPhase({
+        kind: "hint",
+        hint: "Couldn't reach the AI — try again in a moment.",
+      })
     }
   }
 
-  const applyReply = (reply: AiFillReply | null, description: string, final: boolean) => {
+  const applyReply = (
+    reply: AiFillReply | null,
+    description: string,
+    final: boolean
+  ) => {
     if (reply === null) {
-      setAiPhase({ kind: "hint", hint: "Couldn't estimate that — try rewording it." })
+      setAiPhase({
+        kind: "hint",
+        hint: "Couldn't estimate that — try rewording it.",
+      })
       return
     }
     // Display duty first: whenever Google Search informed the answer, the
@@ -214,7 +244,7 @@ export function AddCard({
         setFlags(
           result.status === "unsure"
             ? flagsFromUncertain(result.uncertainFields)
-            : NO_FLAGS,
+            : NO_FLAGS
         )
         setAiPhase(AI_IDLE)
         break
@@ -228,7 +258,10 @@ export function AddCard({
         })
         break
       case "hopeless":
-        setAiPhase({ kind: "hint", hint: `Can't estimate this one. ${result.hint}` })
+        setAiPhase({
+          kind: "hint",
+          hint: `Can't estimate this one. ${result.hint}`,
+        })
         break
     }
   }
@@ -236,30 +269,31 @@ export function AddCard({
   const startAi = () => {
     const description = label.trim()
     if (disabled || thinking || description === "") return
-    void runFill(description, description, false)
+    void runFill({ prompt: description, description, final: false })
   }
 
   // A chip answer triggers the second and final round trip (#5, #21).
   const answerQuestion = (chip: string) => {
     if (aiPhase.kind !== "question") return
-    void runFill(
-      followUpPrompt(aiPhase.description, aiPhase.question, chip),
-      aiPhase.description,
-      true,
-    )
+    void runFill({
+      prompt: followUpPrompt(aiPhase.description, aiPhase.question, chip),
+      description: aiPhase.description,
+      final: true,
+    })
   }
 
   // Tapping a Flagged value selects it and clears the flag (#5): selected
   // text is one keystroke from fixed, and an untouched tap means "accepted".
-  const acceptFlag = (key: FormFlag) => (e: React.FocusEvent<HTMLInputElement>) => {
-    if (!flags.has(key)) return
-    e.target.select()
-    setFlags((prev) => {
-      const next = new Set(prev)
-      next.delete(key)
-      return next
-    })
-  }
+  const acceptFlag =
+    (key: FormFlag) => (e: React.FocusEvent<HTMLInputElement>) => {
+      if (!flags.has(key)) return
+      e.target.select()
+      setFlags((prev) => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+    }
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -304,7 +338,9 @@ export function AddCard({
                 (online ? "" : " opacity-40")
               }
             >
-              <Sparkles className={"h-4 w-4" + (thinking ? " animate-pulse" : "")} />
+              <Sparkles
+                className={"h-4 w-4" + (thinking ? " animate-pulse" : "")}
+              />
             </motion.button>
           </div>
         </div>

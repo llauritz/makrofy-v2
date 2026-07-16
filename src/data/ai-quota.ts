@@ -15,10 +15,12 @@ import {
 // generic UID-match security rules; days without uses have no doc.
 
 /**
- * Fills per identity per Day. Two round trips per fill worst case (an
- * ambiguous answer's chip is the second), so 40 uses ≈ 80 calls — far above
- * honest daily logging, far below what hurts the 5k/month free grounding
- * quota.
+ * Round trips per identity per Day — each is one billable call, and a fill
+ * that needs its one clarifying question costs two. Consumed before the call
+ * (a failed call still hit the service), and checked before each trip, so at
+ * the limit's edge a question can land whose answer is refused — acceptable
+ * for an advisory brake. 40 calls/day is far above honest logging, far below
+ * what hurts the 5k/month free grounding quota.
  */
 export const AI_DAILY_LIMIT = 40
 
@@ -26,7 +28,7 @@ export const AI_DAILY_LIMIT = 40
 export async function readAiUsage(
   db: Firestore,
   uid: string,
-  day: string,
+  day: string
 ): Promise<number> {
   const snap = await getDoc(usageDoc(db, uid, day))
   const count = snap.data()?.count
@@ -40,11 +42,13 @@ export async function readAiUsage(
  */
 export function consumeAiUse(db: Firestore, uid: string, day: string): void {
   const ref = usageDoc(db, uid, day)
-  setDoc(ref, { count: increment(1), updatedAt: serverTimestamp() }, { merge: true }).catch(
-    (err) => {
-      console.error("AI usage write failed", day, err)
-    },
-  )
+  setDoc(
+    ref,
+    { count: increment(1), updatedAt: serverTimestamp() },
+    { merge: true }
+  ).catch((err) => {
+    console.error("AI usage write failed", day, err)
+  })
 }
 
 function usageDoc(db: Firestore, uid: string, day: string) {
