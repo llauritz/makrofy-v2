@@ -201,6 +201,25 @@ export function interpretationOf(food: AiFood): string {
   return serving === "" ? food.label : `${food.label} — ${serving}`
 }
 
+/**
+ * Pin the Google Search Suggestions HTML to the app's resolved theme. The
+ * payload ships Google's light and dark variants behind prefers-color-scheme
+ * media queries, which track the OS — but Yaffle's theme is a user setting,
+ * so a forced theme opposite the OS would show the wrong variant. Rewriting
+ * the query conditions (`all` = always on, `not all` = never) selects between
+ * Google's own style sets without touching them.
+ */
+export function bindAttributionToTheme(
+  html: string,
+  resolved: "dark" | "light"
+): string {
+  return html.replace(
+    /@media\s*\(\s*prefers-color-scheme:\s*(light|dark)\s*\)/g,
+    (_match, scheme: string) =>
+      scheme === resolved ? "@media all" : "@media not all"
+  )
+}
+
 /** A required one-line string field: trimmed, empty means missing. */
 function parseLine(raw: unknown): string | null {
   if (typeof raw !== "string") return null

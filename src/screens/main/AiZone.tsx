@@ -2,6 +2,8 @@ import * as React from "react"
 import { X } from "lucide-react"
 import { motion } from "motion/react"
 
+import { useTheme } from "@/components/theme-provider"
+import { bindAttributionToTheme } from "@/lib/macro-fill"
 import { FadeSwap } from "./FadeSwap"
 
 // The AI's half of the add card's response zone (spec § Add flow: one zone
@@ -155,14 +157,27 @@ function DismissButton({
 }
 
 // The Google Search Suggestions payload (groundingMetadata.searchEntryPoint
-// .renderedContent) — Google's terms require displaying it as provided when a
-// response is grounded, so it lands verbatim: Google-authored HTML+CSS, no
-// restyling. It arrives from the AI Logic proxy, not from user content.
+// .renderedContent) — Google's terms require displaying it when a response is
+// grounded, in Google's own styling (colors, fonts, logo stay theirs). It
+// arrives from the AI Logic proxy, not from user content. Two departures from
+// verbatim: the scheme media queries are pinned to the app theme (Google's
+// CSS tracks the OS, but Yaffle's theme is a user setting — under "system"
+// the two agree and the HTML passes through live), and the container is
+// rounded to a pill to sit with the inputs around it. No overflow wrapper:
+// Google's .carousel scrolls its chips itself, and an outer scrollport would
+// clip the container's hairline box-shadow on whichever edges it touches.
+// The px/pb hairline padding exists for the same clip: the container's ring
+// is a 1px box-shadow OUTSIDE its box, and FadeSwap's overflow-hidden would
+// slice it off wherever the container sits flush against the zone's edges.
 function GoogleSearchSuggestions({ html }: { html: string }) {
+  const { theme } = useTheme()
+  const bound = theme === "system" ? html : bindAttributionToTheme(html, theme)
   return (
     <div
-      className="overflow-x-auto pt-2"
-      dangerouslySetInnerHTML={{ __html: html }}
+      // rounded-full needs the ! — Tailwind utilities sit in a cascade layer,
+      // and Google's unlayered inline <style> would win the radius otherwise.
+      className="px-px pt-2 pb-px [&_.container]:overflow-hidden [&_.container]:rounded-full!"
+      dangerouslySetInnerHTML={{ __html: bound }}
     />
   )
 }

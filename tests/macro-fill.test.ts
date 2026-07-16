@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  bindAttributionToTheme,
   capFinalRoundTrip,
   fillValuesFrom,
   flaggedFieldsFrom,
@@ -297,6 +298,43 @@ describe("interpretationOf", () => {
       fat_g: 33,
     }
     expect(interpretationOf(food)).toBe("Big Mac")
+  })
+})
+
+describe("bindAttributionToTheme", () => {
+  // The shape Google ships in searchEntryPoint.renderedContent: one <style>
+  // block carrying both variants behind prefers-color-scheme media queries.
+  const html =
+    "<style>" +
+    "@media (prefers-color-scheme: light) { .container { background-color: #fafafa; } }\n" +
+    "@media (prefers-color-scheme: dark) { .container { background-color: #1f1f1f; } }" +
+    '</style><div class="container"></div>'
+
+  it("pins the dark variant on and the light variant off for a dark app", () => {
+    const bound = bindAttributionToTheme(html, "dark")
+    expect(bound).toContain(
+      "@media all { .container { background-color: #1f1f1f; } }"
+    )
+    expect(bound).toContain(
+      "@media not all { .container { background-color: #fafafa; } }"
+    )
+    expect(bound).not.toContain("prefers-color-scheme")
+  })
+
+  it("pins the light variant on and the dark variant off for a light app", () => {
+    const bound = bindAttributionToTheme(html, "light")
+    expect(bound).toContain(
+      "@media all { .container { background-color: #fafafa; } }"
+    )
+    expect(bound).toContain(
+      "@media not all { .container { background-color: #1f1f1f; } }"
+    )
+  })
+
+  it("leaves everything but the scheme queries untouched", () => {
+    expect(bindAttributionToTheme(html, "dark")).toContain(
+      '<div class="container"></div>'
+    )
   })
 })
 
