@@ -16,7 +16,7 @@ _Avoid_: date (for the concept; fine as a field name)
 Logging an Entry onto any Day other than today, reached via the Day strip or calendar.
 
 **Day strip**:
-The main screen's sole day navigator: a horizontally-scrollable rail of Day chips running from 14 days ago through today, plus one dashed *frontier* Day beyond the selection. Anchored on today — a past selection flags its chip without moving the window; tapping the frontier selects it and reveals the next future Day. Selection is a single filled ink pill; unselected today stays accent-tinted; a dot marks Days holding Entries. Older Days are reached through the calendar.
+The main screen's sole day navigator: a horizontally-scrollable rail of Day chips running from 14 days ago through today, plus one dashed *frontier* Day beyond the selection. Anchored on today — a past selection flags its chip without moving the window; tapping the frontier selects it and reveals the next future Day. Selection is a single filled ink pill; unselected today carries an outline ring; a dot marks Days holding Entries. Older Days are reached through the calendar.
 _Avoid_: week strip, day bar, stepper
 
 **Coverage**:

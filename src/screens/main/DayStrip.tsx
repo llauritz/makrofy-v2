@@ -12,8 +12,8 @@ import { SPRING } from "./anim"
 
 // The sole day navigator (#33, ADR 0008): a free-scrolling rail of Day chips —
 // 14 days back through today plus one dashed, dimmed frontier Day. Today, when
-// not selected, keeps a soft accent tint so it stays findable; a dot marks Days
-// with Entries; tapping the frontier selects it and reveals the next future Day.
+// not selected, carries a soft outline ring so it stays findable; a dot marks
+// Days with Entries; tapping the frontier selects it and reveals the next Day.
 //
 // Selection is a single filled ink pill that *travels* between chips. Rather
 // than fade each chip's text between palettes — which flashes invisible while
@@ -70,7 +70,7 @@ export function DayStrip({
 
   // Keep the action in view: on open, jump (no animation) so today hugs the
   // right edge with the frontier beyond it and the past off-screen left;
-  // afterwards, ease the selected chip into view. For a future selection the
+  // afterwards, glide the selected chip into view. For a future selection the
   // target is the freshly revealed frontier instead — it sits beside the
   // selection, so the reveal and the selection both stay visible.
   React.useLayoutEffect(() => {
@@ -84,11 +84,25 @@ export function DayStrip({
     const target = selectedIsFuture
       ? (rowRef.current?.lastElementChild as HTMLElement | null)
       : rowRef.current?.querySelector<HTMLElement>('[aria-current="date"]')
-    target?.scrollIntoView({
-      behavior: shouldReduce ? "auto" : "smooth",
-      inline: "nearest",
-      block: "nearest",
+    if (!target) return
+    // Let a plain nearest-scroll tell us where to land, then glide there
+    // ourselves — the browser's native smooth scroll is too brisk, especially
+    // the long hop home from deep in the future. Measuring is invisible: it
+    // runs inside a layout effect and we restore the scroll before paint.
+    const from = scroller.scrollLeft
+    target.scrollIntoView({ block: "nearest", inline: "nearest" })
+    const to = scroller.scrollLeft
+    if (to === from) return
+    if (shouldReduce) return // movement snaps: leave it at `to`
+    scroller.scrollLeft = from
+    const controls = animate(from, to, {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1], // easeOutQuint — a gentle, soft-landing glide
+      onUpdate: (v) => {
+        scroller.scrollLeft = v
+      },
     })
+    return () => controls.stop()
   }, [selectedDay, selectedIsFuture, shouldReduce])
 
   return (
@@ -109,8 +123,8 @@ export function DayStrip({
               "flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-full py-2 " +
               (cell.isFrontier
                 ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-                : cell.isToday
-                  ? "bg-accent"
+                : cell.isToday && !cell.isSelected
+                  ? "ring-1 ring-inset ring-[#cbbfa4] dark:ring-[#4a3e2e]"
                   : "") +
               (cell.isFuture && !cell.isSelected ? " opacity-60" : "")
             }
