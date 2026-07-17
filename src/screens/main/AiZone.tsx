@@ -13,12 +13,21 @@ import { FadeSwap } from "./FadeSwap"
 // the one clarifying question with its answer chips, hints — swapped through
 // FadeSwap so the card makes space and content fades, never jumps (§ Motion).
 
-/** What the zone is showing. AddCard derives this from its AI state. */
+/** What the zone is showing. Surfaces derive this from their AI state. */
 export type AiZoneState =
   | { kind: "empty" }
   | { kind: "thinking" }
-  /** An applied fill: the AI's interpretation, with flag help while Flagged values remain. */
-  | { kind: "filled"; interpretation: string; anyFlagged: boolean }
+  /**
+   * An applied fill: the AI's interpretation, with flag help while Flagged
+   * values remain. `dismissible` on surfaces with no other way to retire the
+   * note (the 0-kcal row fill — the add card clears through the label).
+   */
+  | {
+      kind: "filled"
+      interpretation: string
+      anyFlagged: boolean
+      dismissible?: boolean
+    }
   /** The ambiguous tier: exactly one question; a chip answer is the final round trip. */
   | { kind: "question"; question: string; chips: string[] }
   /** Hopeless refusals, offline / quota / failed-call notes — one quiet line. */
@@ -84,6 +93,14 @@ function ZoneContent({
         <InfoRow>
           <span className="truncate">{state.interpretation}</span>
           {state.anyFlagged && <span>{t.aiZone.bestGuess}</span>}
+          {state.dismissible && (
+            <span className="ml-auto">
+              <DismissButton
+                label={t.aiZone.dismissNote}
+                onDismiss={onDismiss}
+              />
+            </span>
+          )}
         </InfoRow>
       )
     case "question":

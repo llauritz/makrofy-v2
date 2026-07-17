@@ -2,21 +2,9 @@ import * as React from "react"
 import { Plus, Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
-import { AI_DAILY_LIMIT, consumeAiUse, readAiUsage } from "@/data/ai-quota"
 import type { EntrySource } from "@/data/entries"
-import { fillMacros, type AiFillReply } from "@/lib/ai"
-import { localDay } from "@/lib/day"
-import { db } from "@/lib/firebase"
 import { useI18n } from "@/lib/i18n/useI18n"
-import {
-  capFinalRoundTrip,
-  fillValuesFrom,
-  flaggedFieldsFrom,
-  flagsFromUncertain,
-  followUpPrompt,
-  interpretationOf,
-  type FormFlag,
-} from "@/lib/macro-fill"
+import { fillValuesFrom, flaggedFieldsFrom } from "@/lib/macro-fill"
 import {
   advanceSuggestions,
   EMPTY_INDEX,
@@ -25,7 +13,7 @@ import {
   type SuggestionRow,
 } from "@/lib/suggestions"
 import { useOnline } from "@/lib/useOnline"
-import { AiZone, type AiZoneState } from "./AiZone"
+import { AiZone } from "./AiZone"
 import { SPRING } from "./anim"
 import {
   EMPTY_MACROS,
@@ -36,6 +24,13 @@ import {
 } from "./fields"
 import { MacroChips } from "./MacroChips"
 import { MACROS, macroTint } from "./macros"
+import {
+  aiZoneStateOf,
+  FLAGGED_OUTLINE,
+  NO_FLAGS,
+  useAiFill,
+  useFormFlags,
+} from "./useAiFill"
 
 // Label + kcal on top, tinted P/F/C gram pills + ink Add below, and — inside
 // the same card, below the pills — the response zone that hosts history
@@ -43,24 +38,10 @@ import { MACROS, macroTint } from "./macros"
 // Only Add commits: a Suggestion tap and an AI fill both write into the form
 // (source 'history' / 'ai') and never the day log. The AI fills numbers only,
 // never the label; unsure numbers carry a dashed Flagged outline until tapped.
-// #a5988a (not muted-foreground) for placeholders and the "g" unit in BOTH
-// modes matches the record screenshots (issue #4).
-
-// Where the AI interaction stands. A fill returns the phase to idle — its
-// results live on in the form fields and the flags/interpretation state.
-type AiPhase =
-  | { kind: "idle" }
-  | { kind: "thinking" }
-  | { kind: "question"; question: string; chips: string[]; description: string }
-  | { kind: "hint"; hint: string }
-
-const AI_IDLE: AiPhase = { kind: "idle" }
-const NO_FLAGS: ReadonlySet<FormFlag> = new Set()
-
-// Flagged values: the contract's clearly visible 2px dashed outline (#5 —
-// no "~" characters); tapping the field selects the value and clears it.
-const FLAGGED_OUTLINE =
-  "outline-2 outline-dashed outline-[#8f7c5e] -outline-offset-2 dark:outline-[#8a775c]"
+// The round-trip choreography itself lives in useAiFill, shared with the
+// editor and the 0-kcal row surfaces (#53); here a fill overwrites the whole
+// form and its flags. #a5988a (not muted-foreground) for placeholders and the
+// "g" unit in BOTH modes matches the record screenshots (issue #4).
 
 export function AddCard({
   onAdd,
@@ -81,32 +62,32 @@ export function AddCard({
   // fill. Typing in the label makes it a manual Entry again.
   const [source, setSource] = React.useState<EntrySource>("manual")
   const [suggestions, setSuggestions] = React.useState(EMPTY_SUGGESTIONS)
-  const [aiPhase, setAiPhase] = React.useState<AiPhase>(AI_IDLE)
-  const [flags, setFlags] = React.useState<ReadonlySet<FormFlag>>(NO_FLAGS)
-  const [interpretation, setInterpretation] = React.useState<string | null>(
-    null
-  )
-  const [attribution, setAttribution] = React.useState<string | null>(null)
+  const { flags, setFlags, acceptFlag } = useFormFlags()
+  const ai = useAiFill({
+    uid,
+    // An add-card fill overwrites the whole draft: every number, the 'ai'
+    // provenance, and the flag set.
+    apply: (food, newFlags) => {
+      const values = fillValuesFrom(food)
+      setKcal(values.kcal)
+      setMacros({ p: values.p, f: values.f, c: values.c })
+      setSource("ai")
+      setFlags(newFlags)
+    },
+  })
   const online = useOnline()
   const labelRef = React.useRef<HTMLInputElement>(null)
-  // Serial of the latest AI request: every AI-state reset bumps it, so a
-  // stale in-flight reply can never write into a form the user has moved on
-  // from — manual entry and typeahead never wait on the AI.
-  const aiRun = React.useRef(0)
 
   const disabled = uid === null
   // A blank-kcal Entry is intentional (0-kcal, dashed) — a label is the only
   // requirement to commit.
   const canAdd = label.trim() !== "" && !disabled
-  const thinking = aiPhase.kind === "thinking"
+  const thinking = ai.thinking
 
   // Drop every AI trace and invalidate any reply still in flight.
   const clearAi = () => {
-    aiRun.current++
-    setAiPhase(AI_IDLE)
+    ai.clear()
     setFlags(NO_FLAGS)
-    setInterpretation(null)
-    setAttribution(null)
   }
 
   const reset = () => {
@@ -142,9 +123,9 @@ export function AddCard({
     setSource("manual")
     setSuggestions((prev) => advanceSuggestions(prev, value, index))
     if (
-      aiPhase.kind !== "idle" ||
-      interpretation ||
-      attribution ||
+      ai.phase.kind !== "idle" ||
+      ai.interpretation ||
+      ai.attribution ||
       flags.size > 0
     ) {
       clearAi()
@@ -165,137 +146,22 @@ export function AddCard({
     labelRef.current?.focus()
   }
 
-  /**
-   * One AI round trip: the offline note, the quota gate, the call, then the
-   * tier choreography. `description` is the user's food text (kept for a
-   * question's follow-up turn, even when `prompt` wraps it); `final` marks
-   * the answer to a clarifying question — the second and FINAL trip, where
-   * another question is capped into a hint.
-   */
-  const runFill = async ({
-    prompt,
-    description,
-    final,
-  }: {
-    prompt: string
-    description: string
-    final: boolean
-  }) => {
-    if (uid === null) return
-    const runId = ++aiRun.current
-    setSuggestions(EMPTY_SUGGESTIONS)
-    setFlags(NO_FLAGS)
-    setInterpretation(null)
-    setAttribution(null)
-    if (!online) {
-      // The offline contract: the dimmed button stays tappable and answers
-      // with this quiet note in the zone (spec § AI macro-fill).
-      setAiPhase({ kind: "hint", hint: t.addCard.aiOffline })
-      return
-    }
-    setAiPhase({ kind: "thinking" })
-    try {
-      const day = localDay(new Date())
-      const used = await readAiUsage(db, uid, day)
-      if (runId !== aiRun.current) return
-      if (used >= AI_DAILY_LIMIT) {
-        setAiPhase({
-          kind: "hint",
-          hint: t.addCard.aiLimit,
-        })
-        return
-      }
-      consumeAiUse(db, uid, day)
-      const reply = await fillMacros(prompt)
-      if (runId !== aiRun.current) return
-      applyReply(reply, description, final)
-    } catch {
-      if (runId !== aiRun.current) return
-      setAiPhase({
-        kind: "hint",
-        hint: t.addCard.aiError,
-      })
-    }
-  }
-
-  const applyReply = (
-    reply: AiFillReply | null,
-    description: string,
-    final: boolean
-  ) => {
-    if (reply === null) {
-      setAiPhase({
-        kind: "hint",
-        hint: t.addCard.aiNoEstimate,
-      })
-      return
-    }
-    // Display duty first: whenever Google Search informed the answer, the
-    // Suggestions chip shows at response time, whatever the tier (compliance,
-    // spec § AI macro-fill).
-    setAttribution(reply.attribution)
-    const result = final ? capFinalRoundTrip(reply.result) : reply.result
-    switch (result.status) {
-      case "confident":
-      case "unsure": {
-        const values = fillValuesFrom(result.food)
-        setKcal(values.kcal)
-        setMacros({ p: values.p, f: values.f, c: values.c })
-        setSource("ai")
-        setInterpretation(interpretationOf(result.food))
-        setFlags(
-          result.status === "unsure"
-            ? flagsFromUncertain(result.uncertainFields)
-            : NO_FLAGS
-        )
-        setAiPhase(AI_IDLE)
-        break
-      }
-      case "ambiguous":
-        setAiPhase({
-          kind: "question",
-          question: result.question,
-          chips: result.answerChips,
-          description,
-        })
-        break
-      case "hopeless":
-        setAiPhase({
-          kind: "hint",
-          hint: t.addCard.aiHopeless(result.hint),
-        })
-        break
-    }
-  }
-
+  // Both round trips (the ✨ tap and a chip answer) leave a clean slate: the
+  // typeahead collapses and any prior fill's flags drop before the reply.
   const startAi = () => {
     const description = label.trim()
     if (disabled || thinking || description === "") return
-    void runFill({ prompt: description, description, final: false })
+    setSuggestions(EMPTY_SUGGESTIONS)
+    setFlags(NO_FLAGS)
+    ai.start(description)
   }
 
   // A chip answer triggers the second and final round trip (#5, #21).
   const answerQuestion = (chip: string) => {
-    if (aiPhase.kind !== "question") return
-    void runFill({
-      prompt: followUpPrompt(aiPhase.description, aiPhase.question, chip),
-      description: aiPhase.description,
-      final: true,
-    })
+    setSuggestions(EMPTY_SUGGESTIONS)
+    setFlags(NO_FLAGS)
+    ai.answer(chip)
   }
-
-  // Tapping a Flagged value selects it and clears the flag (#5): selected
-  // text is one keystroke from fixed, and an untouched tap means "accepted".
-  const acceptFlag =
-    (key: FormFlag) => (e: React.FocusEvent<HTMLInputElement>) => {
-      if (!flags.has(key)) return
-      e.target.select()
-      setFlags((prev) => {
-        const next = new Set(prev)
-        next.delete(key)
-        return next
-      })
-    }
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -304,14 +170,7 @@ export function AddCard({
     }
   }
 
-  const zoneState: AiZoneState =
-    aiPhase.kind === "idle"
-      ? interpretation
-        ? { kind: "filled", interpretation, anyFlagged: flags.size > 0 }
-        : { kind: "empty" }
-      : aiPhase.kind === "question"
-        ? { kind: "question", question: aiPhase.question, chips: aiPhase.chips }
-        : aiPhase
+  const zoneState = aiZoneStateOf(ai, flags.size > 0)
 
   return (
     <div className="mx-4 mt-1 rounded-3xl border bg-card p-3 shadow-[0_1px_2px_rgba(43,32,21,0.05)]">

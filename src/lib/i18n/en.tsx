@@ -95,6 +95,7 @@ export const en = {
     bestGuess: "Best guess — tap a dashed value to adjust.",
     dismissQuestion: "Dismiss question",
     dismissHint: "Dismiss hint",
+    dismissNote: "Dismiss note",
   },
 
   macros: {
