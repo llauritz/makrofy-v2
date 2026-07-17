@@ -70,11 +70,11 @@ The user's browsable, alphabetical index of every Product with its Rate and use 
 _Avoid_: food database, catalog, favorites
 
 **AI fill**:
-The Gemini-backed path that fills the add card's numbers from the typed label. It never rewrites the label; only Add commits. Committed AI-filled Entries carry the ✨ marker.
+The Gemini-backed path that fills a surface's numbers from the food's label. It never rewrites the label. In the add card it fills the whole draft and only Add commits; on a logged Entry (the inline editor, or the dashed 0-kcal row's own ✨) it fills only the missing fields — logged values anchor the prompt and are never overwritten (ADR 0010). Committed AI-filled Entries carry the ✨ marker.
 _Avoid_: autofill, macro lookup
 
 **Flagged value**:
-A number the AI fill was unsure about. Shown dashed in the add card until fixed or accepted; Entries remember which values were still flagged at commit.
+A number the AI fill was unsure about. Shown dashed until fixed or accepted; Entries remember which values were still flagged at commit, the editor re-shows them for review, and its Save persists the survivors.
 _Avoid_: unsure value, estimate
 
 **Source**:
