@@ -134,8 +134,7 @@ export function DayStrip({
       ref={scrollRef}
       className="relative [scrollbar-width:none] overflow-x-auto px-4 py-2 [&::-webkit-scrollbar]:hidden"
     >
-      {/* Base layer — every chip in ink, always in its unselected palette. */}
-      <div ref={rowRef} className="flex w-max gap-1">
+      <div className="flex w-max gap-1">
         {/* The calendar lives inside the rail, past the oldest chip: scroll
             to the end of the recent two weeks and it appears — "keep going
             further back". Off-strip it fills like the selection pill and
@@ -180,73 +179,81 @@ export function DayStrip({
             </span>
           </motion.span>
         </button>
-        {cells.map((cell) => (
-          <button
-            key={cell.day}
-            type="button"
-            aria-label={cell.day}
-            aria-current={cell.isSelected ? "date" : undefined}
-            onClick={() => onSelect(cell.day)}
-            className={
-              "flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-full py-2 " +
-              (cell.isFrontier
-                ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-                : cell.isToday && !cell.isSelected
-                  ? "ring-1 ring-[#cbbfa4] ring-inset dark:ring-[#4a3e2e]"
-                  : "") +
-              (cell.isFuture && !cell.isSelected ? " opacity-60" : "")
-            }
-          >
-            <ChipFace
-              cell={cell}
-              logged={loggedDays.has(cell.day)}
-              inverted={false}
-            />
-          </button>
-        ))}
-      </div>
 
-      {/* Mask layer — the ink pill, clipping an inverted copy of the same
-          row. Only the chip under the pill is ever visible here. The leading
-          spacer stands in for the calendar button (icon-width whenever a pill
-          exists — a pill means an on-strip selection) to keep the two layers
-          pixel-aligned. */}
-      {pill && (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute left-0 overflow-hidden rounded-full bg-foreground"
-          // The pill mounts fresh whenever it re-appears (first paint, or
-          // returning from off-strip): appearing content fades in place.
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={shouldReduce ? { duration: 0 } : FADE_IN}
-          style={{
-            top: pill.top,
-            width: pill.width,
-            height: pill.height,
-            x: pillX,
-          }}
-        >
-          <motion.div
-            className="absolute top-0 left-0 flex w-max gap-1 px-4"
-            style={{ x: innerX }}
-          >
-            <div className="w-9 shrink-0" />
-            {cells.map((cell) => (
-              <div
-                key={cell.day}
-                className="flex w-11 shrink-0 flex-col items-center gap-0.5 py-2"
+        {/* The chips get their own positioning context so the pill's
+            coordinates never include the calendar button: while the button
+            animates its width, this whole block reflows as one and carries
+            the pill with it — measured offsets stay valid mid-animation. */}
+        <div ref={rowRef} className="relative flex gap-1">
+          {/* Mask layer — the ink pill, clipping an inverted copy of the
+              chip row. Only the chip under the pill is ever visible here.
+              Declared before the chips but painted above them (positioned +
+              transformed), so the frontier chip stays the row's last child
+              for the auto-scroll. */}
+          {pill && (
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute left-0 overflow-hidden rounded-full bg-foreground"
+              // The pill mounts fresh whenever it re-appears (first paint, or
+              // returning from off-strip): appearing content fades in place.
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={shouldReduce ? { duration: 0 } : FADE_IN}
+              style={{
+                top: pill.top,
+                width: pill.width,
+                height: pill.height,
+                x: pillX,
+              }}
+            >
+              <motion.div
+                className="absolute top-0 left-0 flex w-max gap-1"
+                style={{ x: innerX }}
               >
-                <ChipFace
-                  cell={cell}
-                  logged={loggedDays.has(cell.day)}
-                  inverted
-                />
-              </div>
-            ))}
-          </motion.div>
-        </motion.div>
-      )}
+                {cells.map((cell) => (
+                  <div
+                    key={cell.day}
+                    className="flex w-11 shrink-0 flex-col items-center gap-0.5 py-2"
+                  >
+                    <ChipFace
+                      cell={cell}
+                      logged={loggedDays.has(cell.day)}
+                      inverted
+                    />
+                  </div>
+                ))}
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Base layer — every chip in ink, always in its unselected
+              palette. */}
+          {cells.map((cell) => (
+            <button
+              key={cell.day}
+              type="button"
+              aria-label={cell.day}
+              aria-current={cell.isSelected ? "date" : undefined}
+              onClick={() => onSelect(cell.day)}
+              className={
+                "flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-full py-2 " +
+                (cell.isFrontier
+                  ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
+                  : cell.isToday && !cell.isSelected
+                    ? "ring-1 ring-[#cbbfa4] ring-inset dark:ring-[#4a3e2e]"
+                    : "") +
+                (cell.isFuture && !cell.isSelected ? " opacity-60" : "")
+              }
+            >
+              <ChipFace
+                cell={cell}
+                logged={loggedDays.has(cell.day)}
+                inverted={false}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
