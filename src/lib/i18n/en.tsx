@@ -2,6 +2,14 @@ import type { ReactNode } from "react"
 
 import type { QuantityKind } from "@/lib/quantity"
 
+// The display-basis word per Quantity kind (per 100 g / 100 ml / piece), shared
+// by the three glossary rate helpers so a unit reads the same everywhere.
+const BASIS: Record<QuantityKind, string> = {
+  mass: "100 g",
+  volume: "100 ml",
+  count: "each",
+}
+
 // The English dictionary — the source of truth for every user-facing string
 // (spec § i18n, issue #25). `es.tsx` mirrors this shape exactly; the shared
 // `Dictionary` type is `typeof en`, so a missing or mistyped key in another
@@ -172,18 +180,15 @@ export const en = {
     curate: (label: string) => `Curate ${label}`,
     // The Rate's display basis word: mass per 100 g, volume per 100 ml, a count
     // per single piece.
-    basis: (kind: QuantityKind): string =>
-      kind === "mass" ? "100 g" : kind === "volume" ? "100 ml" : "each",
+    basis: (kind: QuantityKind): string => BASIS[kind],
     rateNone: "—",
     // The Glossary row's one-line kcal string: "78 kcal each" for a piece,
     // "380 kcal / 100 g" otherwise.
     rateLine: (kcal: string, kind: QuantityKind): string =>
-      kind === "count"
-        ? `${kcal} kcal each`
-        : `${kcal} kcal / ${kind === "mass" ? "100 g" : "100 ml"}`,
+      kind === "count" ? `${kcal} kcal each` : `${kcal} kcal / ${BASIS[kind]}`,
     // The unit caption beside a Reading's kcal.
     kcalBasis: (kind: QuantityKind): string =>
-      kind === "count" ? "kcal each" : `kcal / ${kind === "mass" ? "100 g" : "100 ml"}`,
+      kind === "count" ? "kcal each" : `kcal / ${BASIS[kind]}`,
   },
 
   productDetail: {

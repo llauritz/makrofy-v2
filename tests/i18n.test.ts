@@ -80,6 +80,16 @@ describe("Spanish dictionary parity", () => {
     expect(es.addCard.placeholder).toBe("¿Qué comiste?")
     expect(es.summary.remaining("1.234")).toBe("Restante: 1.234")
   })
+
+  it("keeps the language-toggle labels as endonyms in every dictionary", () => {
+    // The toggle shows each language in its own language (spec § i18n:
+    // "English / Español"), so these labels must be identical across
+    // dictionaries — not translated per active language.
+    expect(en.settings.languageEnglish).toBe("English")
+    expect(en.settings.languageSpanish).toBe("Español")
+    expect(es.settings.languageEnglish).toBe(en.settings.languageEnglish)
+    expect(es.settings.languageSpanish).toBe(en.settings.languageSpanish)
+  })
 })
 
 describe("glossary rate formatting", () => {

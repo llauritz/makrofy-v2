@@ -15,6 +15,7 @@ import { displayRate, productRate, type GlossaryRate } from "@/lib/glossary"
 import { useI18n } from "@/lib/i18n/useI18n"
 import type { QuantityKind } from "@/lib/quantity"
 import type { Alias, Product, Reading } from "@/lib/suggestions"
+import { productRateLine } from "./rate"
 import { MACROS, macroTint } from "@/screens/main/macros"
 import {
   EMPTY_MACROS,
@@ -76,10 +77,7 @@ export function ProductDetail({
             {product.label}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
-            {rate
-              ? t.glossary.rateLine(n(rate.kcal), product.kind)
-              : t.glossary.rateNone}{" "}
-            · ×{n(product.useCount)}
+            {productRateLine(product, t, n)} · ×{n(product.useCount)}
           </div>
           {/* The Rate's per-unit macros, per nutrition basis (spec § Detail). */}
           {rate && <BasisMacroChips value={rate} />}

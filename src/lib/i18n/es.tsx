@@ -1,6 +1,12 @@
-import type { QuantityKind } from "@/lib/quantity"
-
 import type { Dictionary } from "./en"
+
+// The display-basis word per Quantity kind ("cada uno" reads as "unidad" here),
+// shared by the three glossary rate helpers so a unit reads the same everywhere.
+const BASIS = {
+  mass: "100 g",
+  volume: "100 ml",
+  count: "unidad",
+} as const
 
 // The Spanish dictionary. Mirrors en.tsx exactly — the `: Dictionary` annotation
 // makes any missing key, extra key or wrong function signature a compile error,
@@ -157,17 +163,12 @@ export const es: Dictionary = {
     mergedInto: (label) => `Fusionado en ${label}`,
     fallbackFood: "alimento",
     curate: (label) => `Editar ${label}`,
-    basis: (kind: QuantityKind): string =>
-      kind === "mass" ? "100 g" : kind === "volume" ? "100 ml" : "unidad",
+    basis: (kind) => BASIS[kind],
     rateNone: "—",
-    rateLine: (kcal: string, kind: QuantityKind): string =>
-      kind === "count"
-        ? `${kcal} kcal por unidad`
-        : `${kcal} kcal / ${kind === "mass" ? "100 g" : "100 ml"}`,
-    kcalBasis: (kind: QuantityKind): string =>
-      kind === "count"
-        ? "kcal por unidad"
-        : `kcal / ${kind === "mass" ? "100 g" : "100 ml"}`,
+    rateLine: (kcal, kind) =>
+      kind === "count" ? `${kcal} kcal por unidad` : `${kcal} kcal / ${BASIS[kind]}`,
+    kcalBasis: (kind) =>
+      kind === "count" ? "kcal por unidad" : `kcal / ${BASIS[kind]}`,
   },
 
   productDetail: {

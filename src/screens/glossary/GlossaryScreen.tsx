@@ -13,11 +13,12 @@ import {
 } from "@/data/products"
 import { db } from "@/lib/firebase"
 import { useI18n } from "@/lib/i18n/useI18n"
-import { productRate, searchGlossary, toRate } from "@/lib/glossary"
+import { searchGlossary, toRate } from "@/lib/glossary"
 import type { Alias, Product, Reading } from "@/lib/suggestions"
 import { SPRING } from "@/screens/main/anim"
 import { FadeSwap } from "@/screens/main/FadeSwap"
 import { ProductDetail, type PerBasis } from "./ProductDetail"
+import { productRateLine } from "./rate"
 
 // How long the "merged — undo" bar stays up before the merge is left to stand.
 const MERGE_UNDO_MS = 6000
@@ -253,7 +254,6 @@ function GlossaryRow({
   onOpen: () => void
 }) {
   const { t, n } = useI18n()
-  const rate = productRate(product)
   return (
     <button
       type="button"
@@ -267,7 +267,7 @@ function GlossaryRow({
             {product.label}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
-            {rate ? t.glossary.rateLine(n(rate.kcal), product.kind) : t.glossary.rateNone}
+            {productRateLine(product, t, n)}
           </div>
         </div>
         <div className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
