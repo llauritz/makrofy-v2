@@ -198,4 +198,11 @@ export const es: Dictionary = {
     yesterday: "Ayer",
     tomorrow: "Mañana",
   },
+
+  calendar: {
+    openCalendar: "Abrir calendario",
+    openCalendarOn: (date) => `Abrir calendario, ${date}`,
+    previousMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
+  },
 }

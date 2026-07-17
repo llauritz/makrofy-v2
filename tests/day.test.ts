@@ -5,11 +5,16 @@
 import { describe, expect, it } from "vitest"
 import {
   isFuture,
+  isOffStrip,
   isToday,
   localDay,
+  monthGrid,
+  monthOf,
+  monthTitle,
   relativeDayLabel,
+  shortDayLabel,
   stepDay,
-  stepWithinStrip,
+  stepMonth,
   stripWindow,
 } from "@/lib/day"
 
@@ -142,6 +147,27 @@ describe("stripWindow", () => {
     expect(cells.filter((c) => c.isFrontier)).toHaveLength(1)
   })
 
+  it("collapses to the base window when the selection is far-future (off-strip)", () => {
+    // A calendar jump months ahead must not stretch the strip into a hundred
+    // chips — beyond the 14-day ceiling the selection lives on the calendar
+    // button (#34) and the strip shows its unselected home state.
+    const cells = stripWindow("2026-09-01", NOW)
+    expect(cells[0].day).toBe("2026-06-26")
+    expect(cells[cells.length - 1].day).toBe("2026-07-11") // today + one frontier
+    expect(cells.some((c) => c.isSelected)).toBe(false)
+    expect(cells.filter((c) => c.isFrontier)).toHaveLength(1)
+  })
+
+  it("still extends to a selection at the 14-day ceiling", () => {
+    const cells = stripWindow("2026-07-24", NOW) // today + 14: last on-strip Day
+    expect(cells.find((c) => c.isSelected)?.day).toBe("2026-07-24")
+    // One frontier still sits beyond it; stepping onto it goes off-strip.
+    expect(cells[cells.length - 1]).toMatchObject({
+      day: "2026-07-25",
+      isFrontier: true,
+    })
+  })
+
   it("stays a run of consecutive Days across a DST transition", () => {
     // A window straddling the UK spring-forward (2026-03-29): every step is
     // exactly one calendar day — no hour-drift duplicates or gaps.
@@ -153,23 +179,88 @@ describe("stripWindow", () => {
   })
 })
 
-describe("stepWithinStrip", () => {
-  // The log swipe's step (#33): bounded to the strip. It stops dead at the
-  // 14-day floor (the calendar ticket lifts it) and, forward, advancing onto
-  // the frontier is always allowed — that is the frontier advance.
-  it("steps one Day either way inside the strip", () => {
-    expect(stepWithinStrip("2026-07-05", -1, NOW)).toBe("2026-07-04")
-    expect(stepWithinStrip("2026-07-05", 1, NOW)).toBe("2026-07-06")
+describe("isOffStrip", () => {
+  // The strip's reach (#34): 14 Days back through 14 Days forward. Outside it
+  // no chip renders the selection — the calendar button carries the date.
+  it("is false everywhere the strip reaches", () => {
+    expect(isOffStrip("2026-06-26", NOW)).toBe(false) // the floor
+    expect(isOffStrip("2026-07-10", NOW)).toBe(false) // today
+    expect(isOffStrip("2026-07-24", NOW)).toBe(false) // the ceiling
   })
 
-  it("returns null at the 14-day floor instead of stepping past it", () => {
-    expect(stepWithinStrip("2026-06-26", -1, NOW)).toBeNull() // at the floor
-    expect(stepWithinStrip("2026-06-27", -1, NOW)).toBe("2026-06-26") // onto it
+  it("is true past either edge", () => {
+    expect(isOffStrip("2026-06-25", NOW)).toBe(true) // one below the floor
+    expect(isOffStrip("2026-07-25", NOW)).toBe(true) // one past the ceiling
+    expect(isOffStrip("2025-01-01", NOW)).toBe(true) // deep Backfill
+    expect(isOffStrip("2027-01-01", NOW)).toBe(true) // far future
+  })
+})
+
+describe("monthOf / stepMonth / monthTitle", () => {
+  // The calendar's month axis (#34): 'YYYY-MM' pages, unbounded either way.
+  it("names the month a Day belongs to", () => {
+    expect(monthOf("2026-07-10")).toBe("2026-07")
+    expect(monthOf("2025-12-31")).toBe("2025-12")
   })
 
-  it("always steps forward — swiping ahead advances the frontier", () => {
-    expect(stepWithinStrip("2026-07-10", 1, NOW)).toBe("2026-07-11")
-    expect(stepWithinStrip("2026-07-11", 1, NOW)).toBe("2026-07-12")
+  it("pages months across year boundaries", () => {
+    expect(stepMonth("2026-07", 1)).toBe("2026-08")
+    expect(stepMonth("2026-07", -1)).toBe("2026-06")
+    expect(stepMonth("2026-12", 1)).toBe("2027-01")
+    expect(stepMonth("2026-01", -1)).toBe("2025-12")
+    expect(stepMonth("2026-07", -19)).toBe("2024-12")
+  })
+
+  it("titles a month for the sheet header", () => {
+    expect(monthTitle("2026-07")).toBe("July 2026")
+    expect(monthTitle("2025-01")).toBe("January 2025")
+  })
+})
+
+describe("monthGrid", () => {
+  // The month-grid generator (#34): Sunday-first, always six rows (42 cells)
+  // so the sheet never changes height while paging; the padding cells are the
+  // neighbor months' real Days, flagged out-of-month.
+  it("lays July 2026 out with its neighbors as padding", () => {
+    const cells = monthGrid("2026-07")
+    expect(cells).toHaveLength(42)
+    // Jul 1 2026 is a Wednesday: Sun Jun 28 leads the grid.
+    expect(cells[0]).toMatchObject({ day: "2026-06-28", dayNum: 28, inMonth: false })
+    expect(cells[3]).toMatchObject({ day: "2026-07-01", dayNum: 1, inMonth: true })
+    expect(cells[33]).toMatchObject({ day: "2026-07-31", dayNum: 31, inMonth: true })
+    expect(cells[41]).toMatchObject({ day: "2026-08-08", inMonth: false })
+    expect(cells.filter((c) => c.inMonth)).toHaveLength(31)
+  })
+
+  it("pads a Sunday-start month to six rows too", () => {
+    // Feb 2026 starts on a Sunday and spans exactly four rows on its own.
+    const cells = monthGrid("2026-02")
+    expect(cells).toHaveLength(42)
+    expect(cells[0]).toMatchObject({ day: "2026-02-01", inMonth: true })
+    expect(cells[27]).toMatchObject({ day: "2026-02-28", inMonth: true })
+    expect(cells[41]).toMatchObject({ day: "2026-03-14", inMonth: false })
+  })
+
+  it("stays a run of consecutive Days across a DST transition", () => {
+    // March 2026 contains the UK spring-forward (2026-03-29).
+    const cells = monthGrid("2026-03")
+    for (let i = 1; i < cells.length; i++) {
+      expect(cells[i].day).toBe(stepDay(cells[i - 1].day, 1))
+    }
+  })
+})
+
+describe("shortDayLabel", () => {
+  // The calendar button's off-strip label (#34): compact, year only when it
+  // isn't this year.
+  it("labels a Day of the current year as day + month", () => {
+    expect(shortDayLabel("2026-07-01", NOW)).toBe("1 Jul")
+    expect(shortDayLabel("2026-12-25", NOW)).toBe("25 Dec")
+  })
+
+  it("appends the year when it differs from now's", () => {
+    expect(shortDayLabel("2025-12-31", NOW)).toBe("31 Dec 2025")
+    expect(shortDayLabel("2027-01-01", NOW)).toBe("1 Jan 2027")
   })
 })
 

@@ -10,6 +10,17 @@
 // helpers take a locale — the date arithmetic is pure calendar maths and never
 // touches formatting.
 
+/**
+ * The seven weekday initials, Sunday-first, in the given locale — the calendar
+ * grid header (#34). 2023-01-01 is a Sunday, so offsetting from it walks the
+ * week in order. The strip chips read their initials from `stripWindow` (which
+ * formats per Day), so the two surfaces share the same Intl source.
+ */
+export function narrowWeekdays(locale: string = "en"): string[] {
+  const fmt = new Intl.DateTimeFormat(locale, { weekday: "narrow" })
+  return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2023, 0, 1 + i)))
+}
+
 /** The device-local Day a moment belongs to, as 'YYYY-MM-DD'. */
 export function localDay(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0")
@@ -66,20 +77,41 @@ export interface DayCell {
 export const STRIP_PAST_DAYS = 14
 
 /**
+ * How far forward the strip follows a selection, mirroring the floor. Forward
+ * navigation itself is unbounded — beyond the ceiling the selection simply
+ * lives on the calendar button instead of a chip (#34).
+ */
+export const STRIP_FUTURE_DAYS = 14
+
+/**
  * The strip's floor: the oldest Day it reaches, `STRIP_PAST_DAYS` before today.
- * The one home for the bound so the window's leading edge and the swipe's guard
- * can never disagree (#34 lifts it for the calendar).
+ * The one home for the bound so the window's leading edge and the off-strip
+ * predicate can never disagree.
  */
 export function stripFloor(now: Date = new Date()): string {
   return stepDay(localDay(now), -STRIP_PAST_DAYS)
 }
 
+/** The strip's ceiling: the newest Day a chip can represent. */
+export function stripCeiling(now: Date = new Date()): string {
+  return stepDay(localDay(now), STRIP_FUTURE_DAYS)
+}
+
+/**
+ * Whether a Day lies beyond the strip's reach on either side (#34). Off-strip,
+ * no chip is filled and the calendar button carries the Day's date.
+ */
+export function isOffStrip(day: string, now: Date = new Date()): boolean {
+  return day < stripFloor(now) || day > stripCeiling(now)
+}
+
 /**
  * The Day strip's window (#33): a today-anchored run from `STRIP_PAST_DAYS`
  * ago through today, plus the future frontier. The window never moves with a
- * past selection; selecting a future Day extends it, keeping exactly one
- * dashed frontier beyond the selection — tapping the frontier *is* the
- * frontier advance.
+ * past selection; selecting an on-strip future Day extends it, keeping exactly
+ * one dashed frontier beyond the selection — tapping the frontier *is* the
+ * frontier advance. An off-strip selection (either side, #34) leaves the
+ * window in its unselected home state.
  */
 export function stripWindow(
   selected: string,
@@ -88,7 +120,8 @@ export function stripWindow(
 ): DayCell[] {
   const today = localDay(now)
   const first = stripFloor(now)
-  const frontier = stepDay(selected > today ? selected : today, 1)
+  const extendsStrip = selected > today && !isOffStrip(selected, now)
+  const frontier = stepDay(extendsStrip ? selected : today, 1)
   const length = dayDiff(frontier, first) + 1
   const narrowWeekday = new Intl.DateTimeFormat(locale, { weekday: "narrow" })
   return Array.from({ length }, (_, i) => {
@@ -106,18 +139,77 @@ export function stripWindow(
   })
 }
 
+// ── The calendar's month axis (#34) ─────────────────────────────────────────
+// A month is 'YYYY-MM'; like Days, months compare lexicographically and all
+// arithmetic runs on calendar components, so paging is unbounded and DST-exact.
+
+/** The 'YYYY-MM' month a Day belongs to. */
+export function monthOf(day: string): string {
+  return day.slice(0, 7)
+}
+
+/** The month `delta` months from `month`, across year boundaries. */
+export function stepMonth(month: string, delta: number): string {
+  const [y, m] = month.split("-").map(Number)
+  const d = new Date(y, m - 1 + delta, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+}
+
+/** The sheet header's name for a month, localized: "July 2026" / "julio de 2026". */
+export function monthTitle(month: string, locale: string = "en"): string {
+  const [y, m] = month.split("-").map(Number)
+  const d = new Date(y, m - 1, 1)
+  return new Intl.DateTimeFormat(locale, {
+    month: "long",
+    year: "numeric",
+  }).format(d)
+}
+
+export interface MonthCell {
+  /** 'YYYY-MM-DD' — padding cells are the neighbor months' real Days. */
+  day: string
+  /** Day of month, 1–31. */
+  dayNum: number
+  /** False on the leading/trailing padding rows. */
+  inMonth: boolean
+}
+
 /**
- * The swipe's step, bounded to the strip (#33): null below the 14-day floor
- * (deep Backfill is the calendar's job), always legal forward — stepping onto
- * the frontier is how a swipe advances it.
+ * The calendar's month grid (#34): Sunday-first, always six rows (42 cells) so
+ * the sheet never changes height while paging. Leading and trailing cells are
+ * the neighbor months' Days, flagged out-of-month; state (today, selection,
+ * logged dots) is the component's to overlay, keeping the grid pure.
  */
-export function stepWithinStrip(
+export function monthGrid(month: string): MonthCell[] {
+  const [y, m] = month.split("-").map(Number)
+  const lead = new Date(y, m - 1, 1).getDay() // cells before the 1st, Sunday-first
+  return Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(y, m - 1, 1 + i - lead)
+    return {
+      day: localDay(d),
+      dayNum: d.getDate(),
+      inMonth: d.getMonth() === m - 1,
+    }
+  })
+}
+
+/**
+ * The calendar button's compact name for an off-strip Day: "1 Jul", with the
+ * year appended only when it isn't the current one ("31 Dec 2025").
+ */
+export function shortDayLabel(
   day: string,
-  delta: -1 | 1,
   now: Date = new Date(),
-): string | null {
-  const next = stepDay(day, delta)
-  return next < stripFloor(now) ? null : next
+  locale: string = "en",
+): string {
+  const d = parseDay(day)
+  // Day-before-month order, kept explicit so it reads the same across locales
+  // (matches relativeDayLabel; a plain Intl date string would reorder per region).
+  const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(d)
+  const base = `${d.getDate()} ${month}`
+  return d.getFullYear() === now.getFullYear()
+    ? base
+    : `${base} ${d.getFullYear()}`
 }
 
 /** The near-day words relativeDayLabel needs, from the active dictionary (#25). */

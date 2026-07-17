@@ -218,6 +218,13 @@ export const en = {
     yesterday: "Yesterday",
     tomorrow: "Tomorrow",
   },
+
+  calendar: {
+    openCalendar: "Open calendar",
+    openCalendarOn: (date: string) => `Open calendar, ${date}`,
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+  },
 }
 
 export type Dictionary = typeof en

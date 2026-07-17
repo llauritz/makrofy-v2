@@ -8,7 +8,9 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["tests/**/*.test.ts"],
+    include: ["tests/**/*.test.{ts,tsx}"],
+    // Node by default (the emulator suites); component behavior tests opt in
+    // to jsdom per-file via an `@vitest-environment jsdom` docblock.
     environment: "node",
     // All files share one emulator project and wipe it between tests —
     // parallel files would clear each other's data mid-flight.
