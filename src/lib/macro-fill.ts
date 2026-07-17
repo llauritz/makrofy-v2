@@ -278,13 +278,14 @@ export function fillNumbersFrom(food: AiFood): {
 /**
  * The patch a row-level fill writes onto a logged Entry (#53): the model's
  * numbers for the fields the Entry was missing — a logged value is never
- * overwritten — and, of the model's doubts, only those that landed on a field
- * actually written (doubt about a value the user logged has nowhere to sit).
+ * overwritten — and, of the model's doubts (as form flags), only those that
+ * landed on a field actually written (doubt about a value the user logged
+ * has nowhere to sit).
  */
 export function entryFillFrom(
   known: KnownNutrients,
   food: AiFood,
-  uncertainFields: AiUncertainField[]
+  doubts: ReadonlySet<FormFlag>
 ): EntryAiFill {
   const fillable = fillableFrom(known)
   const numbers = fillNumbersFrom(food)
@@ -293,9 +294,7 @@ export function entryFillFrom(
   if (fillable.has("p")) fill.protein = numbers.protein
   if (fillable.has("f")) fill.fat = numbers.fat
   if (fillable.has("c")) fill.carbs = numbers.carbs
-  const standing = new Set(
-    [...flagsFromUncertain(uncertainFields)].filter((f) => fillable.has(f))
-  )
+  const standing = new Set([...doubts].filter((f) => fillable.has(f)))
   const flagged = flaggedFieldsFrom(standing)
   if (flagged.length > 0) fill.flagged = flagged
   return fill

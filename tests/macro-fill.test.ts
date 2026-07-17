@@ -444,7 +444,7 @@ describe("entryFillFrom", () => {
   }
 
   it("writes only the missing fields, never a logged value", () => {
-    expect(entryFillFrom({ protein: 12 }, banana, [])).toEqual({
+    expect(entryFillFrom({ protein: 12 }, banana, new Set())).toEqual({
       kcal: 105,
       fat: 0.4,
       carbs: 27,
@@ -455,7 +455,7 @@ describe("entryFillFrom", () => {
     // protein is logged, so the model's protein doubt has nowhere to land;
     // calorie doubt lands on the kcal it wrote.
     expect(
-      entryFillFrom({ protein: 12 }, banana, ["calories", "protein_g"])
+      entryFillFrom({ protein: 12 }, banana, new Set(["kcal", "p"]))
     ).toEqual({
       kcal: 105,
       fat: 0.4,
@@ -469,7 +469,7 @@ describe("entryFillFrom", () => {
       entryFillFrom(
         { kcal: 100, protein: 1, fat: 0.5, carbs: 25 },
         banana,
-        ["calories"]
+        new Set(["kcal"])
       )
     ).toEqual({})
   })

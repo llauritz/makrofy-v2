@@ -1,12 +1,16 @@
 import { Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
-import type { Entry, EntryEdit } from "@/data/entries"
+import type { Entry, EntryAiFill, EntryEdit } from "@/data/entries"
 import { useI18n } from "@/lib/i18n/useI18n"
+import { entryFillFrom, knownFromEntry, promptFrom } from "@/lib/macro-fill"
+import { useOnline } from "@/lib/useOnline"
+import { AiZone } from "./AiZone"
 import { SPRING } from "./anim"
 import { EntryEditor } from "./EntryEditor"
 import { FadeSwap } from "./FadeSwap"
 import { MacroChips } from "./MacroChips"
+import { aiZoneStateOf, useAiFill } from "./useAiFill"
 
 // The day's Entries, newest first (the parent reverses log order) with the
 // deferred-deletes already hidden. Spec conventions: no times; macro chips
@@ -19,17 +23,23 @@ import { MacroChips } from "./MacroChips"
 export function EntryList({
   entries,
   editingId,
+  uid = null,
   onStartEdit,
   onSaveEdit,
   onCancelEdit,
   onDelete,
+  onAiFill,
 }: {
   entries: Entry[]
   editingId: string | null
+  /** The identity behind the ✨ surfaces (Guests count); null disables them. */
+  uid?: string | null
   onStartEdit: (id: string) => void
   onSaveEdit: (id: string, edit: EntryEdit) => void
   onCancelEdit: () => void
   onDelete: (entry: Entry) => void
+  /** A row-level AI fill landing on a logged Entry (#53). */
+  onAiFill: (id: string, fill: EntryAiFill) => void
 }) {
   const { t } = useI18n()
   return (
@@ -79,6 +89,7 @@ export function EntryList({
                     {editing ? (
                       <EntryEditor
                         entry={entry}
+                        uid={uid}
                         onSave={(edit) => onSaveEdit(entry.id, edit)}
                         onCancel={onCancelEdit}
                         onDelete={() => onDelete(entry)}
@@ -86,7 +97,9 @@ export function EntryList({
                     ) : (
                       <EntryRow
                         entry={entry}
+                        uid={uid}
                         onEdit={() => onStartEdit(entry.id)}
+                        onAiFill={(fill) => onAiFill(entry.id, fill)}
                       />
                     )}
                   </FadeSwap>
@@ -101,18 +114,54 @@ export function EntryList({
 }
 
 // Chrome-less (border and background live on the FadeSwap box around it).
-function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
+// A tap anywhere on the row opens the editor; a dashed 0-kcal row also
+// carries the ✨ left of its muted number (#53), whose fill answers inside
+// this same card through the response zone below — the add card's grammar.
+// A confident answer commits the Entry's missing fields directly (the Entry
+// is already logged; the ✨ tap is the intent — ADR 0010); its note and any
+// Search attribution stay up, dismissible, after the fill.
+function EntryRow({
+  entry,
+  uid,
+  onEdit,
+  onAiFill,
+}: {
+  entry: Entry
+  uid: string | null
+  onEdit: () => void
+  onAiFill: (fill: EntryAiFill) => void
+}) {
   const { t, n } = useI18n()
+  const online = useOnline()
+  const ai = useAiFill({
+    uid,
+    // The fill lands on the Entry itself: only the missing fields, with the
+    // model's doubts persisting as flags on what it wrote (entryFillFrom).
+    apply: (food, doubts) =>
+      onAiFill(entryFillFrom(knownFromEntry(entry), food, doubts)),
+  })
   const noKcal = entry.kcal === 0
+
+  const startAi = () => {
+    if (ai.thinking) return
+    ai.start(promptFrom(entry.label, knownFromEntry(entry)))
+  }
+
   return (
-    <button
-      type="button"
+    // The whole row is one edit target (as the old row-button was), with the
+    // ✨ and the zone's own controls opting out of the bubble — real nested
+    // <button>s would be invalid HTML, so only the label block is one, and
+    // its Enter-key click bubbles up here too.
+    <div
       onClick={onEdit}
-      aria-label={t.entryList.edit(entry.label)}
-      className="w-full rounded-2xl px-4 py-3 text-left"
+      className="w-full cursor-pointer rounded-2xl px-4 py-3"
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
+        <button
+          type="button"
+          aria-label={t.entryList.edit(entry.label)}
+          className="min-w-0 flex-1 text-left"
+        >
           <div className="flex items-center gap-1.5">
             <span className="truncate text-[15px] font-medium">
               {entry.label}
@@ -128,11 +177,34 @@ function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
             )}
           </div>
           <MacroChips nutrients={entry} />
-        </div>
+        </button>
+        {noKcal && (
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              startAi()
+            }}
+            disabled={uid === null || ai.thinking}
+            whileTap={{ scale: 0.9 }}
+            aria-label={t.addCard.fillWithAi}
+            className={
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-opacity disabled:opacity-40" +
+              // Offline the button dims in place but stays tappable — the
+              // tap answers with the quiet connection note in the zone.
+              (online ? "" : " opacity-40")
+            }
+          >
+            <Sparkles
+              className={"h-4 w-4" + (ai.thinking ? " animate-pulse" : "")}
+            />
+          </motion.button>
+        )}
         <div
           className={
             "shrink-0 text-[15px] font-semibold tabular-nums " +
-            (noKcal ? "text-[#a5988a]" : "")
+            (noKcal ? "text-[#a5988a]" : "") +
+            (ai.thinking ? " animate-pulse" : "")
           }
         >
           {n(entry.kcal)}
@@ -141,6 +213,15 @@ function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
           </span>
         </div>
       </div>
-    </button>
+      {/* The zone's chips and dismiss are their own targets, not edit taps. */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <AiZone
+          state={aiZoneStateOf(ai, false, { dismissibleFill: true })}
+          attribution={ai.attribution}
+          onAnswer={ai.answer}
+          onDismiss={ai.clear}
+        />
+      </div>
+    </div>
   )
 }
