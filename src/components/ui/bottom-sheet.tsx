@@ -3,6 +3,7 @@ import { Dialog } from "@base-ui/react/dialog"
 import { X } from "lucide-react"
 import * as React from "react"
 
+import { useI18n } from "@/lib/i18n/useI18n"
 import { cn } from "@/lib/utils"
 
 // A bottom sheet on Base UI's Dialog: a dimmed backdrop and a rounded card that
@@ -36,9 +37,10 @@ export function BottomSheetContent({
 }
 
 export function BottomSheetClose() {
+  const { t } = useI18n()
   return (
     <Dialog.Close
-      aria-label="Close"
+      aria-label={t.common.close}
       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
     >
       <X className="h-[18px] w-[18px]" />

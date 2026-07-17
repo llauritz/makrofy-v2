@@ -3,6 +3,7 @@ import { motion, MotionConfig } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
 import { useGoalStatus, useIdentity } from "@/data/hooks"
+import { useI18n } from "@/lib/i18n/useI18n"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
 import { MainScreen } from "@/screens/main/MainScreen"
@@ -85,10 +86,11 @@ export function App() {
 // hand-off is continuous — the main screen takes over without a flash of
 // unstyled or wrong-theme content.
 function Splash() {
+  const { t } = useI18n()
   return (
     <div className="flex min-h-svh items-center justify-center bg-background">
       <div className="font-wordmark text-3xl font-semibold text-muted-foreground">
-        Yaffle
+        {t.app.name}
       </div>
     </div>
   )

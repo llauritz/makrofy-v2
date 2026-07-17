@@ -2,6 +2,7 @@ import * as React from "react"
 import { motion } from "motion/react"
 
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
+import { useI18n } from "@/lib/i18n/useI18n"
 import { parseGoalKcal } from "@/lib/goal-input"
 
 // PARKED — not currently mounted. This first-run screen shipped in #17 but is
@@ -19,6 +20,7 @@ export function OnboardingScreen({
 }: {
   onSubmit: (kcal: number) => void
 }) {
+  const { t } = useI18n()
   const [value, setValue] = React.useState(String(DEFAULT_GOAL_KCAL))
   const submit = () => onSubmit(parseGoalKcal(value) ?? DEFAULT_GOAL_KCAL)
 
@@ -30,11 +32,10 @@ export function OnboardingScreen({
         transition={{ type: "spring", stiffness: 200, damping: 26 }}
       >
         <div className="font-wordmark text-4xl leading-none font-semibold">
-          Yaffle
+          {t.app.name}
         </div>
         <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-          Set a daily calorie goal to get started. You can change it any time in
-          Settings.
+          {t.onboarding.intro}
         </p>
 
         <div className="mt-9">
@@ -42,7 +43,7 @@ export function OnboardingScreen({
             htmlFor="onboarding-goal"
             className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
           >
-            Daily goal
+            {t.onboarding.dailyGoal}
           </label>
           <div className="mt-2 flex items-baseline gap-2 border-b-2 border-border pb-2 focus-within:border-foreground">
             <input
@@ -58,11 +59,11 @@ export function OnboardingScreen({
               onFocus={(e) => e.target.select()}
               inputMode="numeric"
               autoComplete="off"
-              aria-label="Daily calorie goal"
+              aria-label={t.onboarding.dailyGoalAria}
               className="min-w-0 flex-1 bg-transparent text-4xl font-bold tabular-nums outline-none"
             />
             <span className="text-lg font-medium text-muted-foreground">
-              kcal
+              {t.units.kcal}
             </span>
           </div>
         </div>
@@ -73,7 +74,7 @@ export function OnboardingScreen({
           whileTap={{ scale: 0.98 }}
           className="mt-10 w-full rounded-full bg-primary py-3.5 text-[15px] font-semibold text-primary-foreground"
         >
-          Get started
+          {t.onboarding.getStarted}
         </motion.button>
       </motion.div>
     </div>

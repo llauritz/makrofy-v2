@@ -13,6 +13,10 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
+    // The typed dictionaries (src/lib/i18n/*.tsx) carry a few React-node
+    // entries for rich phrases, so the modules that import them — the i18n
+    // tests included — must parse JSX (#25).
+    "jsx": "react-jsx",
 
     /* Linting */
     "strict": true,

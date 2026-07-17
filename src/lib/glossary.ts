@@ -13,24 +13,24 @@ import {
 } from "./suggestions"
 import type { QuantityKind } from "./quantity"
 
-// The nutrition-label basis each Quantity kind reads against: mass per 100 g,
-// volume per 100 ml, a count per single piece ("each").
-const BASIS: Record<QuantityKind, { factor: number; label: string }> = {
-  mass: { factor: 100, label: "100 g" },
-  volume: { factor: 100, label: "100 ml" },
-  count: { factor: 1, label: "each" },
+// The scale factor each Quantity kind reads against: per 100 g (mass), per 100
+// ml (volume), per single piece (count). The basis *words* ("100 g" / "each")
+// are a display concern and live in the dictionary (glossary.basis, #25); this
+// module only does the maths.
+const BASIS_FACTOR: Record<QuantityKind, number> = {
+  mass: 100,
+  volume: 100,
+  count: 1,
 }
 
 /**
  * A Product's Rate scaled to its display basis (per 100 g / 100 ml / piece):
- * kcal and any logged macros for one basis portion, plus the basis label. The
- * numbers round the way Suggestions do — kcal to the integer, macros to one
- * decimal.
+ * kcal and any logged macros for one basis portion. The numbers round the way
+ * Suggestions do — kcal to the integer, macros to one decimal. The basis label
+ * is localized at the render layer, not carried here.
  */
 export interface GlossaryRate {
   kcal: number
-  /** "100 g" | "100 ml" | "each". */
-  basis: string
   protein?: number
   fat?: number
   carbs?: number
@@ -43,12 +43,11 @@ export interface GlossaryRate {
  * detail's Rate, and each Reading row all read through here.
  */
 export function displayRate(kind: QuantityKind, rate: Rate): GlossaryRate {
-  const { factor, label } = BASIS[kind]
+  const factor = BASIS_FACTOR[kind]
   const macro = (n: number | undefined) =>
     n === undefined ? undefined : Math.round(n * factor * 10) / 10
   const display: GlossaryRate = {
     kcal: Math.round(rate.kcal * factor),
-    basis: label,
   }
   if (rate.protein !== undefined) display.protein = macro(rate.protein)
   if (rate.fat !== undefined) display.fat = macro(rate.fat)
@@ -66,11 +65,6 @@ export function productRate(product: Product): GlossaryRate | null {
   return rate ? displayRate(product.kind, rate) : null
 }
 
-/** The display basis label for a kind — "100 g" | "100 ml" | "each". */
-export function basisLabel(kind: QuantityKind): string {
-  return BASIS[kind].label
-}
-
 /**
  * Convert numbers entered against the display basis (per 100 g / 100 ml /
  * piece) back into the per-unit Rate the overlay stores — the inverse of
@@ -81,7 +75,7 @@ export function toRate(
   kind: QuantityKind,
   perBasis: { kcal: number; protein?: number; fat?: number; carbs?: number }
 ): Rate {
-  const { factor } = BASIS[kind]
+  const factor = BASIS_FACTOR[kind]
   const down = (n: number | undefined) =>
     n === undefined ? undefined : n / factor
   const rate: Rate = { kcal: perBasis.kcal / factor }
@@ -89,19 +83,6 @@ export function toRate(
   if (perBasis.fat !== undefined) rate.fat = down(perBasis.fat)
   if (perBasis.carbs !== undefined) rate.carbs = down(perBasis.carbs)
   return rate
-}
-
-/**
- * The Rate as the Glossary row's one-line kcal string: "78 kcal each" for a
- * piece, "380 kcal / 100 g" for mass/volume, an em dash for a rate-less
- * Product.
- */
-export function formatRate(product: Product): string {
-  const rate = productRate(product)
-  if (!rate) return "—"
-  return rate.basis === "each"
-    ? `${rate.kcal} kcal each`
-    : `${rate.kcal} kcal / ${rate.basis}`
 }
 
 // Locale-agnostic alphabetical order, case-insensitive ("apple" before

@@ -3,6 +3,7 @@ import { X } from "lucide-react"
 import { motion } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
+import { useI18n } from "@/lib/i18n/useI18n"
 import { bindAttributionToTheme } from "@/lib/macro-fill"
 import { FadeSwap } from "./FadeSwap"
 
@@ -72,18 +73,17 @@ function ZoneContent({
   onAnswer: (chip: string) => void
   onDismiss: () => void
 }) {
+  const { t } = useI18n()
   switch (state.kind) {
     case "empty":
       return null
     case "thinking":
-      return <InfoRow>Estimating…</InfoRow>
+      return <InfoRow>{t.aiZone.estimating}</InfoRow>
     case "filled":
       return (
         <InfoRow>
           <span className="truncate">{state.interpretation}</span>
-          {state.anyFlagged && (
-            <span>Best guess — tap a dashed value to adjust.</span>
-          )}
+          {state.anyFlagged && <span>{t.aiZone.bestGuess}</span>}
         </InfoRow>
       )
     case "question":
@@ -94,7 +94,10 @@ function ZoneContent({
           <div className="rounded-2xl bg-input px-4 py-3">
             <div className="flex items-start justify-between gap-2">
               <span className="text-sm">{state.question}</span>
-              <DismissButton label="Dismiss question" onDismiss={onDismiss} />
+              <DismissButton
+                label={t.aiZone.dismissQuestion}
+                onDismiss={onDismiss}
+              />
             </div>
             {state.chips.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -119,7 +122,7 @@ function ZoneContent({
         <div className="pt-2">
           <div className="flex items-start justify-between gap-2 rounded-2xl bg-input px-4 py-3">
             <span className="text-sm text-muted-foreground">{state.hint}</span>
-            <DismissButton label="Dismiss hint" onDismiss={onDismiss} />
+            <DismissButton label={t.aiZone.dismissHint} onDismiss={onDismiss} />
           </div>
         </div>
       )

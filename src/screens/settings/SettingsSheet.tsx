@@ -13,6 +13,7 @@ import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useGoal, useIdentity } from "@/data/hooks"
 import { db } from "@/lib/firebase"
 import { parseGoalKcal } from "@/lib/goal-input"
+import { useI18n } from "@/lib/i18n/useI18n"
 import type { Language } from "@/lib/language"
 import { cn } from "@/lib/utils"
 import { InstallAppEntry } from "@/pwa/InstallApp"
@@ -34,12 +35,13 @@ export function SettingsSheet({
   onOpenChange: (open: boolean) => void
   onOpenGlossary: () => void
 }) {
+  const { t } = useI18n()
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="max-h-[88svh] gap-6 overflow-y-auto">
         <div className="flex items-center justify-between">
           <BottomSheetTitle className="text-lg font-semibold">
-            Settings
+            {t.settings.title}
           </BottomSheetTitle>
           <BottomSheetClose />
         </div>
@@ -49,7 +51,7 @@ export function SettingsSheet({
             right under the goal, above the device-local theme/language prefs. */}
         <NavRow
           icon={<BookText className="h-[18px] w-[18px]" />}
-          label="Food glossary"
+          label={t.settings.foodGlossary}
           onClick={onOpenGlossary}
         />
         <ThemeSetting />
@@ -60,7 +62,7 @@ export function SettingsSheet({
           <InstallAppEntry />
           <StubRow
             icon={<ArrowLeftRight className="h-[18px] w-[18px]" />}
-            label="Export / import"
+            label={t.settings.exportImport}
           />
         </div>
       </BottomSheetContent>
@@ -120,12 +122,13 @@ function Field({
 // effect. Edits commit on blur or Enter; a blank or invalid figure reverts to
 // the last good value rather than writing a broken Goal.
 function GoalSetting() {
+  const { t } = useI18n()
   const uid = useIdentity()
   const goal = useGoal(uid)
   const kcal = goal?.kcal ?? DEFAULT_GOAL_KCAL
 
   return (
-    <Field label="Daily goal" htmlFor="settings-goal">
+    <Field label={t.settings.dailyGoal} htmlFor="settings-goal">
       <GoalInput
         key={kcal}
         kcal={kcal}
@@ -145,6 +148,7 @@ function GoalInput({
   disabled: boolean
   onCommit: (kcal: number) => void
 }) {
+  const { t } = useI18n()
   const [value, setValue] = React.useState(String(kcal))
 
   const commit = () => {
@@ -170,27 +174,30 @@ function GoalInput({
         onFocus={(e) => e.target.select()}
         inputMode="numeric"
         autoComplete="off"
-        aria-label="Daily calorie goal"
+        aria-label={t.settings.dailyGoalAria}
         disabled={disabled}
         className="min-w-0 flex-1 bg-transparent text-lg font-bold tabular-nums outline-none"
       />
-      <span className="text-sm font-medium text-muted-foreground">kcal</span>
+      <span className="text-sm font-medium text-muted-foreground">
+        {t.units.kcal}
+      </span>
     </div>
   )
 }
 
 function ThemeSetting() {
+  const { t } = useI18n()
   const { theme, setTheme } = useTheme()
   return (
-    <Field label="Theme">
+    <Field label={t.settings.theme}>
       <Segmented
-        ariaLabel="Theme"
+        ariaLabel={t.settings.theme}
         value={theme}
         onChange={setTheme}
         options={[
-          { value: "system", label: "System" },
-          { value: "light", label: "Light" },
-          { value: "dark", label: "Dark" },
+          { value: "system", label: t.settings.themeSystem },
+          { value: "light", label: t.settings.themeLight },
+          { value: "dark", label: t.settings.themeDark },
         ]}
       />
     </Field>
@@ -198,16 +205,17 @@ function ThemeSetting() {
 }
 
 function LanguageSetting() {
+  const { t } = useI18n()
   const { language, setLanguage } = useLanguage()
   return (
-    <Field label="Language">
+    <Field label={t.settings.language}>
       <Segmented<Language>
-        ariaLabel="Language"
+        ariaLabel={t.settings.language}
         value={language}
         onChange={setLanguage}
         options={[
-          { value: "en", label: "English" },
-          { value: "es", label: "Español" },
+          { value: "en", label: t.settings.languageEnglish },
+          { value: "es", label: t.settings.languageSpanish },
         ]}
       />
     </Field>
@@ -260,6 +268,7 @@ function Segmented<T extends string>({
 // A settings slot whose feature hasn't shipped yet — visible so the surface
 // reads as complete, inert until its ticket lands (sign-in #19, export #24).
 function StubRow({ icon, label }: { icon: React.ReactNode; label: string }) {
+  const { t } = useI18n()
   return (
     <div
       aria-disabled="true"
@@ -267,7 +276,7 @@ function StubRow({ icon, label }: { icon: React.ReactNode; label: string }) {
     >
       <span className="text-muted-foreground">{icon}</span>
       <span className="flex-1 text-[15px] font-medium">{label}</span>
-      <span className="text-[13px] text-muted-foreground">Soon</span>
+      <span className="text-[13px] text-muted-foreground">{t.common.soon}</span>
     </div>
   )
 }

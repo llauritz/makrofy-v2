@@ -8,6 +8,7 @@
     "dev:no-emulators": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "i18n:sweep": "node scripts/i18n-sweep.mjs",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/emulators.mjs vitest run",

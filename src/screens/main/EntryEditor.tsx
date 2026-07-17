@@ -3,6 +3,7 @@ import { Check, Trash2, X } from "lucide-react"
 import { motion } from "motion/react"
 
 import type { Entry, EntryEdit } from "@/data/entries"
+import { useI18n } from "@/lib/i18n/useI18n"
 import {
   macroInputsFrom,
   parseMacros,
@@ -26,6 +27,7 @@ export function EntryEditor({
   onCancel: () => void
   onDelete: () => void
 }) {
+  const { t } = useI18n()
   const [label, setLabel] = React.useState(entry.label)
   const [kcal, setKcal] = React.useState(String(entry.kcal))
   const [macros, setMacros] = React.useState(() => macroInputsFrom(entry))
@@ -59,16 +61,16 @@ export function EntryEditor({
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           onKeyDown={onKeyDown}
-          aria-label="Food"
+          aria-label={t.addCard.food}
           className="min-w-0 flex-1 rounded-full bg-input px-4 py-2.5 text-sm outline-none placeholder:text-[#a5988a]"
         />
         <input
           value={kcal}
           onChange={(e) => setKcal(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="kcal"
+          placeholder={t.units.kcal}
           inputMode="decimal"
-          aria-label="Calories"
+          aria-label={t.addCard.calories}
           className="w-16 rounded-full bg-input px-3 py-2.5 text-center text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
         />
       </div>
@@ -94,10 +96,10 @@ export function EntryEditor({
               onKeyDown={onKeyDown}
               placeholder="0"
               inputMode="decimal"
-              aria-label={`${m.label} grams`}
+              aria-label={t.macros.grams(t.macros[m.field])}
               className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
             />
-            <span className="text-xs text-[#a5988a]">g</span>
+            <span className="text-xs text-[#a5988a]">{t.units.g}</span>
           </label>
         ))}
       </div>
@@ -106,18 +108,18 @@ export function EntryEditor({
           type="button"
           onClick={onDelete}
           whileTap={{ scale: 0.9 }}
-          aria-label="Delete entry"
+          aria-label={t.entryEditor.deleteEntry}
           className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-destructive"
         >
           <Trash2 className="h-4 w-4" />
-          Delete
+          {t.common.delete}
         </motion.button>
         <div className="flex items-center gap-2">
           <motion.button
             type="button"
             onClick={onCancel}
             whileTap={{ scale: 0.9 }}
-            aria-label="Cancel"
+            aria-label={t.entryEditor.cancel}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-input text-muted-foreground"
           >
             <X className="h-4 w-4" />
@@ -127,11 +129,11 @@ export function EntryEditor({
             onClick={save}
             disabled={!canSave}
             whileTap={{ scale: 0.9 }}
-            aria-label="Save changes"
+            aria-label={t.entryEditor.saveChanges}
             className="flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
           >
             <Check className="h-4 w-4" strokeWidth={2.5} />
-            Save
+            {t.common.save}
           </motion.button>
         </div>
       </div>

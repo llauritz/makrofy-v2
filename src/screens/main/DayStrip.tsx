@@ -8,6 +8,7 @@ import {
 } from "motion/react"
 
 import { stripWindow, type DayCell } from "@/lib/day"
+import { useI18n } from "@/lib/i18n/useI18n"
 import { SPRING } from "./anim"
 
 // The sole day navigator (#33, ADR 0008): a free-scrolling rail of Day chips —
@@ -34,7 +35,8 @@ export function DayStrip({
   loggedDays: Set<string>
   onSelect: (day: string) => void
 }) {
-  const cells = stripWindow(selectedDay)
+  const { language } = useI18n()
+  const cells = stripWindow(selectedDay, new Date(), language)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const rowRef = React.useRef<HTMLDivElement>(null)
   const mounted = React.useRef(false)

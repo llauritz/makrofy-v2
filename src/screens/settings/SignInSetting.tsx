@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useAuthUser } from "@/data/hooks"
 import { signOutToGuest, startGoogleSignIn } from "@/data/identity"
 import { auth } from "@/lib/firebase"
+import { useI18n } from "@/lib/i18n/useI18n"
 
 // The Settings sign-in surface (#19). Signed out (a Guest), it offers Google
 // sign-in — which *links* onto the same identity, so nothing already logged is
@@ -12,6 +13,7 @@ import { auth } from "@/lib/firebase"
 // Sign-in redirects away and resolves on the next load (completeGoogleRedirect),
 // so there's no in-page spinner to show.
 export function SignInSetting() {
+  const { t } = useI18n()
   const user = useAuthUser()
   const signedIn = user !== null && !user.isAnonymous
 
@@ -23,7 +25,7 @@ export function SignInSetting() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15px] font-medium">
-            {user.displayName ?? "Signed in"}
+            {user.displayName ?? t.signIn.signedInFallback}
           </div>
           {user.email && (
             <div className="truncate text-[13px] text-muted-foreground">
@@ -36,7 +38,7 @@ export function SignInSetting() {
           size="sm"
           onClick={() => void signOutToGuest(auth)}
         >
-          Sign out
+          {t.signIn.signOut}
         </Button>
       </div>
     )
@@ -52,10 +54,10 @@ export function SignInSetting() {
       <LogIn className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium">
-          Sign in with Google
+          {t.signIn.signInWithGoogle}
         </span>
         <span className="block text-[13px] text-muted-foreground">
-          Back up and sync across devices
+          {t.signIn.signInSubtitle}
         </span>
       </span>
     </button>

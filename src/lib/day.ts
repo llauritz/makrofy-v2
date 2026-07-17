@@ -5,14 +5,10 @@
 // is the one home for the date edges V1 got wrong (future-nav asymmetry,
 // off-by-one, timezone).
 
-// Fixed English display tables. Locale-aware formatting arrives with i18n
-// (#25); until then these keep labels deterministic and test-stable.
-const WEEKDAY_NARROW = ["S", "M", "T", "W", "T", "F", "S"] as const
-const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const
-const MONTH_SHORT = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-] as const
+// Display labels are locale-aware via Intl (spec § i18n, #25): the caller
+// passes the active language's locale, defaulting to English. Only the display
+// helpers take a locale — the date arithmetic is pure calendar maths and never
+// touches formatting.
 
 /** The device-local Day a moment belongs to, as 'YYYY-MM-DD'. */
 export function localDay(date: Date): string {
@@ -85,17 +81,22 @@ export function stripFloor(now: Date = new Date()): string {
  * dashed frontier beyond the selection — tapping the frontier *is* the
  * frontier advance.
  */
-export function stripWindow(selected: string, now: Date = new Date()): DayCell[] {
+export function stripWindow(
+  selected: string,
+  now: Date = new Date(),
+  locale: string = "en",
+): DayCell[] {
   const today = localDay(now)
   const first = stripFloor(now)
   const frontier = stepDay(selected > today ? selected : today, 1)
   const length = dayDiff(frontier, first) + 1
+  const narrowWeekday = new Intl.DateTimeFormat(locale, { weekday: "narrow" })
   return Array.from({ length }, (_, i) => {
     const day = stepDay(first, i)
     const d = parseDay(day)
     return {
       day,
-      weekday: WEEKDAY_NARROW[d.getDay()],
+      weekday: narrowWeekday.format(d),
       dayNum: d.getDate(),
       isToday: day === today,
       isFuture: day > today,
@@ -119,16 +120,35 @@ export function stepWithinStrip(
   return next < stripFloor(now) ? null : next
 }
 
+/** The near-day words relativeDayLabel needs, from the active dictionary (#25). */
+export interface RelativeDayLabels {
+  today: string
+  yesterday: string
+  tomorrow: string
+}
+
 /**
- * A short human name for a Day: "Today"/"Yesterday"/"Tomorrow" for the near
- * ones, else "Wed 8 Jul". Lets the selected Day stay legible even when it has
- * slid off the Day strip on a deep Backfill (the calendar button's label, #34).
+ * A short human name for a Day: the near ones as the given words
+ * (Today/Yesterday/Tomorrow), else weekday-day-month in the locale ("Wed 8
+ * Jul" / "mié 8 jul"). Lets the selected Day stay legible even when it has slid
+ * off the Day strip on a deep Backfill (the calendar button's label, #34). The
+ * words and locale come from the caller's i18n context, so day.ts stays free of
+ * the dictionary itself.
  */
-export function relativeDayLabel(day: string, now: Date = new Date()): string {
+export function relativeDayLabel(
+  day: string,
+  labels: RelativeDayLabels,
+  locale: string,
+  now: Date = new Date(),
+): string {
   const diff = dayDiff(day, localDay(now))
-  if (diff === 0) return "Today"
-  if (diff === -1) return "Yesterday"
-  if (diff === 1) return "Tomorrow"
+  if (diff === 0) return labels.today
+  if (diff === -1) return labels.yesterday
+  if (diff === 1) return labels.tomorrow
   const d = parseDay(day)
-  return `${WEEKDAY_SHORT[d.getDay()]} ${d.getDate()} ${MONTH_SHORT[d.getMonth()]}`
+  // Day-before-month order, kept explicit so it reads the same across locales
+  // (a plain Intl date string would reorder and add punctuation per region).
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d)
+  const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(d)
+  return `${weekday} ${d.getDate()} ${month}`
 }

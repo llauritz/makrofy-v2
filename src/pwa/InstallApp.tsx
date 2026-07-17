@@ -8,6 +8,7 @@ import {
   BottomSheetDescription,
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet"
+import { useI18n } from "@/lib/i18n/useI18n"
 
 import { useInstallPrompt } from "./useInstallPrompt"
 
@@ -17,6 +18,7 @@ import { useInstallPrompt } from "./useInstallPrompt"
 //
 // Belongs in Settings; #17 builds that surface and re-homes this component.
 export function InstallAppEntry() {
+  const { t } = useI18n()
   const { affordance, promptInstall } = useInstallPrompt()
   const [iosGuideOpen, setIosGuideOpen] = React.useState(false)
 
@@ -40,9 +42,11 @@ export function InstallAppEntry() {
         className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-muted"
       >
         <Download className="h-[18px] w-[18px] text-muted-foreground" />
-        <span className="flex-1 text-[15px] font-medium">Install app</span>
+        <span className="flex-1 text-[15px] font-medium">
+          {t.install.installApp}
+        </span>
         <span className="text-[13px] text-muted-foreground">
-          {affordance === "ios-guide" ? "How to" : "Add to home screen"}
+          {affordance === "ios-guide" ? t.install.howTo : t.install.addToHomeScreen}
         </span>
       </button>
 
@@ -60,31 +64,27 @@ function IosInstallGuide({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useI18n()
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="gap-4">
         <div className="flex items-start justify-between gap-3">
           <BottomSheetTitle className="font-wordmark text-xl font-semibold">
-            Install Yaffle
+            {t.install.iosTitle}
           </BottomSheetTitle>
           <BottomSheetClose />
         </div>
 
         <BottomSheetDescription className="text-[15px] text-muted-foreground">
-          Add Yaffle to your home screen for a full-screen, offline-ready app.
+          {t.install.iosBody}
         </BottomSheetDescription>
 
         <ol className="flex flex-col gap-3">
           <IosStep icon={<Share className="h-5 w-5" />} n={1}>
-            Tap the <span className="font-medium text-foreground">Share</span>{" "}
-            button in Safari's toolbar.
+            {t.install.iosStep1}
           </IosStep>
           <IosStep icon={<SquarePlus className="h-5 w-5" />} n={2}>
-            Choose{" "}
-            <span className="font-medium text-foreground">
-              Add to Home Screen
-            </span>
-            .
+            {t.install.iosStep2}
           </IosStep>
         </ol>
       </BottomSheetContent>

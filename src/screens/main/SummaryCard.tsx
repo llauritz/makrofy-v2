@@ -1,6 +1,7 @@
 import { BarChart3 } from "lucide-react"
 import { motion } from "motion/react"
 
+import { useI18n } from "@/lib/i18n/useI18n"
 import { MACROS, macroTint } from "./macros"
 import type { DaySummary } from "./summary"
 
@@ -8,6 +9,7 @@ import type { DaySummary } from "./summary"
 // proportional figures (tabular-nums is for lists/columns only). The arc caps
 // at full once over the Goal; the "Over" copy carries the overage.
 function ProgressRing({ summary }: { summary: DaySummary }) {
+  const { t, n } = useI18n()
   const size = 116
   const c = size / 2
   const r = 46
@@ -42,9 +44,11 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <div className="text-xl leading-none font-bold">
-          {summary.consumed.toLocaleString()}
+          {n(summary.consumed)}
         </div>
-        <div className="mt-0.5 text-[10px] text-muted-foreground">kcal</div>
+        <div className="mt-0.5 text-[10px] text-muted-foreground">
+          {t.units.kcal}
+        </div>
       </div>
     </div>
   )
@@ -62,15 +66,16 @@ export function SummaryCard({
   summary: DaySummary
   onOpenSettings: () => void
 }) {
+  const { t, n } = useI18n()
   const headline = summary.isOver
-    ? `Over: ${summary.over.toLocaleString()}`
-    : `Remaining: ${summary.remaining.toLocaleString()}`
+    ? t.summary.over(n(summary.over))
+    : t.summary.remaining(n(summary.remaining))
   return (
     <div className="flex items-center gap-4 rounded-[28px] border bg-card p-4 shadow-[0_8px_30px_rgba(43,32,21,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
       <button
         type="button"
         onClick={onOpenSettings}
-        aria-label="Open settings"
+        aria-label={t.summary.openSettings}
         className="shrink-0 rounded-full outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
       >
         <ProgressRing summary={summary} />
@@ -80,17 +85,17 @@ export function SummaryCard({
           <button
             type="button"
             onClick={onOpenSettings}
-            aria-label="Open settings"
+            aria-label={t.summary.openSettings}
             className="rounded-md text-left outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring active:opacity-70"
           >
             <div className="text-lg leading-tight font-bold">{headline}</div>
             <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-              {summary.pctOfGoal}% of {summary.goalKcal.toLocaleString()} goal
+              {t.summary.pctOfGoal(n(summary.pctOfGoal), n(summary.goalKcal))}
             </div>
           </button>
           <button
             type="button"
-            aria-label="Statistics"
+            aria-label={t.summary.statistics}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-input text-muted-foreground"
           >
             <BarChart3 className="h-4 w-4" />
@@ -107,7 +112,8 @@ export function SummaryCard({
                 color: m.text,
               }}
             >
-              {m.letter} {Math.round(summary.totals[m.field])}g
+              {m.letter} {n(Math.round(summary.totals[m.field]))}
+              {t.units.g}
             </span>
           ))}
         </div>
