@@ -59,12 +59,26 @@ export interface NewEntry extends EntryNutrients {
 }
 
 /**
- * The mutable fields of an Entry. Editing never moves an Entry to another Day,
- * restamps its Source, or touches its flags — date, source, mealType,
- * createdAt and any flagged values are fixed at commit. An absent optional
- * macro means "cleared": the field is removed.
+ * The mutable fields of an Entry. Editing never moves an Entry to another Day
+ * or restamps its Source — date, source, mealType and createdAt are fixed at
+ * commit. An absent optional macro means "cleared": the field is removed.
+ * `flagged` present means the editor reconciled the Entry's Flagged values
+ * (seeded outlines, tap-to-accept — #53); absent leaves them untouched.
  */
-export type EntryEdit = EntryNutrients
+export type EntryEdit = EntryNutrients & { flagged?: FlaggableField[] }
+
+/**
+ * An AI fill landing on a logged Entry (#53): only the fields the Entry was
+ * missing — a logged value is never overwritten — plus the fields the model
+ * was still unsure about among those it filled.
+ */
+export interface EntryAiFill {
+  kcal?: number
+  protein?: number
+  fat?: number
+  carbs?: number
+  flagged?: FlaggableField[]
+}
 
 /**
  * Meal type is attached silently, never shown in V2 UI — it exists as the
