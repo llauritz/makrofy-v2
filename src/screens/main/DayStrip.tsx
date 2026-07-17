@@ -9,7 +9,7 @@ import {
 } from "motion/react"
 
 import { isOffStrip, shortDayLabel, stripWindow, type DayCell } from "@/lib/day"
-import { SPRING } from "./anim"
+import { FADE_IN, FADE_OUT, SPRING } from "./anim"
 
 // The sole day navigator (#33, ADR 0008): a free-scrolling rail of Day chips —
 // 14 days back through today plus one dashed, dimmed frontier Day. Today, when
@@ -134,7 +134,11 @@ export function DayStrip({
             to the end of the recent two weeks and it appears — "keep going
             further back". Off-strip it fills like the selection pill and
             carries the Day's date (the rail auto-scrolls to show it), so
-            "where am I?" always has an answer. */}
+            "where am I?" always has an answer. The expansion follows the
+            motion vocabulary (spec § Motion): the box makes space by
+            springing its real width — the label slot animates 0 ↔ auto while
+            the padding stays constant — and the date plus the ink fill fade
+            in place. */}
         <button
           type="button"
           aria-label={
@@ -144,18 +148,31 @@ export function DayStrip({
           }
           onClick={onOpenCalendar}
           className={
-            "flex h-9 shrink-0 items-center justify-center self-center rounded-full " +
+            "flex h-9 shrink-0 items-center self-center rounded-full px-[9px] transition-colors duration-150 " +
             (offStrip
-              ? "gap-1.5 bg-foreground px-3 text-background"
-              : "w-9 text-muted-foreground")
+              ? "bg-foreground text-background"
+              : "text-muted-foreground")
           }
         >
-          <CalendarDays className="h-[18px] w-[18px]" />
-          {offStrip && (
-            <span className="text-sm font-semibold whitespace-nowrap">
+          <CalendarDays className="h-[18px] w-[18px] shrink-0" />
+          <motion.span
+            aria-hidden={!offStrip}
+            className="overflow-hidden"
+            initial={false}
+            animate={{
+              width: offStrip ? "auto" : 0,
+              opacity: offStrip ? 1 : 0,
+            }}
+            transition={
+              shouldReduce
+                ? { duration: 0 }
+                : { width: SPRING, opacity: offStrip ? FADE_IN : FADE_OUT }
+            }
+          >
+            <span className="block pl-1.5 text-sm font-semibold whitespace-nowrap">
               {shortDayLabel(selectedDay)}
             </span>
-          )}
+          </motion.span>
         </button>
         {cells.map((cell) => (
           <button

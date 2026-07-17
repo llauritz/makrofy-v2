@@ -106,7 +106,7 @@ describe("MainScreen day navigation (#34)", () => {
     render(<MainScreen onOpenGlossary={() => {}} />)
 
     // On-strip, the button is a plain calendar affordance, no date on show.
-    expect(calendarButton().textContent).toBe("")
+    expect(calendarButton().getAttribute("aria-label")).toBe("Open calendar")
 
     const sheet = openSheet()
     // The sheet opens on the selected Day's month.
@@ -126,7 +126,9 @@ describe("MainScreen day navigation (#34)", () => {
     expect(screen.queryByRole("dialog")).toBeNull()
     expect(screen.getByText("Porridge")).toBeTruthy()
     expect(document.querySelector('[aria-current="date"]')).toBeNull()
-    expect(calendarButton().textContent).toBe(shortDayLabel(TARGET))
+    expect(calendarButton().getAttribute("aria-label")).toBe(
+      `Open calendar, ${shortDayLabel(TARGET)}`
+    )
   })
 
   it("reopens from the off-strip button and returns home via today", () => {
@@ -151,7 +153,7 @@ describe("MainScreen day navigation (#34)", () => {
 
     // Home again: sheet closed, today's chip selected, the date label gone.
     expect(screen.queryByRole("dialog")).toBeNull()
-    expect(calendarButton().textContent).toBe("")
+    expect(calendarButton().getAttribute("aria-label")).toBe("Open calendar")
     const current = document.querySelectorAll('[aria-current="date"]')
     expect(current).toHaveLength(1)
     expect(current[0].getAttribute("aria-label")).toBe(TODAY)
@@ -165,6 +167,8 @@ describe("MainScreen day navigation (#34)", () => {
 
     const landed = stepDay(TODAY, -15)
     expect(document.querySelector('[aria-current="date"]')).toBeNull()
-    expect(calendarButton().textContent).toBe(shortDayLabel(landed))
+    expect(calendarButton().getAttribute("aria-label")).toBe(
+      `Open calendar, ${shortDayLabel(landed)}`
+    )
   })
 })
