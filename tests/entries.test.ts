@@ -165,14 +165,23 @@ describe("logging and observing a Day", () => {
     const today = todayLocal()
     const states = observeDay(today)
 
-    // The emulator truncates server timestamps to whole seconds (production
-    // is microsecond-precision), so the adds must straddle a second boundary
-    // for their log order to be defined.
+    // The emulator truncates server timestamps to whole seconds (production is
+    // microsecond-precision), and listenToDay sorts by createdAt with no
+    // tiebreak — so two Entries that land in the same whole second sort in an
+    // arbitrary (document-id) order. To make the log order deterministic the
+    // adds must fall in *different* whole seconds, which means the 1s straddle
+    // has to be measured from when "first" is actually committed on the server,
+    // not from when the listener first estimates it: drain the queued write
+    // (addEntry is fire-and-forget) so "first"'s whole-second createdAt is
+    // fixed, THEN wait out the second boundary before adding "second". Without
+    // the drain a slow commit can push "first" into the same second as "second"
+    // and the order flips (it did, intermittently, in CI).
     await addEntry(ctx.db, uid, { date: today, label: "first", kcal: 100, source: "manual" })
-    await waitFor(() => states.find((s) => s.length === 1))
+    await waitForPendingWrites(ctx.db)
     await new Promise((r) => setTimeout(r, 1100))
     await addEntry(ctx.db, uid, { date: today, label: "second", kcal: 200, source: "manual" })
     await addEntry(ctx.db, uid, { date: "2026-01-05", label: "other day", kcal: 300, source: "manual" })
+    await waitForPendingWrites(ctx.db)
 
     const entries = await waitFor(() => states.find((s) => s.length === 2))
     expect(entries.map((e) => e.label)).toEqual(["first", "second"])
