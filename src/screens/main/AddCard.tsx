@@ -269,7 +269,7 @@ export function AddCard({
       <Suggestions rows={suggestions.rows} onPick={pick} />
       <AiZone
         state={zoneState}
-        attribution={attribution}
+        attribution={ai.attribution}
         onAnswer={answerQuestion}
         onDismiss={clearAi}
       />

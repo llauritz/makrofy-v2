@@ -35,6 +35,11 @@ The row fill writes through `applyAiFill` (entries.ts): the missing values,
 model was unsure about *among those it wrote* — doubt about a logged value
 has nowhere to sit, so it is dropped (`entryFillFrom`).
 
+The editor's Save restamps the provenance the same way: an `EntryEdit`
+carrying `source: 'ai'` (set when a fill was applied this session, dropped
+again if the label is rewritten — the add card's rule) updates the Entry's
+Source, so ✨ means the same thing however the fill arrived.
+
 ## Flags are no longer fixed at commit (amends ADR 0003)
 
 ADR 0003 kept `flagged` persisted past commit "so a future edit form or

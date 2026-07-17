@@ -56,6 +56,10 @@ export function EntryEditor({
   const [label, setLabel] = React.useState(entry.label)
   const [kcal, setKcal] = React.useState(String(entry.kcal))
   const [macros, setMacros] = React.useState(() => macroInputsFrom(entry))
+  // Whether this session's values carry an applied ✨ fill — Save then
+  // restamps the provenance (the add card's rule: committed AI values carry
+  // ✨; rewriting the label makes it the user's own food again).
+  const [aiFilled, setAiFilled] = React.useState(false)
   const { flags, setFlags, acceptFlag } = useFormFlags(
     formFlagsFrom(entry.flagged)
   )
@@ -78,6 +82,7 @@ export function EntryEditor({
         for (const flag of newFlags) if (fillable.has(flag)) next.add(flag)
         return next
       })
+      setAiFilled(true)
     },
   })
   const online = useOnline()
@@ -95,21 +100,28 @@ export function EntryEditor({
       // The editor reconciles flags (#53, amending ADR 0003): survivors of
       // tap-to-accept persist, an emptied set clears the Entry's field.
       flagged: flaggedFieldsFrom(flags),
+      ...(aiFilled ? { source: "ai" as const } : {}),
     })
   }
 
-  // A rewritten label invalidates the AI's reading of it, but not the flags —
-  // they belong to the values, which an edit to the label doesn't change.
+  // A rewritten label invalidates the AI's reading of it — and the pending
+  // ✨ restamp — but not the flags: they belong to the values, which an edit
+  // to the label doesn't change.
   const onLabelChange = (value: string) => {
     setLabel(value)
+    setAiFilled(false)
     if (ai.phase.kind !== "idle" || ai.interpretation || ai.attribution) {
       ai.clear()
     }
   }
 
+  // Nothing blank means nothing to fill: the ✨ disables rather than spend a
+  // round trip writing nothing. Blanking a field is the re-estimate gesture.
+  const canFill = fillable.size > 0
+
   const startAi = () => {
     const description = label.trim()
-    if (uid === null || ai.thinking || description === "") return
+    if (uid === null || ai.thinking || !canFill || description === "") return
     ai.start(promptFrom(description, knownFromInputs(kcal, macros)))
   }
 
@@ -148,7 +160,9 @@ export function EntryEditor({
             <motion.button
               type="button"
               onClick={startAi}
-              disabled={uid === null || ai.thinking || label.trim() === ""}
+              disabled={
+                uid === null || ai.thinking || !canFill || label.trim() === ""
+              }
               whileTap={{ scale: 0.9 }}
               aria-label={t.addCard.fillWithAi}
               className={

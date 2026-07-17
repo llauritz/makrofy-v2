@@ -60,12 +60,17 @@ export interface NewEntry extends EntryNutrients {
 
 /**
  * The mutable fields of an Entry. Editing never moves an Entry to another Day
- * or restamps its Source — date, source, mealType and createdAt are fixed at
- * commit. An absent optional macro means "cleared": the field is removed.
- * `flagged` present means the editor reconciled the Entry's Flagged values
- * (seeded outlines, tap-to-accept — #53); absent leaves them untouched.
+ * — date, mealType and createdAt are fixed at commit. An absent optional
+ * macro means "cleared": the field is removed. `flagged` present means the
+ * editor reconciled the Entry's Flagged values (seeded outlines,
+ * tap-to-accept — #53); `source` present restamps the provenance (the
+ * editor's ✨ fill arriving under Save); either absent leaves the Entry's
+ * value untouched.
  */
-export type EntryEdit = EntryNutrients & { flagged?: FlaggableField[] }
+export type EntryEdit = EntryNutrients & {
+  source?: EntrySource
+  flagged?: FlaggableField[]
+}
 
 /**
  * An AI fill landing on a logged Entry (#53): only the fields the Entry was
@@ -146,6 +151,7 @@ export function updateEntry(
   if (edit.flagged !== undefined) {
     data.flagged = edit.flagged.length > 0 ? edit.flagged : deleteField()
   }
+  if (edit.source !== undefined) data.source = edit.source
   updateDoc(doc(entriesCollection(db, uid), id), data).catch((err) => {
     console.error("Entry update failed", id, err)
   })

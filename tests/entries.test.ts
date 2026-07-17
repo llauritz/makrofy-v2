@@ -336,6 +336,28 @@ describe("logging and observing a Day", () => {
     expect("flagged" in cleared).toBe(false)
   })
 
+  it("an edit carrying a source restamps it — the editor's ✨ fill under Save", async () => {
+    const today = todayLocal()
+    const id = await addEntry(ctx.db, uid, {
+      date: today,
+      label: "greek yogurt",
+      kcal: 150,
+      source: "manual",
+    })
+
+    const states = observeDay(today)
+    await waitFor(() => states.find((s) => s.length === 1))
+    updateEntry(ctx.db, uid, id, {
+      label: "greek yogurt",
+      kcal: 150,
+      protein: 8,
+      source: "ai",
+    })
+
+    const after = await waitForServerEntry(ctx, uid, id, (d) => d.protein === 8)
+    expect(after.source).toBe("ai")
+  })
+
   it("an edit that says nothing about flags leaves them untouched", async () => {
     const today = todayLocal()
     const id = await addEntry(ctx.db, uid, {
