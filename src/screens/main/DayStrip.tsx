@@ -59,14 +59,18 @@ export function DayStrip({
   } | null>(null)
 
   // Slide the pill onto the selected chip. Chips are uniform, so the selected
-  // button's box is the pill's box; only x differs per selection. Snap on first
-  // paint and under reduced motion (spec § Motion: movement snaps); else spring.
+  // button's box is the pill's box; only x differs per selection. Travel is
+  // only legal between two visible anchors: re-appearing after an off-strip
+  // spell (or first paint, or reduced motion) snaps into place — the mount
+  // fade below is the entrance, springing from the stale position is not.
+  const hadPill = React.useRef(false)
   React.useLayoutEffect(() => {
     const btn = rowRef.current?.querySelector<HTMLElement>(
       '[aria-current="date"]'
     )
     if (!btn) {
       setPill(null) // off-strip selection (#34): no chip, no pill
+      hadPill.current = false
       return
     }
     setPill({
@@ -74,7 +78,9 @@ export function DayStrip({
       width: btn.offsetWidth,
       height: btn.offsetHeight,
     })
-    if (!mounted.current || shouldReduce) {
+    const appearing = !hadPill.current
+    hadPill.current = true
+    if (!mounted.current || appearing || shouldReduce) {
       pillX.set(btn.offsetLeft)
       return
     }
@@ -209,6 +215,11 @@ export function DayStrip({
         <motion.div
           aria-hidden
           className="pointer-events-none absolute left-0 overflow-hidden rounded-full bg-foreground"
+          // The pill mounts fresh whenever it re-appears (first paint, or
+          // returning from off-strip): appearing content fades in place.
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={shouldReduce ? { duration: 0 } : FADE_IN}
           style={{
             top: pill.top,
             width: pill.width,
