@@ -8,6 +8,7 @@ import {
   BottomSheetDescription,
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet"
+import { useI18n } from "@/lib/i18n/useI18n"
 import type { SyncStatus } from "@/lib/sync"
 
 // The header sync indicator (spec § PWA & offline, #19). Silent when synced —
@@ -22,6 +23,7 @@ export function SyncIndicator({
   status: SyncStatus
   onReauth: () => void
 }) {
+  const { t } = useI18n()
   const [explainOpen, setExplainOpen] = React.useState(false)
 
   if (status === "synced") return null
@@ -31,7 +33,7 @@ export function SyncIndicator({
       <button
         type="button"
         onClick={onReauth}
-        aria-label="Sign-in needed to sync your changes"
+        aria-label={t.sync.attention}
         className="flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors"
       >
         <CircleAlert className="h-[18px] w-[18px]" />
@@ -44,7 +46,7 @@ export function SyncIndicator({
       <button
         type="button"
         onClick={() => setExplainOpen(true)}
-        aria-label="Not synced — changes saved on this device"
+        aria-label={t.sync.pending}
         className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
       >
         <CloudOff className="h-[18px] w-[18px]" />
@@ -54,14 +56,12 @@ export function SyncIndicator({
         <BottomSheetContent className="gap-4">
           <div className="flex items-start justify-between gap-3">
             <BottomSheetTitle className="text-lg font-semibold">
-              Saved on this device
+              {t.sync.savedTitle}
             </BottomSheetTitle>
             <BottomSheetClose />
           </div>
           <BottomSheetDescription className="text-[15px] text-muted-foreground">
-            Your changes are saved on this device and sync automatically as soon
-            as you&rsquo;re back online — nothing is lost while you&rsquo;re
-            offline.
+            {t.sync.savedBody}
           </BottomSheetDescription>
         </BottomSheetContent>
       </BottomSheet>

@@ -13,9 +13,10 @@ import {
   monthGrid,
   monthOf,
   monthTitle,
+  narrowWeekdays,
   stepMonth,
-  WEEKDAY_NARROW,
 } from "@/lib/day"
+import { useI18n } from "@/lib/i18n/useI18n"
 
 // The deep-jump surface (#34, ADR 0008): a month-grid bottom sheet that
 // reaches any date, past or future — the Day strip covers the recent two
@@ -37,6 +38,7 @@ export function CalendarSheet({
   loggedDays: Set<string>
   onPick: (day: string) => void
 }) {
+  const { t, language } = useI18n()
   const [month, setMonth] = React.useState(() => monthOf(selectedDay))
 
   // Each opening starts at the selected Day's month — the sheet answers
@@ -55,17 +57,17 @@ export function CalendarSheet({
       <BottomSheetContent className="gap-4">
         <div className="flex items-center justify-between">
           <BottomSheetTitle className="text-lg font-semibold">
-            {monthTitle(month)}
+            {monthTitle(month, language)}
           </BottomSheetTitle>
           <div className="flex items-center gap-1">
             <PagerButton
-              label="Previous month"
+              label={t.calendar.previousMonth}
               onClick={() => setMonth(stepMonth(month, -1))}
             >
               <ChevronLeft className="h-[18px] w-[18px]" />
             </PagerButton>
             <PagerButton
-              label="Next month"
+              label={t.calendar.nextMonth}
               onClick={() => setMonth(stepMonth(month, 1))}
             >
               <ChevronRight className="h-[18px] w-[18px]" />
@@ -75,7 +77,7 @@ export function CalendarSheet({
         </div>
 
         <div className="grid grid-cols-7 gap-y-1">
-          {WEEKDAY_NARROW.map((w, i) => (
+          {narrowWeekdays(language).map((w, i) => (
             <span
               key={i}
               aria-hidden

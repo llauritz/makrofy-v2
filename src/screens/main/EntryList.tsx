@@ -2,6 +2,7 @@ import { Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
 import type { Entry, EntryEdit } from "@/data/entries"
+import { useI18n } from "@/lib/i18n/useI18n"
 import { SPRING } from "./anim"
 import { EntryEditor } from "./EntryEditor"
 import { FadeSwap } from "./FadeSwap"
@@ -30,6 +31,7 @@ export function EntryList({
   onCancelEdit: () => void
   onDelete: (entry: Entry) => void
 }) {
+  const { t } = useI18n()
   return (
     <div className="mx-4 mt-3 pb-3">
       <AnimatePresence mode="popLayout" initial={false}>
@@ -42,9 +44,11 @@ export function EntryList({
             exit={{ opacity: 0 }}
             className="rounded-2xl border border-dashed border-[#cbbfa4] px-4 py-8 text-center dark:border-[#4a3e2e]"
           >
-            <div className="text-[15px] font-medium">Nothing logged yet</div>
+            <div className="text-[15px] font-medium">
+              {t.entryList.emptyTitle}
+            </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              What you log for this day shows up here.
+              {t.entryList.emptyBody}
             </div>
           </motion.div>
         ) : (
@@ -98,12 +102,13 @@ export function EntryList({
 
 // Chrome-less (border and background live on the FadeSwap box around it).
 function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
+  const { t, n } = useI18n()
   const noKcal = entry.kcal === 0
   return (
     <button
       type="button"
       onClick={onEdit}
-      aria-label={`Edit ${entry.label}`}
+      aria-label={t.entryList.edit(entry.label)}
       className="w-full rounded-2xl px-4 py-3 text-left"
     >
       <div className="flex items-center justify-between gap-3">
@@ -117,7 +122,7 @@ function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
                 carries only this quiet mark. */}
             {entry.source === "ai" && (
               <Sparkles
-                aria-label="AI-assisted"
+                aria-label={t.entryList.aiAssisted}
                 className="h-3 w-3 shrink-0 text-[#a5988a]"
               />
             )}
@@ -130,9 +135,9 @@ function EntryRow({ entry, onEdit }: { entry: Entry; onEdit: () => void }) {
             (noKcal ? "text-[#a5988a]" : "")
           }
         >
-          {entry.kcal}
+          {n(entry.kcal)}
           <span className="ml-1 text-[11px] font-normal text-muted-foreground">
-            kcal
+            {t.units.kcal}
           </span>
         </div>
       </div>

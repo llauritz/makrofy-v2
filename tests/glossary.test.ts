@@ -6,9 +6,7 @@
 import { describe, expect, it } from "vitest"
 import { buildProductIndex } from "@/lib/suggestions"
 import {
-  basisLabel,
   displayRate,
-  formatRate,
   productRate,
   searchGlossary,
   sortedProducts,
@@ -49,9 +47,11 @@ describe("sortedProducts", () => {
 })
 
 describe("productRate", () => {
+  // The display basis word (per 100 g / each) is localized at the render layer
+  // (i18n dictionary); productRate returns just the scaled numbers.
   it("shows a count Product per piece", () => {
     const index = buildProductIndex([entry("Egg", { kcal: 78 })], NOW)
-    expect(productRate(index.products[0])).toEqual({ kcal: 78, basis: "each" })
+    expect(productRate(index.products[0])).toEqual({ kcal: 78 })
   })
 
   it("shows a mass Product per 100 g, scaling macros to the same basis", () => {
@@ -62,17 +62,13 @@ describe("productRate", () => {
     )
     expect(productRate(index.products[0])).toEqual({
       kcal: 380,
-      basis: "100 g",
       protein: 13,
     })
   })
 
   it("shows a volume Product per 100 ml", () => {
     const index = buildProductIndex([entry("Milk 200ml", { kcal: 100 })], NOW)
-    expect(productRate(index.products[0])).toEqual({
-      kcal: 50,
-      basis: "100 ml",
-    })
+    expect(productRate(index.products[0])).toEqual({ kcal: 50 })
   })
 
   it("is null for a rate-less Product", () => {
@@ -81,40 +77,17 @@ describe("productRate", () => {
   })
 })
 
-describe("formatRate", () => {
-  it("reads per-piece Products as 'N kcal each'", () => {
-    const index = buildProductIndex([entry("Egg", { kcal: 78 })], NOW)
-    expect(formatRate(index.products[0])).toBe("78 kcal each")
-  })
-
-  it("reads mass and volume Products against their 100-unit basis", () => {
-    const mass = buildProductIndex([entry("Oats 100g", { kcal: 380 })], NOW)
-    const vol = buildProductIndex([entry("Milk 200ml", { kcal: 100 })], NOW)
-    expect(formatRate(mass.products[0])).toBe("380 kcal / 100 g")
-    expect(formatRate(vol.products[0])).toBe("50 kcal / 100 ml")
-  })
-
-  it("shows an em dash for a rate-less Product", () => {
-    const index = buildProductIndex([entry("Water 500ml")], NOW)
-    expect(formatRate(index.products[0])).toBe("—")
-  })
-})
-
 describe("displayRate", () => {
   it("scales a per-unit Rate to its basis — kcal to the integer, macros to one decimal", () => {
     // A per-gram Rate for a mass Product (any competing Reading, not just the top).
     expect(displayRate("mass", { kcal: 2.6, protein: 0.128 })).toEqual({
       kcal: 260,
-      basis: "100 g",
       protein: 12.8,
     })
   })
 
   it("leaves a count Rate at its per-piece value and drops absent macros", () => {
-    expect(displayRate("count", { kcal: 89 })).toEqual({
-      kcal: 89,
-      basis: "each",
-    })
+    expect(displayRate("count", { kcal: 89 })).toEqual({ kcal: 89 })
   })
 
   it("round-trips with toRate", () => {
@@ -144,14 +117,6 @@ describe("toRate", () => {
     const index = buildProductIndex([entry("Oats 100g", { kcal: 380 })], NOW)
     const shown = productRate(index.products[0])!
     expect(toRate("mass", shown)).toEqual(index.products[0].readings[0].rate)
-  })
-})
-
-describe("basisLabel", () => {
-  it("names each kind's display basis", () => {
-    expect(basisLabel("mass")).toBe("100 g")
-    expect(basisLabel("volume")).toBe("100 ml")
-    expect(basisLabel("count")).toBe("each")
   })
 })
 

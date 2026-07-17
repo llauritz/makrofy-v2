@@ -22,6 +22,11 @@ import {
 // every relative assertion below.
 const NOW = new Date(2026, 6, 10, 9, 30)
 
+// The near-day words relativeDayLabel takes from the active dictionary (#25);
+// the caller passes them so day.ts stays free of the i18n layer.
+const EN = { today: "Today", yesterday: "Yesterday", tomorrow: "Tomorrow" }
+const ES = { today: "Hoy", yesterday: "Ayer", tomorrow: "Mañana" }
+
 describe("localDay", () => {
   it("formats a Date as its device-local 'YYYY-MM-DD'", () => {
     expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe("2026-01-05")
@@ -83,6 +88,16 @@ describe("stripWindow", () => {
       isSelected: false,
     })
     expect(cells.filter((c) => c.isFrontier)).toHaveLength(1)
+  })
+
+  it("formats weekday initials in the active locale", () => {
+    // The narrow weekday comes from Intl (spec § i18n): English initials
+    // default (F for Friday), Spanish differs (V for viernes, S for sábado).
+    const en = stripWindow("2026-07-10", NOW)
+    expect(en[14]).toMatchObject({ day: "2026-07-10", weekday: "F" })
+    const es = stripWindow("2026-07-10", NOW, "es")
+    expect(es[14]).toMatchObject({ day: "2026-07-10", weekday: "V" })
+    expect(es[15]).toMatchObject({ day: "2026-07-11", weekday: "S" })
   })
 
   it("stays today-anchored when a past Day is selected", () => {
@@ -250,14 +265,21 @@ describe("shortDayLabel", () => {
 })
 
 describe("relativeDayLabel", () => {
-  it("names the near Days relative to now", () => {
-    expect(relativeDayLabel("2026-07-10", NOW)).toBe("Today")
-    expect(relativeDayLabel("2026-07-09", NOW)).toBe("Yesterday")
-    expect(relativeDayLabel("2026-07-11", NOW)).toBe("Tomorrow")
+  it("names the near Days with the given words", () => {
+    expect(relativeDayLabel("2026-07-10", EN, "en", NOW)).toBe("Today")
+    expect(relativeDayLabel("2026-07-09", EN, "en", NOW)).toBe("Yesterday")
+    expect(relativeDayLabel("2026-07-11", EN, "en", NOW)).toBe("Tomorrow")
   })
 
-  it("formats distant Days as weekday, day and month", () => {
-    expect(relativeDayLabel("2026-07-07", NOW)).toBe("Tue 7 Jul")
-    expect(relativeDayLabel("2026-12-31", NOW)).toBe("Thu 31 Dec")
+  it("formats distant Days as weekday, day and month in the locale", () => {
+    expect(relativeDayLabel("2026-07-07", EN, "en", NOW)).toBe("Tue 7 Jul")
+    expect(relativeDayLabel("2026-12-31", EN, "en", NOW)).toBe("Thu 31 Dec")
+  })
+
+  it("localizes both the near words and the distant date", () => {
+    expect(relativeDayLabel("2026-07-10", ES, "es", NOW)).toBe("Hoy")
+    expect(relativeDayLabel("2026-07-09", ES, "es", NOW)).toBe("Ayer")
+    // Spanish weekday/month abbreviations, day-before-month order preserved.
+    expect(relativeDayLabel("2026-07-07", ES, "es", NOW)).toBe("mar 7 jul")
   })
 })

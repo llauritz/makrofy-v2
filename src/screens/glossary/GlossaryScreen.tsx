@@ -12,11 +12,13 @@ import {
   unmergeAlias,
 } from "@/data/products"
 import { db } from "@/lib/firebase"
-import { formatRate, searchGlossary, toRate } from "@/lib/glossary"
+import { useI18n } from "@/lib/i18n/useI18n"
+import { searchGlossary, toRate } from "@/lib/glossary"
 import type { Alias, Product, Reading } from "@/lib/suggestions"
 import { SPRING } from "@/screens/main/anim"
 import { FadeSwap } from "@/screens/main/FadeSwap"
 import { ProductDetail, type PerBasis } from "./ProductDetail"
+import { productRateLine } from "./rate"
 
 // How long the "merged — undo" bar stays up before the merge is left to stand.
 const MERGE_UNDO_MS = 6000
@@ -28,6 +30,7 @@ const MERGE_UNDO_MS = 6000
 // products module — never a logged Entry — so the derived index (and this list)
 // simply re-renders as the correction lands.
 export function GlossaryScreen({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const uid = useIdentity()
   const index = useProductIndex(uid)
   const [query, setQuery] = React.useState("")
@@ -122,12 +125,12 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
         <button
           type="button"
           onClick={onBack}
-          aria-label="Back"
+          aria-label={t.common.back}
           className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-[22px] font-semibold">Food glossary</h1>
+        <h1 className="text-[22px] font-semibold">{t.glossary.title}</h1>
       </header>
 
       <div className="px-4 pb-2">
@@ -136,8 +139,8 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search foods"
-            aria-label="Search foods"
+            placeholder={t.glossary.search}
+            aria-label={t.glossary.search}
             autoComplete="off"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#a5988a]"
           />
@@ -146,12 +149,12 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
 
       <main className="flex flex-1 flex-col px-4 pb-3">
         {!hasAny ? (
-          <Empty
-            title="No foods yet"
-            body="Foods you log show up here once you've added a few."
-          />
+          <Empty title={t.glossary.emptyTitle} body={t.glossary.emptyBody} />
         ) : products.length === 0 ? (
-          <Empty title="No matches" body="No food matches that search." />
+          <Empty
+            title={t.glossary.noMatchesTitle}
+            body={t.glossary.noMatchesBody}
+          />
         ) : (
           <ul className="flex flex-col gap-2">
             <AnimatePresence mode="popLayout" initial={false}>
@@ -218,15 +221,20 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
               className="flex items-center justify-between gap-3 rounded-full bg-foreground py-2.5 pr-2.5 pl-4 text-background shadow-[0_8px_30px_rgba(43,32,21,0.2)]"
             >
               <span className="truncate text-sm font-medium">
-                Merged into{" "}
-                {survivorLabel(index.products, pendingMerge.survivorKey)}
+                {t.glossary.mergedInto(
+                  survivorLabel(
+                    index.products,
+                    pendingMerge.survivorKey,
+                    t.glossary.fallbackFood
+                  )
+                )}
               </span>
               <button
                 type="button"
                 onClick={undoMerge}
                 className="shrink-0 rounded-full bg-background/15 px-3 py-1 text-sm font-semibold"
               >
-                Undo
+                {t.common.undo}
               </button>
             </motion.div>
           )}
@@ -245,11 +253,12 @@ function GlossaryRow({
   product: Product
   onOpen: () => void
 }) {
+  const { t, n } = useI18n()
   return (
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`Curate ${product.label}`}
+      aria-label={t.glossary.curate(product.label)}
       className="w-full rounded-2xl px-4 py-3 text-left"
     >
       <div className="flex items-center justify-between gap-3">
@@ -258,11 +267,11 @@ function GlossaryRow({
             {product.label}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
-            {formatRate(product)}
+            {productRateLine(product, t, n)}
           </div>
         </div>
         <div className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
-          ×{product.useCount}
+          ×{n(product.useCount)}
         </div>
       </div>
     </button>
@@ -289,8 +298,12 @@ function sameKindOthers(products: Product[], survivor: Product): Product[] {
     )
 }
 
-// The survivor's current label for the undo bar; falls back to nothing if it
-// has already scrolled out of the derived index.
-function survivorLabel(products: Product[], key: string): string {
-  return products.find((p) => p.key === key)?.label ?? "food"
+// The survivor's current label for the undo bar; falls back to a generic word
+// if it has already scrolled out of the derived index.
+function survivorLabel(
+  products: Product[],
+  key: string,
+  fallback: string
+): string {
+  return products.find((p) => p.key === key)?.label ?? fallback
 }

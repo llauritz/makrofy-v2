@@ -14,6 +14,7 @@ import {
 } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
+import { LanguageProvider } from "@/components/language-provider"
 import type { Entry } from "@/data/entries"
 import {
   localDay,
@@ -40,6 +41,17 @@ vi.mock("@/data/hooks", () => ({
 }))
 
 import { MainScreen } from "@/screens/main/MainScreen"
+
+// Every screen reads the active language through useI18n → useLanguage, so the
+// component tree needs a LanguageProvider (jsdom's navigator resolves to en,
+// which is what the English label assertions below expect).
+function renderMain() {
+  return render(
+    <LanguageProvider>
+      <MainScreen onOpenGlossary={() => {}} />
+    </LanguageProvider>
+  )
+}
 
 // The moving parts of "now", computed exactly once for the whole file.
 const TODAY = localDay(new Date())
@@ -103,7 +115,7 @@ function swipe(surface: Element, dx: number) {
 describe("MainScreen day navigation (#34)", () => {
   it("selects a calendar pick, closes the sheet, and lands on that Day's log", () => {
     dayLog.set(TARGET, [entry(TARGET, "Porridge")])
-    render(<MainScreen onOpenGlossary={() => {}} />)
+    renderMain()
 
     // On-strip, the button is a plain calendar affordance, no date on show.
     expect(calendarButton().getAttribute("aria-label")).toBe("Open calendar")
@@ -132,7 +144,7 @@ describe("MainScreen day navigation (#34)", () => {
   })
 
   it("reopens from the off-strip button and returns home via today", () => {
-    render(<MainScreen onOpenGlossary={() => {}} />)
+    renderMain()
 
     let sheet = openSheet()
     fireEvent.click(
@@ -160,7 +172,7 @@ describe("MainScreen day navigation (#34)", () => {
   })
 
   it("lets the swipe drift past the old 14-day floor into the off-strip state", () => {
-    const { container } = render(<MainScreen onOpenGlossary={() => {}} />)
+    const { container } = renderMain()
     const surface = container.querySelector(".touch-pan-y")!
 
     for (let i = 0; i < 15; i++) swipe(surface, 120)

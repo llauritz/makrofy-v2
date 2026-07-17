@@ -9,6 +9,7 @@ import {
 } from "motion/react"
 
 import { isOffStrip, shortDayLabel, stripWindow, type DayCell } from "@/lib/day"
+import { useI18n } from "@/lib/i18n/useI18n"
 import { FADE_IN, FADE_OUT, SPRING } from "./anim"
 
 // The sole day navigator (#33, ADR 0008): a free-scrolling rail of Day chips —
@@ -37,7 +38,8 @@ export function DayStrip({
   onSelect: (day: string) => void
   onOpenCalendar: () => void
 }) {
-  const cells = stripWindow(selectedDay)
+  const { t, language } = useI18n()
+  const cells = stripWindow(selectedDay, new Date(), language)
   // Beyond the strip's reach the selection has no chip: the calendar button
   // itself carries the Day's date and reopens the picker (#34).
   const offStrip = isOffStrip(selectedDay)
@@ -148,8 +150,10 @@ export function DayStrip({
           type="button"
           aria-label={
             offStrip
-              ? `Open calendar, ${shortDayLabel(selectedDay)}`
-              : "Open calendar"
+              ? t.calendar.openCalendarOn(
+                  shortDayLabel(selectedDay, new Date(), language)
+                )
+              : t.calendar.openCalendar
           }
           onClick={onOpenCalendar}
           className={
@@ -175,7 +179,7 @@ export function DayStrip({
             }
           >
             <span className="block pl-1.5 text-sm font-semibold whitespace-nowrap">
-              {shortDayLabel(selectedDay)}
+              {shortDayLabel(selectedDay, new Date(), language)}
             </span>
           </motion.span>
         </button>

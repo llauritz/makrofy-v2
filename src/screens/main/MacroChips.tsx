@@ -1,4 +1,5 @@
 import type { Entry } from "@/data/entries"
+import { useI18n } from "@/lib/i18n/useI18n"
 import { MACROS, macroTint } from "./macros"
 
 // The tinted P/F/C gram chips shown under a food's label — shared by the entry
@@ -20,6 +21,7 @@ export function MacroChips({
   nutrients: Pick<Entry, "protein" | "fat" | "carbs">
   size?: ChipSize
 }) {
+  const { t, n } = useI18n()
   const chips = MACROS.filter((m) => (nutrients[m.field] ?? 0) > 0)
   if (chips.length === 0) return null
   const s = SIZE[size]
@@ -35,7 +37,8 @@ export function MacroChips({
             className={`rounded-full ${s.dot}`}
             style={{ backgroundColor: m.mark }}
           />
-          {m.letter} {nutrients[m.field]}g
+          {m.letter} {n(nutrients[m.field] ?? 0)}
+          {t.units.g}
         </span>
       ))}
     </div>

@@ -11,15 +11,11 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
-import {
-  basisLabel,
-  displayRate,
-  formatRate,
-  productRate,
-  type GlossaryRate,
-} from "@/lib/glossary"
+import { displayRate, productRate, type GlossaryRate } from "@/lib/glossary"
+import { useI18n } from "@/lib/i18n/useI18n"
 import type { QuantityKind } from "@/lib/quantity"
 import type { Alias, Product, Reading } from "@/lib/suggestions"
+import { productRateLine } from "./rate"
 import { MACROS, macroTint } from "@/screens/main/macros"
 import {
   EMPTY_MACROS,
@@ -67,6 +63,7 @@ export function ProductDetail({
   onUnmerge: (alias: Alias) => void
   onDeleteProduct: () => void
 }) {
+  const { t, n } = useI18n()
   const rate = productRate(product)
   const rateLess = product.readings.length === 0
   const [adding, setAdding] = React.useState(false)
@@ -80,17 +77,17 @@ export function ProductDetail({
             {product.label}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
-            {formatRate(product)} · ×{product.useCount}
+            {productRateLine(product, t, n)} · ×{n(product.useCount)}
           </div>
           {/* The Rate's per-unit macros, per nutrition basis (spec § Detail). */}
           {rate && <BasisMacroChips value={rate} />}
         </div>
-        <IconButton onClick={onClose} label="Close">
+        <IconButton onClick={onClose} label={t.common.close}>
           <X className="h-4 w-4" />
         </IconButton>
       </div>
 
-      <SectionLabel>Readings</SectionLabel>
+      <SectionLabel>{t.productDetail.readings}</SectionLabel>
       {rateLess ? (
         // A rate-less Product has no Reading to curate; entering a value seeds
         // its first, a fresh ×1 Reading (spec § Reading curation). Products that
@@ -113,7 +110,7 @@ export function ProductDetail({
               className="flex items-center gap-1.5 px-1 py-1 text-[13px] font-medium text-muted-foreground hover:text-foreground"
             >
               <Plus className="h-4 w-4" />
-              No calories yet — enter a value
+              {t.productDetail.noCalories}
             </button>
           )}
         </FadeSwap>
@@ -135,7 +132,7 @@ export function ProductDetail({
 
       {product.aliases.length > 0 && (
         <>
-          <SectionLabel>Also known as</SectionLabel>
+          <SectionLabel>{t.productDetail.alsoKnownAs}</SectionLabel>
           <ul className="flex flex-col gap-1.5">
             {product.aliases.map((alias) => (
               <li
@@ -145,7 +142,7 @@ export function ProductDetail({
                 <span className="truncate text-sm">{alias.label}</span>
                 <IconButton
                   onClick={() => onUnmerge(alias)}
-                  label={`Unmerge ${alias.label}`}
+                  label={t.productDetail.unmerge(alias.label)}
                 >
                   <X className="h-4 w-4" />
                 </IconButton>
@@ -164,7 +161,7 @@ export function ProductDetail({
             className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             <GitMerge className="h-4 w-4" />
-            Merge in…
+            {t.productDetail.mergeIn}
           </button>
         ) : (
           <span />
@@ -173,11 +170,11 @@ export function ProductDetail({
           type="button"
           onClick={onDeleteProduct}
           whileTap={{ scale: 0.9 }}
-          aria-label="Delete product"
+          aria-label={t.productDetail.deleteProduct}
           className="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-destructive"
         >
           <Trash2 className="h-4 w-4" />
-          Delete
+          {t.common.delete}
         </motion.button>
       </div>
 
@@ -192,8 +189,7 @@ export function ProductDetail({
             className="overflow-hidden"
           >
             <p className="mt-2 text-xs text-muted-foreground">
-              Pick a food to merge into <b>{product.label}</b>. Its entries and
-              counts join this one.
+              {t.productDetail.mergePrompt(product.label)}
             </p>
             <ul className="mt-1.5 flex flex-col gap-1.5">
               {mergeCandidates.map((candidate) => (
@@ -210,7 +206,7 @@ export function ProductDetail({
                       {candidate.label}
                     </span>
                     <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-                      ×{candidate.useCount}
+                      ×{n(candidate.useCount)}
                     </span>
                   </button>
                 </li>
@@ -239,6 +235,7 @@ function ReadingRow({
   onDelete: () => void
   onTogglePin: () => void
 }) {
+  const { t, n } = useI18n()
   const [editing, setEditing] = React.useState(false)
   const shown = displayRate(kind, reading.rate)
 
@@ -262,7 +259,7 @@ function ReadingRow({
           <button
             type="button"
             onClick={onTogglePin}
-            aria-label={reading.pinned ? "Unpin" : "Pin as rate"}
+            aria-label={reading.pinned ? t.productDetail.unpin : t.productDetail.pinAsRate}
             aria-pressed={reading.pinned}
             className={
               "flex h-7 w-7 shrink-0 items-center justify-center rounded-full " +
@@ -280,33 +277,30 @@ function ReadingRow({
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-1.5">
               <span className="text-sm font-semibold tabular-nums">
-                {shown.kcal}
+                {n(shown.kcal)}
               </span>
               <span className="text-[11px] text-muted-foreground">
-                {kcalBasis(kind)}
+                {t.glossary.kcalBasis(kind)}
               </span>
               <span className="text-[11px] text-muted-foreground tabular-nums">
-                ×{reading.votes}
+                ×{n(reading.votes)}
               </span>
             </div>
             <BasisMacroChips value={shown} />
           </div>
-          <IconButton onClick={() => setEditing(true)} label="Edit reading">
+          <IconButton
+            onClick={() => setEditing(true)}
+            label={t.productDetail.editReading}
+          >
             <Pencil className="h-4 w-4" />
           </IconButton>
-          <IconButton onClick={onDelete} label="Delete reading">
+          <IconButton onClick={onDelete} label={t.productDetail.deleteReading}>
             <Trash2 className="h-4 w-4" />
           </IconButton>
         </div>
       )}
     </FadeSwap>
   )
-}
-
-// The unit caption beside a Reading's kcal: "kcal each" for a piece, else
-// "kcal / 100 g" or "/ 100 ml".
-function kcalBasis(kind: QuantityKind): string {
-  return kind === "count" ? "kcal each" : `kcal / ${basisLabel(kind)}`
 }
 
 // The compact kcal + P/F/C form a Reading edits through, mirroring the add
@@ -322,7 +316,8 @@ function ReadingEditor({
   onSave: (value: PerBasis) => void
   onCancel: () => void
 }) {
-  const basis = basisLabel(kind)
+  const { t } = useI18n()
+  const basis = t.glossary.basis(kind)
   const [kcal, setKcal] = React.useState(initial ? String(initial.kcal) : "")
   const [macros, setMacros] = React.useState<MacroInputs>(() =>
     initial
@@ -367,12 +362,12 @@ function ReadingEditor({
           onKeyDown={onKeyDown}
           onFocus={(e) => e.target.select()}
           inputMode="decimal"
-          aria-label={`Calories per ${basis}`}
+          aria-label={t.productDetail.caloriesPer(basis)}
           className="w-20 rounded-full bg-card px-3 py-2 text-center text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
-          placeholder="kcal"
+          placeholder={t.units.kcal}
         />
         <span className="text-[11px] text-muted-foreground">
-          {kcalBasis(kind)}
+          {t.glossary.kcalBasis(kind)}
         </span>
       </div>
       <div className="mt-2 flex items-center gap-2">
@@ -397,13 +392,13 @@ function ReadingEditor({
               onKeyDown={onKeyDown}
               placeholder="0"
               inputMode="decimal"
-              aria-label={`${m.label} grams per ${basis}`}
+              aria-label={t.productDetail.gramsPer(t.macros[m.field], basis)}
               className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
             />
-            <span className="text-xs text-[#a5988a]">g</span>
+            <span className="text-xs text-[#a5988a]">{t.units.g}</span>
           </label>
         ))}
-        <IconButton onClick={onCancel} label="Cancel">
+        <IconButton onClick={onCancel} label={t.common.cancel}>
           <X className="h-4 w-4" />
         </IconButton>
         <motion.button
@@ -411,7 +406,7 @@ function ReadingEditor({
           onClick={save}
           disabled={!canSave}
           whileTap={{ scale: 0.9 }}
-          aria-label="Save reading"
+          aria-label={t.productDetail.saveReading}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
         >
           <Check className="h-4 w-4" strokeWidth={2.5} />
@@ -424,6 +419,7 @@ function ReadingEditor({
 // The per-basis macro chips (reusing the macro coding), shown under a Reading
 // or beside the Product's Rate.
 function BasisMacroChips({ value }: { value: GlossaryRate }) {
+  const { t, n } = useI18n()
   const chips = MACROS.filter((m) => (value[m.field] ?? 0) > 0)
   if (chips.length === 0) return null
   return (
@@ -438,7 +434,8 @@ function BasisMacroChips({ value }: { value: GlossaryRate }) {
             className="h-1 w-1 rounded-full"
             style={{ backgroundColor: m.mark }}
           />
-          {m.letter} {value[m.field]}g
+          {m.letter} {n(value[m.field] ?? 0)}
+          {t.units.g}
         </span>
       ))}
     </div>

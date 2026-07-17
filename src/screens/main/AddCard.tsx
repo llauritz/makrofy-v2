@@ -7,6 +7,7 @@ import type { EntrySource } from "@/data/entries"
 import { fillMacros, type AiFillReply } from "@/lib/ai"
 import { localDay } from "@/lib/day"
 import { db } from "@/lib/firebase"
+import { useI18n } from "@/lib/i18n/useI18n"
 import {
   capFinalRoundTrip,
   fillValuesFrom,
@@ -72,6 +73,7 @@ export function AddCard({
    * spec § AI macro-fill); null disables the whole card, as before. */
   uid?: string | null
 }) {
+  const { t } = useI18n()
   const [label, setLabel] = React.useState("")
   const [kcal, setKcal] = React.useState("")
   const [macros, setMacros] = React.useState(EMPTY_MACROS)
@@ -188,7 +190,7 @@ export function AddCard({
     if (!online) {
       // The offline contract: the dimmed button stays tappable and answers
       // with this quiet note in the zone (spec § AI macro-fill).
-      setAiPhase({ kind: "hint", hint: "AI fill needs a connection." })
+      setAiPhase({ kind: "hint", hint: t.addCard.aiOffline })
       return
     }
     setAiPhase({ kind: "thinking" })
@@ -199,7 +201,7 @@ export function AddCard({
       if (used >= AI_DAILY_LIMIT) {
         setAiPhase({
           kind: "hint",
-          hint: "Daily AI limit reached — more tomorrow.",
+          hint: t.addCard.aiLimit,
         })
         return
       }
@@ -211,7 +213,7 @@ export function AddCard({
       if (runId !== aiRun.current) return
       setAiPhase({
         kind: "hint",
-        hint: "Couldn't reach the AI — try again in a moment.",
+        hint: t.addCard.aiError,
       })
     }
   }
@@ -224,7 +226,7 @@ export function AddCard({
     if (reply === null) {
       setAiPhase({
         kind: "hint",
-        hint: "Couldn't estimate that — try rewording it.",
+        hint: t.addCard.aiNoEstimate,
       })
       return
     }
@@ -260,7 +262,7 @@ export function AddCard({
       case "hopeless":
         setAiPhase({
           kind: "hint",
-          hint: `Can't estimate this one. ${result.hint}`,
+          hint: t.addCard.aiHopeless(result.hint),
         })
         break
     }
@@ -320,8 +322,8 @@ export function AddCard({
             value={label}
             onChange={(e) => onLabelChange(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="What did you eat?"
-            aria-label="Food"
+            placeholder={t.addCard.placeholder}
+            aria-label={t.addCard.food}
             className="w-full rounded-full bg-input py-2.5 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
           />
           <div className="absolute inset-y-0 right-1.5 flex items-center">
@@ -330,7 +332,7 @@ export function AddCard({
               onClick={startAi}
               disabled={disabled || thinking || label.trim() === ""}
               whileTap={{ scale: 0.9 }}
-              aria-label="Fill with AI"
+              aria-label={t.addCard.fillWithAi}
               className={
                 "flex h-7 w-7 items-center justify-center rounded-full transition-opacity disabled:opacity-40" +
                 // Offline the button dims in place but stays tappable — the
@@ -349,9 +351,9 @@ export function AddCard({
           onChange={(e) => setKcal(e.target.value)}
           onKeyDown={onKeyDown}
           onFocus={acceptFlag("kcal")}
-          placeholder="kcal"
+          placeholder={t.units.kcal}
           inputMode="decimal"
-          aria-label="Calories"
+          aria-label={t.addCard.calories}
           className={
             "w-16 rounded-full bg-input px-3 py-2.5 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
             // outline-none (focus reset) and the dashed flag outline are
@@ -388,10 +390,10 @@ export function AddCard({
               onFocus={acceptFlag(m.key)}
               placeholder="0"
               inputMode="decimal"
-              aria-label={`${m.label} grams`}
+              aria-label={t.macros.grams(t.macros[m.field])}
               className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
             />
-            <span className="text-xs text-[#a5988a]">g</span>
+            <span className="text-xs text-[#a5988a]">{t.units.g}</span>
           </label>
         ))}
         <motion.button
@@ -399,7 +401,7 @@ export function AddCard({
           onClick={submit}
           disabled={!canAdd}
           whileTap={{ scale: 0.9 }}
-          aria-label="Add entry"
+          aria-label={t.addCard.addEntry}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
         >
           <Plus className="h-5 w-5" strokeWidth={2.5} />
@@ -459,12 +461,13 @@ function Suggestion({
   row: SuggestionRow
   onPick: () => void
 }) {
+  const { t, n } = useI18n()
   return (
     <motion.button
       type="button"
       onClick={onPick}
       whileTap={{ scale: 0.98 }}
-      aria-label={`Use ${row.label}`}
+      aria-label={t.addCard.use(row.label)}
       className="w-full rounded-2xl bg-input px-3 py-2 text-left"
     >
       <div className="flex items-center justify-between gap-3">
@@ -483,9 +486,9 @@ function Suggestion({
           <MacroChips nutrients={row} size="sm" />
         </div>
         <div className="shrink-0 text-sm font-semibold tabular-nums">
-          {row.kcal}
+          {n(row.kcal)}
           <span className="ml-1 text-[11px] font-normal text-muted-foreground">
-            kcal
+            {t.units.kcal}
           </span>
         </div>
       </div>
