@@ -13,11 +13,7 @@ import {
 // auto-enforced product). Everything is loaded lazily on the first ✨ tap —
 // most sessions never pay for the AI SDK or the reCAPTCHA script.
 
-// Owner escalated from `gemini-3.1-flash-lite` to the latest model
-// (2026-07-16, spec § AI macro-fill amended). Same Gemini-3 capability set,
-// same $14/1k grounding fee; pricier tokens (~$0.002/call — grounding still
-// dominates).
-const MODEL_ID = "gemini-3.5-flash"
+const MODEL_ID = "gemini-3.1-flash-lite"
 
 // The reCAPTCHA Enterprise site key for production App Check attestation —
 // public by design (it ships in the bundle, like firebaseConfig). Local dev
