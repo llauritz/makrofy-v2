@@ -5,7 +5,6 @@
 // MainScreen renders for real, so these tests survive refactors of the strip,
 // the sheet, and the wiring between them.
 import { Timestamp } from "firebase/firestore"
-import * as React from "react"
 import {
   cleanup,
   fireEvent,
@@ -56,6 +55,7 @@ function entry(date: string, label: string): Entry {
     mealType: "breakfast",
     source: "manual",
     createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
   }
 }
 

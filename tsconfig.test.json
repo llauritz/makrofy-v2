@@ -24,7 +24,7 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["tests", "vitest.config.ts", "src/data"],
+  "include": ["tests/**/*.ts", "vitest.config.ts", "src/data"],
   // hooks.ts is the React binding over the data seam — it pulls in the Firebase
   // singleton (import.meta.env) and belongs to the app typecheck, not this
   // node-typed one. The pure, tested modules stay in scope.
