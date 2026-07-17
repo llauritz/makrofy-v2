@@ -1,4 +1,5 @@
 import * as React from "react"
+import { CalendarDays } from "lucide-react"
 import {
   animate,
   motion,
@@ -7,7 +8,7 @@ import {
   useTransform,
 } from "motion/react"
 
-import { stripWindow, type DayCell } from "@/lib/day"
+import { isOffStrip, shortDayLabel, stripWindow, type DayCell } from "@/lib/day"
 import { SPRING } from "./anim"
 
 // The sole day navigator (#33, ADR 0008): a free-scrolling rail of Day chips —
@@ -29,12 +30,17 @@ export function DayStrip({
   selectedDay,
   loggedDays,
   onSelect,
+  onOpenCalendar,
 }: {
   selectedDay: string
   loggedDays: Set<string>
   onSelect: (day: string) => void
+  onOpenCalendar: () => void
 }) {
   const cells = stripWindow(selectedDay)
+  // Beyond the strip's reach the selection has no chip: the calendar button
+  // itself carries the Day's date and reopens the picker (#34).
+  const offStrip = isOffStrip(selectedDay)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const rowRef = React.useRef<HTMLDivElement>(null)
   const mounted = React.useRef(false)
@@ -56,10 +62,18 @@ export function DayStrip({
   // button's box is the pill's box; only x differs per selection. Snap on first
   // paint and under reduced motion (spec § Motion: movement snaps); else spring.
   React.useLayoutEffect(() => {
-    const btn =
-      rowRef.current?.querySelector<HTMLElement>('[aria-current="date"]')
-    if (!btn) return // off-strip selection (#34) has no chip to mask
-    setPill({ top: btn.offsetTop, width: btn.offsetWidth, height: btn.offsetHeight })
+    const btn = rowRef.current?.querySelector<HTMLElement>(
+      '[aria-current="date"]'
+    )
+    if (!btn) {
+      setPill(null) // off-strip selection (#34): no chip, no pill
+      return
+    }
+    setPill({
+      top: btn.offsetTop,
+      width: btn.offsetWidth,
+      height: btn.offsetHeight,
+    })
     if (!mounted.current || shouldReduce) {
       pillX.set(btn.offsetLeft)
       return
@@ -106,57 +120,98 @@ export function DayStrip({
   }, [selectedDay, selectedIsFuture, shouldReduce])
 
   return (
-    <div
-      ref={scrollRef}
-      className="relative overflow-x-auto px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
-      {/* Base layer — every chip in ink, always in its unselected palette. */}
-      <div ref={rowRef} className="flex w-max gap-1">
-        {cells.map((cell) => (
-          <button
-            key={cell.day}
-            type="button"
-            aria-label={cell.day}
-            aria-current={cell.isSelected ? "date" : undefined}
-            onClick={() => onSelect(cell.day)}
-            className={
-              "flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-full py-2 " +
-              (cell.isFrontier
-                ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-                : cell.isToday && !cell.isSelected
-                  ? "ring-1 ring-inset ring-[#cbbfa4] dark:ring-[#4a3e2e]"
-                  : "") +
-              (cell.isFuture && !cell.isSelected ? " opacity-60" : "")
-            }
-          >
-            <ChipFace cell={cell} logged={loggedDays.has(cell.day)} inverted={false} />
-          </button>
-        ))}
-      </div>
+    <div className="flex items-center gap-2 pl-3">
+      {/* The leading calendar affordance: an icon while the selection is on
+          the strip; off-strip it fills like the selection pill and carries the
+          Day's date, so "where am I?" always has an answer. */}
+      <button
+        type="button"
+        aria-label={
+          offStrip
+            ? `Open calendar, ${shortDayLabel(selectedDay)}`
+            : "Open calendar"
+        }
+        onClick={onOpenCalendar}
+        className={
+          "flex h-9 shrink-0 items-center justify-center rounded-full " +
+          (offStrip
+            ? "gap-1.5 bg-foreground px-3 text-background"
+            : "w-9 text-muted-foreground")
+        }
+      >
+        <CalendarDays className="h-[18px] w-[18px]" />
+        {offStrip && (
+          <span className="text-sm font-semibold whitespace-nowrap">
+            {shortDayLabel(selectedDay)}
+          </span>
+        )}
+      </button>
 
-      {/* Mask layer — the ink pill, clipping an inverted copy of the same row.
-          Only the chip under the pill is ever visible here. */}
-      {pill && (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute left-0 overflow-hidden rounded-full bg-foreground"
-          style={{ top: pill.top, width: pill.width, height: pill.height, x: pillX }}
-        >
+      <div
+        ref={scrollRef}
+        className="relative [scrollbar-width:none] overflow-x-auto py-2 pr-4 [&::-webkit-scrollbar]:hidden"
+      >
+        {/* Base layer — every chip in ink, always in its unselected palette. */}
+        <div ref={rowRef} className="flex w-max gap-1">
+          {cells.map((cell) => (
+            <button
+              key={cell.day}
+              type="button"
+              aria-label={cell.day}
+              aria-current={cell.isSelected ? "date" : undefined}
+              onClick={() => onSelect(cell.day)}
+              className={
+                "flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-full py-2 " +
+                (cell.isFrontier
+                  ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
+                  : cell.isToday && !cell.isSelected
+                    ? "ring-1 ring-[#cbbfa4] ring-inset dark:ring-[#4a3e2e]"
+                    : "") +
+                (cell.isFuture && !cell.isSelected ? " opacity-60" : "")
+              }
+            >
+              <ChipFace
+                cell={cell}
+                logged={loggedDays.has(cell.day)}
+                inverted={false}
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* Mask layer — the ink pill, clipping an inverted copy of the same
+            row. Only the chip under the pill is ever visible here. */}
+        {pill && (
           <motion.div
-            className="absolute top-0 left-0 flex w-max gap-1 px-4"
-            style={{ x: innerX }}
+            aria-hidden
+            className="pointer-events-none absolute left-0 overflow-hidden rounded-full bg-foreground"
+            style={{
+              top: pill.top,
+              width: pill.width,
+              height: pill.height,
+              x: pillX,
+            }}
           >
-            {cells.map((cell) => (
-              <div
-                key={cell.day}
-                className="flex w-11 shrink-0 flex-col items-center gap-0.5 py-2"
-              >
-                <ChipFace cell={cell} logged={loggedDays.has(cell.day)} inverted />
-              </div>
-            ))}
+            <motion.div
+              className="absolute top-0 left-0 flex w-max gap-1"
+              style={{ x: innerX }}
+            >
+              {cells.map((cell) => (
+                <div
+                  key={cell.day}
+                  className="flex w-11 shrink-0 flex-col items-center gap-0.5 py-2"
+                >
+                  <ChipFace
+                    cell={cell}
+                    logged={loggedDays.has(cell.day)}
+                    inverted
+                  />
+                </div>
+              ))}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

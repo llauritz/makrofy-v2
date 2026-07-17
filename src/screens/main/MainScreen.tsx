@@ -19,11 +19,12 @@ import {
   useSyncStatus,
 } from "@/data/hooks"
 import { refreshIdentity } from "@/data/identity"
-import { localDay, stepWithinStrip } from "@/lib/day"
+import { localDay, stepDay } from "@/lib/day"
 import { auth, db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
 import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
+import { CalendarSheet } from "./CalendarSheet"
 import { DayStrip } from "./DayStrip"
 import { EntryList } from "./EntryList"
 import type { EntryDraft } from "./fields"
@@ -46,6 +47,7 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
   )
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
+  const [calendarOpen, setCalendarOpen] = React.useState(false)
   // The Entry awaiting a deferred delete — hidden from the log while its undo
   // snackbar is up; the real delete fires only when the window lapses.
   const [pending, setPending] = React.useState<Entry | null>(null)
@@ -86,13 +88,9 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
     setEditingId(null)
     setSelectedDay(day)
   }
-  // The swipe steps ±1 Day, bounded to the strip: it stops at the 14-day floor
-  // and, forward, advances the frontier (the calendar ticket lifts the floor).
-  const swipeStep = (delta: -1 | 1) => {
-    const next = stepWithinStrip(selectedDay, delta)
-    if (next) goToDay(next)
-  }
-  const swipe = useDaySwipe(swipeStep)
+  // The swipe steps ±1 Day, unbounded (#34): drifting past the strip's reach
+  // is fine — the selection then lives on the calendar button, not a chip.
+  const swipe = useDaySwipe((delta) => goToDay(stepDay(selectedDay, delta)))
 
   const handleAdd = (draft: EntryDraft, source: EntrySource) => {
     if (!uid) return
@@ -137,6 +135,7 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
           selectedDay={selectedDay}
           loggedDays={loggedDays}
           onSelect={goToDay}
+          onOpenCalendar={() => setCalendarOpen(true)}
         />
         {/* The log is the swipe surface: touch-pan-y lets the browser own
             vertical scroll while horizontal gestures reach the pointer
@@ -161,6 +160,16 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
           <SummaryCard summary={summary} onOpenSettings={openSettings} />
         </div>
       </main>
+      <CalendarSheet
+        open={calendarOpen}
+        onOpenChange={setCalendarOpen}
+        selectedDay={selectedDay}
+        loggedDays={loggedDays}
+        onPick={(day) => {
+          goToDay(day)
+          setCalendarOpen(false)
+        }}
+      />
       <SettingsSheet
         open={settingsOpen}
         onOpenChange={setSettingsOpen}

@@ -7,11 +7,17 @@
 
 // Fixed English display tables. Locale-aware formatting arrives with i18n
 // (#25); until then these keep labels deterministic and test-stable.
-const WEEKDAY_NARROW = ["S", "M", "T", "W", "T", "F", "S"] as const
+// WEEKDAY_NARROW is Sunday-first, shared by the strip chips and the calendar
+// grid header (#34) so the two surfaces can never disagree on the week shape.
+export const WEEKDAY_NARROW = ["S", "M", "T", "W", "T", "F", "S"] as const
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const
 const MONTH_SHORT = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+] as const
+const MONTH_LONG = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ] as const
 
 /** The device-local Day a moment belongs to, as 'YYYY-MM-DD'. */
@@ -70,25 +76,47 @@ export interface DayCell {
 export const STRIP_PAST_DAYS = 14
 
 /**
+ * How far forward the strip follows a selection, mirroring the floor. Forward
+ * navigation itself is unbounded — beyond the ceiling the selection simply
+ * lives on the calendar button instead of a chip (#34).
+ */
+export const STRIP_FUTURE_DAYS = 14
+
+/**
  * The strip's floor: the oldest Day it reaches, `STRIP_PAST_DAYS` before today.
- * The one home for the bound so the window's leading edge and the swipe's guard
- * can never disagree (#34 lifts it for the calendar).
+ * The one home for the bound so the window's leading edge and the off-strip
+ * predicate can never disagree.
  */
 export function stripFloor(now: Date = new Date()): string {
   return stepDay(localDay(now), -STRIP_PAST_DAYS)
 }
 
+/** The strip's ceiling: the newest Day a chip can represent. */
+export function stripCeiling(now: Date = new Date()): string {
+  return stepDay(localDay(now), STRIP_FUTURE_DAYS)
+}
+
+/**
+ * Whether a Day lies beyond the strip's reach on either side (#34). Off-strip,
+ * no chip is filled and the calendar button carries the Day's date.
+ */
+export function isOffStrip(day: string, now: Date = new Date()): boolean {
+  return day < stripFloor(now) || day > stripCeiling(now)
+}
+
 /**
  * The Day strip's window (#33): a today-anchored run from `STRIP_PAST_DAYS`
  * ago through today, plus the future frontier. The window never moves with a
- * past selection; selecting a future Day extends it, keeping exactly one
- * dashed frontier beyond the selection — tapping the frontier *is* the
- * frontier advance.
+ * past selection; selecting an on-strip future Day extends it, keeping exactly
+ * one dashed frontier beyond the selection — tapping the frontier *is* the
+ * frontier advance. An off-strip selection (either side, #34) leaves the
+ * window in its unselected home state.
  */
 export function stripWindow(selected: string, now: Date = new Date()): DayCell[] {
   const today = localDay(now)
   const first = stripFloor(now)
-  const frontier = stepDay(selected > today ? selected : today, 1)
+  const extendsStrip = selected > today && !isOffStrip(selected, now)
+  const frontier = stepDay(extendsStrip ? selected : today, 1)
   const length = dayDiff(frontier, first) + 1
   return Array.from({ length }, (_, i) => {
     const day = stepDay(first, i)
@@ -105,18 +133,66 @@ export function stripWindow(selected: string, now: Date = new Date()): DayCell[]
   })
 }
 
+// ── The calendar's month axis (#34) ─────────────────────────────────────────
+// A month is 'YYYY-MM'; like Days, months compare lexicographically and all
+// arithmetic runs on calendar components, so paging is unbounded and DST-exact.
+
+/** The 'YYYY-MM' month a Day belongs to. */
+export function monthOf(day: string): string {
+  return day.slice(0, 7)
+}
+
+/** The month `delta` months from `month`, across year boundaries. */
+export function stepMonth(month: string, delta: number): string {
+  const [y, m] = month.split("-").map(Number)
+  const d = new Date(y, m - 1 + delta, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+}
+
+/** The sheet header's name for a month: "July 2026". */
+export function monthTitle(month: string): string {
+  const [y, m] = month.split("-").map(Number)
+  return `${MONTH_LONG[m - 1]} ${y}`
+}
+
+export interface MonthCell {
+  /** 'YYYY-MM-DD' — padding cells are the neighbor months' real Days. */
+  day: string
+  /** Day of month, 1–31. */
+  dayNum: number
+  /** False on the leading/trailing padding rows. */
+  inMonth: boolean
+}
+
 /**
- * The swipe's step, bounded to the strip (#33): null below the 14-day floor
- * (deep Backfill is the calendar's job), always legal forward — stepping onto
- * the frontier is how a swipe advances it.
+ * The calendar's month grid (#34): Sunday-first, always six rows (42 cells) so
+ * the sheet never changes height while paging. Leading and trailing cells are
+ * the neighbor months' Days, flagged out-of-month; state (today, selection,
+ * logged dots) is the component's to overlay, keeping the grid pure.
  */
-export function stepWithinStrip(
-  day: string,
-  delta: -1 | 1,
-  now: Date = new Date(),
-): string | null {
-  const next = stepDay(day, delta)
-  return next < stripFloor(now) ? null : next
+export function monthGrid(month: string): MonthCell[] {
+  const [y, m] = month.split("-").map(Number)
+  const lead = new Date(y, m - 1, 1).getDay() // cells before the 1st, Sunday-first
+  return Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(y, m - 1, 1 + i - lead)
+    return {
+      day: localDay(d),
+      dayNum: d.getDate(),
+      inMonth: d.getMonth() === m - 1,
+    }
+  })
+}
+
+/**
+ * The calendar button's compact name for an off-strip Day: "1 Jul", with the
+ * year appended only when it isn't the current one ("31 Dec 2025").
+ */
+export function shortDayLabel(day: string, now: Date = new Date()): string {
+  const d = parseDay(day)
+  const base = `${d.getDate()} ${MONTH_SHORT[d.getMonth()]}`
+  return d.getFullYear() === now.getFullYear()
+    ? base
+    : `${base} ${d.getFullYear()}`
 }
 
 /**
