@@ -59,12 +59,31 @@ export interface NewEntry extends EntryNutrients {
 }
 
 /**
- * The mutable fields of an Entry. Editing never moves an Entry to another Day,
- * restamps its Source, or touches its flags — date, source, mealType,
- * createdAt and any flagged values are fixed at commit. An absent optional
- * macro means "cleared": the field is removed.
+ * The mutable fields of an Entry. Editing never moves an Entry to another Day
+ * — date, mealType and createdAt are fixed at commit. An absent optional
+ * macro means "cleared": the field is removed. `flagged` present means the
+ * editor reconciled the Entry's Flagged values (seeded outlines,
+ * tap-to-accept — #53); `source` present restamps the provenance (the
+ * editor's ✨ fill arriving under Save); either absent leaves the Entry's
+ * value untouched.
  */
-export type EntryEdit = EntryNutrients
+export type EntryEdit = EntryNutrients & {
+  source?: EntrySource
+  flagged?: FlaggableField[]
+}
+
+/**
+ * An AI fill landing on a logged Entry (#53): only the fields the Entry was
+ * missing — a logged value is never overwritten — plus the fields the model
+ * was still unsure about among those it filled.
+ */
+export interface EntryAiFill {
+  kcal?: number
+  protein?: number
+  fat?: number
+  carbs?: number
+  flagged?: FlaggableField[]
+}
 
 /**
  * Meal type is attached silently, never shown in V2 UI — it exists as the
@@ -122,13 +141,44 @@ export function updateEntry(
     kcal: edit.kcal,
     updatedAt: serverTimestamp(),
   }
-  // Only the macros are reconciled; flagged values are left untouched so they
-  // persist past an edit (ADR 0003). A cleared macro is removed.
+  // A cleared macro is removed. Flags: an edit that carries flagged reconciles
+  // it — the editor's Save persists the Flagged values still standing after
+  // tap-to-accept (#53, amending ADR 0003) — and one that says nothing about
+  // flags leaves them untouched.
   for (const field of ["protein", "fat", "carbs"] as const) {
     data[field] = edit[field] !== undefined ? edit[field] : deleteField()
   }
+  if (edit.flagged !== undefined) {
+    data.flagged = edit.flagged.length > 0 ? edit.flagged : deleteField()
+  }
+  if (edit.source !== undefined) data.source = edit.source
   updateDoc(doc(entriesCollection(db, uid), id), data).catch((err) => {
     console.error("Entry update failed", id, err)
+  })
+}
+
+/**
+ * Land an AI fill on a logged Entry (#53): write only the provided fields —
+ * the caller sends just what the Entry was missing (entryFillFrom), so logged
+ * values are never overwritten — stamp the ✨ provenance, and persist the
+ * fields the model was still unsure about. The label is never touched.
+ * Queued, not awaited (see addEntry).
+ */
+export function applyAiFill(
+  db: Firestore,
+  uid: string,
+  id: string,
+  fill: EntryAiFill,
+): void {
+  const data: Record<string, unknown> = {
+    source: "ai",
+    updatedAt: serverTimestamp(),
+  }
+  for (const field of ["kcal", "protein", "fat", "carbs", "flagged"] as const) {
+    if (fill[field] !== undefined) data[field] = fill[field]
+  }
+  updateDoc(doc(entriesCollection(db, uid), id), data).catch((err) => {
+    console.error("Entry AI fill failed", id, err)
   })
 }
 

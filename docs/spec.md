@@ -80,11 +80,13 @@ Normative: [#5](https://github.com/llauritz/makrofy-v2/issues/5); screenshots `d
 
 ## AI macro-fill
 
-Normative: [#3](https://github.com/llauritz/makrofy-v2/issues/3) + `docs/research/gemini-firebase-ai-logic-macro-fill.md` (schema, worked examples, pricing).
+Normative: [#3](https://github.com/llauritz/makrofy-v2/issues/3) + `docs/research/gemini-firebase-ai-logic-macro-fill.md` (schema, worked examples, pricing). Surfaces beyond the add card: [#53](https://github.com/llauritz/makrofy-v2/issues/53) + ADR 0010.
 
 - **Model**: `gemini-3.1-flash-lite` via Firebase AI Logic with Google Search grounding (owner reverted the brief 2026-07-16 `gemini-3.5-flash` escalation same day; never 2.5 — no single-call grounded structured output, pricier grounding).
 - **Four tiers**, one flat `status`-enum response: *confident* → fill · *unsure* → fill + 2px-dashed flagged fields (tap to accept/fix) · *ambiguous* → exactly one question with answer chips (chip = second and **final** round trip) · *hopeless* → refusal + usable hint.
 - **The AI never rewrites the label**; interpretation shows in the info row; committed AI entries carry ✨ (`source: 'ai'`).
+- **Three surfaces, one choreography** (#53, ADR 0010): the add card (fill overwrites the draft; only Add commits) · the inline editor (✨ in the label input; fill completes only blank fields under Save; dashed outlines seed from the Entry's persisted flags and Save persists the survivors) · the dashed 0-kcal row (✨ left of the muted number; responses answer inside that same card; a confident answer commits the missing fields directly with ✨ provenance).
+- **On a logged Entry the fill writes only missing fields** — logged values are never overwritten; they anchor the prompt ("porridge (12 g protein)") so the estimate stays consistent with them; kcal 0 counts as missing.
 - **Two-speed conditional grounding**: staples ungrounded ~0.5 s, silent; branded/variable foods grounded 1.8–3.8 s and **must show the Google Search Suggestions chip** at response time (Google's terms — compliance). The heuristic is prompt design.
 - **Safety**: App Check (reCAPTCHA Enterprise) enforced; AI button requires a Firebase identity (Guests count); per-user daily quota app-side; budget alert as backstop (alerts don't cap spend).
 - **Offline**: AI button dims; tap shows "AI fill needs a connection" in the response zone. Manual entry and typeahead never wait on the AI.

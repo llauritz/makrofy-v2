@@ -3,9 +3,11 @@ import { AnimatePresence } from "motion/react"
 
 import {
   addEntry,
+  applyAiFill,
   deleteEntry,
   updateEntry,
   type Entry,
+  type EntryAiFill,
   type EntryEdit,
   type EntrySource,
 } from "@/data/entries"
@@ -102,6 +104,11 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
     setEditingId(null)
   }
 
+  // A row-level ✨ fill: the missing fields land on the logged Entry (#53).
+  const handleAiFill = (id: string, fill: EntryAiFill) => {
+    if (uid) applyAiFill(db, uid, id, fill)
+  }
+
   const requestDelete = (entry: Entry) => {
     setEditingId(null)
     // Finalize a prior pending delete before deferring this one.
@@ -146,10 +153,12 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
           <EntryList
             entries={newestFirst}
             editingId={editingId}
+            uid={uid}
             onStartEdit={setEditingId}
             onSaveEdit={handleSave}
             onCancelEdit={() => setEditingId(null)}
             onDelete={requestDelete}
+            onAiFill={handleAiFill}
           />
         </div>
         <div className="flex-1" />

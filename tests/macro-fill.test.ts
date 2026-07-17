@@ -9,12 +9,18 @@ import { describe, expect, it } from "vitest"
 import {
   bindAttributionToTheme,
   capFinalRoundTrip,
+  entryFillFrom,
+  fillableFrom,
+  fillNumbersFrom,
   fillValuesFrom,
   flaggedFieldsFrom,
   flagsFromUncertain,
   followUpPrompt,
+  formFlagsFrom,
   interpretationOf,
+  knownFromEntry,
   parseMacroFillResponse,
+  promptFrom,
 } from "@/lib/macro-fill"
 
 // The research note's worked example for the confident tier ("10g butter").
@@ -350,5 +356,131 @@ describe("followUpPrompt", () => {
         'Your clarifying question: "Which cereal is it — and roughly how much?"\n' +
         'The answer: "Cornflakes, 40 g"'
     )
+  })
+})
+
+describe("knownFromEntry", () => {
+  it("treats kcal 0 as not logged (the dashed-row rule), macros by presence", () => {
+    expect(knownFromEntry({ kcal: 0, protein: 12 })).toEqual({ protein: 12 })
+  })
+
+  it("keeps a real kcal and an explicit 0-gram macro", () => {
+    // 0 g fat is a logged value (black coffee), unlike 0 kcal which means
+    // "no calorie info" per the Entry schema.
+    expect(knownFromEntry({ kcal: 350, fat: 0 })).toEqual({ kcal: 350, fat: 0 })
+  })
+})
+
+describe("fillableFrom", () => {
+  it("offers every field when nothing is known", () => {
+    expect(fillableFrom({})).toEqual(new Set(["kcal", "p", "f", "c"]))
+  })
+
+  it("offers only the fields without a value", () => {
+    expect(fillableFrom({ kcal: 350 })).toEqual(new Set(["p", "f", "c"]))
+    expect(fillableFrom({ protein: 12, fat: 0 })).toEqual(
+      new Set(["kcal", "c"])
+    )
+  })
+
+  it("is empty when everything is already filled", () => {
+    expect(
+      fillableFrom({ kcal: 350, protein: 12, fat: 5, carbs: 30 })
+    ).toEqual(new Set())
+  })
+})
+
+describe("promptFrom", () => {
+  it("is the label alone when nothing is known", () => {
+    expect(promptFrom("porridge", {})).toBe("porridge")
+  })
+
+  it("folds known values into the description so estimates anchor to them", () => {
+    expect(promptFrom("porridge", { protein: 12 })).toBe(
+      "porridge (12 g protein)"
+    )
+    expect(promptFrom("chicken salad", { kcal: 350 })).toBe(
+      "chicken salad (350 kcal)"
+    )
+  })
+
+  it("lists several known values in kcal, protein, fat, carbs order", () => {
+    expect(
+      promptFrom("smoothie", { carbs: 30, kcal: 320, protein: 12 })
+    ).toBe("smoothie (320 kcal, 12 g protein, 30 g carbs)")
+  })
+})
+
+describe("fillNumbersFrom", () => {
+  it("rounds like the add-card strings: kcal whole, macros one decimal", () => {
+    const food = {
+      label: "Granola",
+      servingText: "50 g",
+      grams: 50,
+      calories: 230.4,
+      protein_g: 5.04,
+      carbs_g: 32,
+      fat_g: 9.25,
+    }
+    expect(fillNumbersFrom(food)).toEqual({
+      kcal: 230,
+      protein: 5,
+      fat: 9.3,
+      carbs: 32,
+    })
+  })
+})
+
+describe("entryFillFrom", () => {
+  // The unsure worked example: the row fill's source food.
+  const banana = {
+    label: "Banana, raw",
+    servingText: "1 medium (~118 g)",
+    grams: 118,
+    calories: 105,
+    protein_g: 1.3,
+    carbs_g: 27.0,
+    fat_g: 0.4,
+  }
+
+  it("writes only the missing fields, never a logged value", () => {
+    expect(entryFillFrom({ protein: 12 }, banana, new Set())).toEqual({
+      kcal: 105,
+      fat: 0.4,
+      carbs: 27,
+    })
+  })
+
+  it("keeps flags only for fields the fill actually wrote", () => {
+    // protein is logged, so the model's protein doubt has nowhere to land;
+    // calorie doubt lands on the kcal it wrote.
+    expect(
+      entryFillFrom({ protein: 12 }, banana, new Set(["kcal", "p"]))
+    ).toEqual({
+      kcal: 105,
+      fat: 0.4,
+      carbs: 27,
+      flagged: ["kcal"],
+    })
+  })
+
+  it("is empty when nothing is missing", () => {
+    expect(
+      entryFillFrom(
+        { kcal: 100, protein: 1, fat: 0.5, carbs: 25 },
+        banana,
+        new Set(["kcal"])
+      )
+    ).toEqual({})
+  })
+})
+
+describe("formFlagsFrom", () => {
+  it("maps persisted flagged fields back onto their form flags", () => {
+    expect(formFlagsFrom(["kcal", "fat"])).toEqual(new Set(["kcal", "f"]))
+  })
+
+  it("is empty for an Entry with no flags", () => {
+    expect(formFlagsFrom(undefined)).toEqual(new Set())
   })
 })

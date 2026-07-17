@@ -5,7 +5,7 @@
 // the model's JSON is untrusted, and the flat wire schema can't express
 // which fields belong to which status — those tier rules are enforced here,
 // client-side. The Gemini call itself lives in src/lib/ai.ts.
-import type { FlaggableField } from "@/data/entries"
+import type { EntryAiFill, FlaggableField } from "@/data/entries"
 
 /** The macro fields the model may mark as low-confidence (wire names). */
 export type AiUncertainField =
@@ -173,6 +173,70 @@ export function flaggedFieldsFrom(
 }
 
 /**
+ * The nutrient values a surface already holds, Entry-shaped. What an AI fill
+ * on a logged Entry (or the editor) must never overwrite — and what anchors
+ * its prompt so the estimate stays consistent with them. An absent field is
+ * one the fill may write.
+ */
+export interface KnownNutrients {
+  kcal?: number
+  protein?: number
+  fat?: number
+  carbs?: number
+}
+
+/**
+ * The values an Entry actually carries. kcal 0 means "no calorie info" (the
+ * dashed-row rule, ADR 0003), so it reads as unknown; a present 0-gram macro
+ * is a logged value (black coffee) and stays known.
+ */
+export function knownFromEntry(entry: {
+  kcal: number
+  protein?: number
+  fat?: number
+  carbs?: number
+}): KnownNutrients {
+  const known: KnownNutrients = {}
+  if (entry.kcal !== 0) known.kcal = entry.kcal
+  if (entry.protein !== undefined) known.protein = entry.protein
+  if (entry.fat !== undefined) known.fat = entry.fat
+  if (entry.carbs !== undefined) known.carbs = entry.carbs
+  return known
+}
+
+const FLAG_BY_NUTRIENT: Record<keyof KnownNutrients, FormFlag> = {
+  kcal: "kcal",
+  protein: "p",
+  fat: "f",
+  carbs: "c",
+}
+
+/** The form fields an AI fill may write: those without a known value. */
+export function fillableFrom(known: KnownNutrients): Set<FormFlag> {
+  const fillable = new Set<FormFlag>()
+  for (const field of ["kcal", "protein", "fat", "carbs"] as const) {
+    if (known[field] === undefined) fillable.add(FLAG_BY_NUTRIENT[field])
+  }
+  return fillable
+}
+
+/**
+ * The user prompt for a fill on a surface that already holds values: the
+ * label with the known values folded in as part of the description
+ * ("porridge (320 kcal, 12 g protein)"), so the model's estimate for the
+ * missing fields stays consistent with what's logged. Still "one short
+ * free-text food description" to SYSTEM_PROMPT — no new wire contract.
+ */
+export function promptFrom(label: string, known: KnownNutrients): string {
+  const parts: string[] = []
+  if (known.kcal !== undefined) parts.push(`${known.kcal} kcal`)
+  if (known.protein !== undefined) parts.push(`${known.protein} g protein`)
+  if (known.fat !== undefined) parts.push(`${known.fat} g fat`)
+  if (known.carbs !== undefined) parts.push(`${known.carbs} g carbs`)
+  return parts.length === 0 ? label : `${label} (${parts.join(", ")})`
+}
+
+/**
  * An AI fill as add-card input strings: kcal a whole number, macro grams at
  * most one decimal (the V1 decimal-vs-integer truncation bug class — round,
  * never truncate).
@@ -190,6 +254,65 @@ export function fillValuesFrom(food: AiFood): {
     f: grams(food.fat_g),
     c: grams(food.carbs_g),
   }
+}
+
+/**
+ * An AI fill as Entry numbers, same rounding as the add-card strings: kcal a
+ * whole number, macro grams at most one decimal.
+ */
+export function fillNumbersFrom(food: AiFood): {
+  kcal: number
+  protein: number
+  fat: number
+  carbs: number
+} {
+  const grams = (n: number) => Math.round(n * 10) / 10
+  return {
+    kcal: Math.round(food.calories),
+    protein: grams(food.protein_g),
+    fat: grams(food.fat_g),
+    carbs: grams(food.carbs_g),
+  }
+}
+
+/**
+ * The patch a row-level fill writes onto a logged Entry (#53): the model's
+ * numbers for the fields the Entry was missing — a logged value is never
+ * overwritten — and, of the model's doubts (as form flags), only those that
+ * landed on a field actually written (doubt about a value the user logged
+ * has nowhere to sit).
+ */
+export function entryFillFrom(
+  known: KnownNutrients,
+  food: AiFood,
+  doubts: ReadonlySet<FormFlag>
+): EntryAiFill {
+  const fillable = fillableFrom(known)
+  const numbers = fillNumbersFrom(food)
+  const fill: EntryAiFill = {}
+  if (fillable.has("kcal")) fill.kcal = numbers.kcal
+  if (fillable.has("p")) fill.protein = numbers.protein
+  if (fillable.has("f")) fill.fat = numbers.fat
+  if (fillable.has("c")) fill.carbs = numbers.carbs
+  const standing = new Set([...doubts].filter((f) => fillable.has(f)))
+  const flagged = flaggedFieldsFrom(standing)
+  if (flagged.length > 0) fill.flagged = flagged
+  return fill
+}
+
+/**
+ * Persisted flagged fields as their form flags — the inverse of
+ * flaggedFieldsFrom, seeding the editor's dashed outlines so a committed
+ * Entry's Flagged values finally get their review surface (#53).
+ */
+export function formFlagsFrom(flagged?: FlaggableField[]): Set<FormFlag> {
+  const byField: Record<FlaggableField, FormFlag> = {
+    kcal: "kcal",
+    protein: "p",
+    fat: "f",
+    carbs: "c",
+  }
+  return new Set((flagged ?? []).map((field) => byField[field]))
 }
 
 /**

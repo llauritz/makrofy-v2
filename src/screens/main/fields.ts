@@ -1,4 +1,5 @@
 import type { EntryNutrients, FlaggableField } from "@/data/entries"
+import type { KnownNutrients } from "@/lib/macro-fill"
 import { MACROS } from "./macros"
 
 // Shared form plumbing for the add card and the inline editor: the P/F/C text
@@ -35,6 +36,25 @@ export function parseMacros(
   const out: Pick<EntryDraft, "protein" | "fat" | "carbs"> = {}
   for (const m of MACROS) out[m.field] = parseOptional(inputs[m.key])
   return out
+}
+
+/**
+ * The values the form actually holds, as what an editor AI fill anchors to
+ * and must not overwrite (#53). kcal 0 or blank reads as unknown (the
+ * dashed-row rule); a typed 0-gram macro is a logged value and stays known.
+ */
+export function knownFromInputs(
+  kcal: string,
+  macros: MacroInputs
+): KnownNutrients {
+  const known: KnownNutrients = {}
+  const kcalValue = parseOptional(kcal)
+  if (kcalValue !== undefined && kcalValue !== 0) known.kcal = kcalValue
+  for (const m of MACROS) {
+    const value = parseOptional(macros[m.key])
+    if (value !== undefined) known[m.field] = value
+  }
+  return known
 }
 
 /** Seed the macro inputs from an existing Entry's grams. */

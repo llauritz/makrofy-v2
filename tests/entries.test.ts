@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore"
 import {
   addEntry,
+  applyAiFill,
   deleteEntry,
   deriveMealType,
   listenToAllEntries,
@@ -256,6 +257,128 @@ describe("logging and observing a Day", () => {
     expect((after.updatedAt as Timestamp).toMillis()).toBeGreaterThan(
       createdAtMs,
     )
+  })
+
+  it("an AI fill writes only its missing fields and stamps the ✨ provenance", async () => {
+    // The row-level fill (#53): a dashed 0-kcal Entry with one logged macro.
+    const today = todayLocal()
+    const id = await addEntry(ctx.db, uid, {
+      date: today,
+      label: "banana",
+      kcal: 0,
+      protein: 12,
+      source: "manual",
+    })
+
+    const states = observeDay(today)
+    await waitFor(() => states.find((s) => s.length === 1))
+    applyAiFill(ctx.db, uid, id, {
+      kcal: 105,
+      fat: 0.4,
+      carbs: 27,
+      flagged: ["kcal"],
+    })
+
+    const after = await waitForServerEntry(ctx, uid, id, (d) => d.kcal === 105)
+    expect(after).toMatchObject({
+      label: "banana", // the AI never rewrites the label
+      kcal: 105,
+      protein: 12, // the logged value, untouched
+      fat: 0.4,
+      carbs: 27,
+      source: "ai",
+      flagged: ["kcal"],
+    })
+  })
+
+  it("an edit reconciles the flags it was given and clears them when empty", async () => {
+    const today = todayLocal()
+    const id = await addEntry(ctx.db, uid, {
+      date: today,
+      label: "protein shake",
+      kcal: 220,
+      protein: 30,
+      source: "ai",
+      flagged: ["kcal", "protein"],
+    })
+
+    const states = observeDay(today)
+    await waitFor(() => states.find((s) => s.length === 1))
+
+    // The editor's Save: the kcal flag was tap-accepted, protein still stands.
+    updateEntry(ctx.db, uid, id, {
+      label: "protein shake",
+      kcal: 220,
+      protein: 30,
+      flagged: ["protein"],
+    })
+    const reconciled = await waitForServerEntry(
+      ctx,
+      uid,
+      id,
+      (d) => Array.isArray(d.flagged) && d.flagged.length === 1,
+    )
+    expect(reconciled.flagged).toEqual(["protein"])
+
+    // Every flag accepted: the field is removed, not left as [].
+    updateEntry(ctx.db, uid, id, {
+      label: "protein shake",
+      kcal: 220,
+      protein: 30,
+      flagged: [],
+    })
+    const cleared = await waitForServerEntry(
+      ctx,
+      uid,
+      id,
+      (d) => !("flagged" in d),
+    )
+    expect("flagged" in cleared).toBe(false)
+  })
+
+  it("an edit carrying a source restamps it — the editor's ✨ fill under Save", async () => {
+    const today = todayLocal()
+    const id = await addEntry(ctx.db, uid, {
+      date: today,
+      label: "greek yogurt",
+      kcal: 150,
+      source: "manual",
+    })
+
+    const states = observeDay(today)
+    await waitFor(() => states.find((s) => s.length === 1))
+    updateEntry(ctx.db, uid, id, {
+      label: "greek yogurt",
+      kcal: 150,
+      protein: 8,
+      source: "ai",
+    })
+
+    const after = await waitForServerEntry(ctx, uid, id, (d) => d.protein === 8)
+    expect(after.source).toBe("ai")
+  })
+
+  it("an edit that says nothing about flags leaves them untouched", async () => {
+    const today = todayLocal()
+    const id = await addEntry(ctx.db, uid, {
+      date: today,
+      label: "granola",
+      kcal: 230,
+      source: "ai",
+      flagged: ["kcal"],
+    })
+
+    const states = observeDay(today)
+    await waitFor(() => states.find((s) => s.length === 1))
+    updateEntry(ctx.db, uid, id, { label: "granola, toasted", kcal: 230 })
+
+    const after = await waitForServerEntry(
+      ctx,
+      uid,
+      id,
+      (d) => d.label === "granola, toasted",
+    )
+    expect(after.flagged).toEqual(["kcal"])
   })
 
   it("editing clears macros that were removed and adds ones that appear", async () => {

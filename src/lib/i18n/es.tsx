@@ -81,6 +81,7 @@ export const es: Dictionary = {
     bestGuess: "Mejor estimación — toca un valor punteado para ajustarlo.",
     dismissQuestion: "Descartar pregunta",
     dismissHint: "Descartar sugerencia",
+    dismissNote: "Descartar nota",
   },
 
   macros: {
