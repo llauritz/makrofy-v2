@@ -25,5 +25,8 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  // Component behavior tests (.tsx) type-check here, not in the node-typed
+  // test project: they render the real app tree, which needs JSX and the
+  // vite/client env types.
+  "include": ["src", "tests/**/*.tsx"]
 }
