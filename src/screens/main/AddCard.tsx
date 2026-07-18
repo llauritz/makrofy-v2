@@ -11,6 +11,7 @@ import {
   advanceSuggestions,
   EMPTY_INDEX,
   EMPTY_SUGGESTIONS,
+  refreshSuggestions,
   type Product,
   type ProductIndex,
   type SuggestionRow,
@@ -96,15 +97,15 @@ export function AddCard({
 
   // A curation write from the long-press card (#73) — or a remote device —
   // re-derives the index while rows are on screen; refresh them in place so
-  // corrected numbers show (the sticky search otherwise waits for the next
-  // keystroke). Collapsed stays collapsed — a pick must not resurface rows.
-  // State-adjust-during-render, the sanctioned no-effect form.
+  // corrected numbers show. refreshSuggestions recomputes from the STICKY
+  // word, so the mid-typing states the search deliberately holds rows in
+  // (trailing space, short next word) refresh too — advanceSuggestions would
+  // return them untouched. Collapsed stays collapsed: a pick must not
+  // resurface rows. State-adjust-during-render, the sanctioned no-effect form.
   const [derivedFrom, setDerivedFrom] = React.useState(index)
   if (derivedFrom !== index) {
     setDerivedFrom(index)
-    setSuggestions((prev) =>
-      prev.rows.length === 0 ? prev : advanceSuggestions(prev, label, index)
-    )
+    setSuggestions((prev) => refreshSuggestions(prev, label, index))
   }
 
   const disabled = uid === null

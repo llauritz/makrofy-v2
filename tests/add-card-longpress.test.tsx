@@ -210,6 +210,36 @@ describe("AddCard long-press curation (#73)", () => {
     })
   })
 
+  it("refreshes rows the sticky search is holding — trailing space", async () => {
+    // The user's exact stale case: input ends in a space (the sticky state
+    // where advanceSuggestions returns prev untouched), then a card edit
+    // re-derives the index. The rows must still pick up the new value.
+    const { view } = renderCard()
+    fireEvent.change(screen.getByLabelText("Food"), {
+      target: { value: "ban " },
+    })
+    expect(screen.getAllByLabelText("Use banana")).toHaveLength(2)
+
+    const corrected = buildProductIndex(
+      [
+        entry("banana", 200, 2),
+        entry("banana", 120, 1),
+        entry("bandana bread", 100, 0),
+      ],
+      NOW
+    )
+    view.rerender(
+      <LanguageProvider>
+        <AddCard onAdd={vi.fn()} index={corrected} uid="test-uid" />
+      </LanguageProvider>
+    )
+    await waitFor(() => {
+      const rows = screen.getAllByLabelText("Use banana")
+      expect(rows.some((r) => r.textContent?.includes("120"))).toBe(true)
+      expect(rows.some((r) => r.textContent?.includes("50"))).toBe(false)
+    })
+  })
+
   it("falls back to the rows when the Product vanishes from the index", async () => {
     const { view } = renderCard()
     longPress(screen.getAllByLabelText("Use banana")[0])
