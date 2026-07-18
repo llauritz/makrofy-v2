@@ -1,6 +1,7 @@
 import * as React from "react"
 import { AnimatePresence } from "motion/react"
 
+import { clearCoverage, setCoverage, type CoverageLevel } from "@/data/days"
 import {
   addEntry,
   applyAiFill,
@@ -13,6 +14,7 @@ import {
 } from "@/data/entries"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import {
+  useCoverage,
   useDay,
   useGoal,
   useIdentity,
@@ -27,6 +29,7 @@ import { useDaySwipe } from "@/lib/useDaySwipe"
 import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
 import { CalendarSheet } from "./CalendarSheet"
+import { CoverageControl } from "./CoverageControl"
 import { DayStrip } from "./DayStrip"
 import { EntryList } from "./EntryList"
 import type { EntryDraft } from "./fields"
@@ -58,6 +61,7 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
   )
 
   const dayEntries = useDay(uid, selectedDay)
+  const coverage = useCoverage(uid, selectedDay)
   const goal = useGoal(uid)
   const loggedDays = useLoggedDays(uid)
   const productIndex = useProductIndex(uid)
@@ -107,6 +111,14 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
   // A row-level ✨ fill: the missing fields land on the logged Entry (#53).
   const handleAiFill = (id: string, fill: EntryAiFill) => {
     if (uid) applyAiFill(db, uid, id, fill)
+  }
+
+  // A Coverage chip tap (#42): re-tapping the stored label removes it — the
+  // Day returns to the trusted default (ADR 0006) — any other level replaces it.
+  const handleCoverage = (level: CoverageLevel) => {
+    if (!uid) return
+    if (level === coverage) clearCoverage(db, uid, selectedDay)
+    else setCoverage(db, uid, selectedDay, level)
   }
 
   const requestDelete = (entry: Entry) => {
@@ -159,6 +171,12 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
             onCancelEdit={() => setEditingId(null)}
             onDelete={requestDelete}
             onAiFill={handleAiFill}
+          />
+          <CoverageControl
+            day={selectedDay}
+            entryCount={visible.length}
+            level={coverage}
+            onSelect={handleCoverage}
           />
         </div>
         <div className="flex-1" />

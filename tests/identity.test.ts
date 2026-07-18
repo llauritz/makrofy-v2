@@ -11,6 +11,7 @@ import {
   signInWithCredential,
 } from "firebase/auth"
 import { doc, getDoc, waitForPendingWrites } from "firebase/firestore"
+import { readAllDays, setCoverage } from "@/data/days"
 import { addEntry, readAllEntries } from "@/data/entries"
 import { setGoal } from "@/data/goal"
 import { readAllOverlays, setPin } from "@/data/products"
@@ -210,6 +211,28 @@ describe("Google sign-in — second-device collision, union merge", () => {
     // Conflict: the existing account's pin stands; the Guest's unique one lands.
     expect(byKey.get("count:oats")?.pinnedRate).toBe(380)
     expect(byKey.get("count:egg")?.pinnedRate).toBe(78)
+  })
+
+  it("unions Coverage labels too, the existing account winning per date", async () => {
+    await clearFirestoreData()
+    const existingUid = await seedExistingAccount(["oats"], 2000)
+    // The existing account has already labelled 2026-07-10.
+    setCoverage(existingApp.db, existingUid, "2026-07-10", "everything")
+    await waitForPendingWrites(existingApp.db)
+
+    const guestUid = await seedGuest([], 2000)
+    // The Guest disagrees on 2026-07-10 and has a unique label on 2026-07-11.
+    setCoverage(guestApp.db, guestUid, "2026-07-10", "some")
+    setCoverage(guestApp.db, guestUid, "2026-07-11", "most")
+    await waitForPendingWrites(guestApp.db)
+
+    await unionMergeInto(guestApp.auth, guestApp.db, googleCred(), guestUid)
+
+    const days = await readAllDays(guestApp.db, existingUid)
+    const byDay = new Map(days.map((d) => [d.day, d.coverage]))
+    // Conflict: the existing account's label stands; the Guest's unique one lands.
+    expect(byDay.get("2026-07-10")).toBe("everything")
+    expect(byDay.get("2026-07-11")).toBe("most")
   })
 
   it("recognises the real collision error a sign-in throws", async () => {

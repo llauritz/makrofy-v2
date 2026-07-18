@@ -12,6 +12,7 @@ import {
 } from "firebase/auth"
 import type { Firestore } from "firebase/firestore"
 
+import { readAllDays, writeMissingDays } from "@/data/days"
 import { readAllEntries, writeEntries } from "@/data/entries"
 import { readAllOverlays, writeMissingOverlays } from "@/data/products"
 
@@ -175,11 +176,12 @@ export function isCredentialInUseError(err: unknown): boolean {
  * switch to it — the union merge (ADR 0002/0009). Copy-first and promptless:
  * read the Guest's data while still signed in as the Guest, sign into the
  * existing account with its Google credential, then batch-write it in. Entry
- * auto-ids make that half a clean union; the overlay unions by Product key with
- * the existing account winning any key both hold (writeMissingOverlays), the
- * same rule that keeps the existing account's settings. The Guest's now-orphaned
- * documents are left behind rather than risking a delete-before-write. Returns
- * the account now signed in and the copied Entry count.
+ * auto-ids make that half a clean union; the overlay unions by Product key and
+ * the days sidecar by date, the existing account winning any key both hold
+ * (writeMissingOverlays / writeMissingDays — ADR 0006), the same rule that
+ * keeps the existing account's settings. The Guest's now-orphaned documents are
+ * left behind rather than risking a delete-before-write. Returns the account
+ * now signed in and the copied Entry count.
  */
 export async function unionMergeInto(
   auth: Auth,
@@ -189,9 +191,11 @@ export async function unionMergeInto(
 ): Promise<MergeOutcome> {
   const entries = await readAllEntries(db, guestUid)
   const overlays = await readAllOverlays(db, guestUid)
+  const days = await readAllDays(db, guestUid)
   const { user } = await signInWithCredential(auth, credential)
   await writeEntries(db, user.uid, entries)
   await writeMissingOverlays(db, user.uid, overlays)
+  await writeMissingDays(db, user.uid, days)
   return { uid: user.uid, merged: entries.length }
 }
 

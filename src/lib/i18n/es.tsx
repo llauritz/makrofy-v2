@@ -52,6 +52,13 @@ export const es: Dictionary = {
     aiAssisted: "Con ayuda de IA",
   },
 
+  coverage: {
+    question: "¿Cuánto de lo que comiste quedó registrado?",
+    some: "Algo",
+    most: "La mayoría",
+    everything: "Todo",
+  },
+
   entryEditor: {
     deleteEntry: "Eliminar entrada",
     cancel: "Cancelar",

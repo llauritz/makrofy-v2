@@ -14,6 +14,7 @@ import * as React from "react"
 import { onAuthStateChanged, onIdTokenChanged, type User } from "firebase/auth"
 
 import { readBootMirror } from "@/data/boot-mirror"
+import { listenToCoverage, type CoverageLevel } from "@/data/days"
 import {
   listenToAllEntries,
   listenToDay,
@@ -173,6 +174,30 @@ export function useDay(uid: string | null, day: string): Entry[] {
     return listenToDay(db, uid, day, setEntries)
   }, [uid, day])
   return entries
+}
+
+/**
+ * One Day's Coverage label (ADR 0006), live; null while unlabelled. Unlike
+ * the sibling hooks this resets on a Day switch: a label is a claim about one
+ * specific Day, and letting the previous Day's chip stay filled until the new
+ * snapshot lands would mislabel the Day on screen.
+ */
+export function useCoverage(
+  uid: string | null,
+  day: string,
+): CoverageLevel | null {
+  // The label is stored with the Day it belongs to, and a snapshot from a
+  // different Day than the one being asked about reads as null — no
+  // imperative reset needed when the selection moves.
+  const [state, setState] = React.useState<{
+    day: string
+    level: CoverageLevel | null
+  } | null>(null)
+  React.useEffect(() => {
+    if (!uid) return
+    return listenToCoverage(db, uid, day, (level) => setState({ day, level }))
+  }, [uid, day])
+  return state !== null && state.day === day ? state.level : null
 }
 
 /** The synced Goal; null until onboarding sets one (#17). */

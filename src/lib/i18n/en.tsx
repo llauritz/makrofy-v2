@@ -66,6 +66,16 @@ export const en = {
     aiAssisted: "AI-assisted",
   },
 
+  coverage: {
+    // The Coverage control's caption (issue #42): asks about the log↔intake
+    // relationship, deliberately day-neutral so it reads the same on today's
+    // evening control and any closed Day.
+    question: "How much of what you ate made it into the log?",
+    some: "Some",
+    most: "Most",
+    everything: "Everything",
+  },
+
   entryEditor: {
     deleteEntry: "Delete entry",
     cancel: "Cancel",
