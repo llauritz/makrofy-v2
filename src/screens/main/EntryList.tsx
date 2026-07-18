@@ -43,7 +43,7 @@ export function EntryList({
 }) {
   const { t } = useI18n()
   return (
-    <div className="mx-4 mt-3 pb-3">
+    <div className="mx-4 mt-4 pb-3">
       <AnimatePresence mode="popLayout" initial={false}>
         {entries.length === 0 ? (
           <motion.div

@@ -242,7 +242,7 @@ export function AddCard({
             onKeyDown={onKeyDown}
             placeholder={t.addCard.placeholder}
             aria-label={t.addCard.food}
-            className="w-full rounded-full bg-input py-2.5 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
+            className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
           />
           <div className="absolute inset-y-0 right-1.5 flex items-center">
             <motion.button
@@ -273,7 +273,7 @@ export function AddCard({
           inputMode="decimal"
           aria-label={t.addCard.calories}
           className={
-            "w-16 rounded-full bg-input px-3 py-2.5 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
+            "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
             // outline-none (focus reset) and the dashed flag outline are
             // mutually exclusive — both set outline-style.
             (flags.has("kcal") ? FLAGGED_OUTLINE : "outline-none") +
@@ -281,12 +281,12 @@ export function AddCard({
           }
         />
       </div>
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2.5 flex items-center gap-2">
         {MACROS.map((m) => (
           <label
             key={m.key}
             className={
-              "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2" +
+              "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2.5" +
               (flags.has(m.key) ? " " + FLAGGED_OUTLINE : "") +
               (thinking ? " animate-pulse" : "")
             }
