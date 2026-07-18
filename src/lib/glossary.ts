@@ -113,3 +113,20 @@ export function searchGlossary(index: ProductIndex, query: string): Product[] {
     .filter((p) => words.every((w) => productMatchesWord(p, w)))
     .sort(byLabel)
 }
+
+/**
+ * Same-kind Products other than the survivor — the only merge targets (a
+ * cross-kind merge needs a grams-per-piece mapping and is out of v1, so no
+ * surface ever offers it). Shared by the Glossary screen and the add card's
+ * long-press card (#73).
+ */
+export function sameKindOthers(
+  products: Product[],
+  survivor: Product
+): Product[] {
+  return products
+    .filter((p) => p.kind === survivor.kind && p.key !== survivor.key)
+    .sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+    )
+}

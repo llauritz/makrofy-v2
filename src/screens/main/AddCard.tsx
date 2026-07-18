@@ -3,17 +3,23 @@ import { Plus, Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
 import type { EntrySource } from "@/data/entries"
+import { useProductCuration } from "@/data/useProductCuration"
+import { sameKindOthers } from "@/lib/glossary"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { fillValuesFrom, flaggedFieldsFrom } from "@/lib/macro-fill"
 import {
   advanceSuggestions,
   EMPTY_INDEX,
   EMPTY_SUGGESTIONS,
+  type Product,
   type ProductIndex,
   type SuggestionRow,
 } from "@/lib/suggestions"
+import { useLongPress } from "@/lib/useLongPress"
 import { useOnline } from "@/lib/useOnline"
+import { ProductDetail } from "@/screens/glossary/ProductDetail"
 import { AiZone } from "./AiZone"
+import { FadeSwap } from "./FadeSwap"
 import { SPRING } from "./anim"
 import {
   EMPTY_MACROS,
@@ -62,6 +68,12 @@ export function AddCard({
   // fill. Typing in the label makes it a manual Entry again.
   const [source, setSource] = React.useState<EntrySource>("manual")
   const [suggestions, setSuggestions] = React.useState(EMPTY_SUGGESTIONS)
+  // The Product whose curation card a long-pressed Suggestion opened (#73) —
+  // the Glossary's ProductDetail inline, writing the same synced overlay. Kept
+  // as a key and resolved against the live index, so a Product merged away on
+  // another device quietly falls back to its row instead of crashing.
+  const [curatingKey, setCuratingKey] = React.useState<string | null>(null)
+  const curation = useProductCuration(uid ?? null)
   const { flags, setFlags, acceptFlag } = useFormFlags()
   const ai = useAiFill({
     uid,
@@ -77,6 +89,19 @@ export function AddCard({
   })
   const online = useOnline()
   const labelRef = React.useRef<HTMLInputElement>(null)
+
+  // A curation write from the long-press card (#73) — or a remote device —
+  // re-derives the index while rows are on screen; refresh them in place so
+  // corrected numbers show (the sticky search otherwise waits for the next
+  // keystroke). Collapsed stays collapsed — a pick must not resurface rows.
+  // State-adjust-during-render, the sanctioned no-effect form.
+  const [derivedFrom, setDerivedFrom] = React.useState(index)
+  if (derivedFrom !== index) {
+    setDerivedFrom(index)
+    setSuggestions((prev) =>
+      prev.rows.length === 0 ? prev : advanceSuggestions(prev, label, index)
+    )
+  }
 
   const disabled = uid === null
   // A blank-kcal Entry is intentional (0-kcal, dashed) — a label is the only
@@ -96,6 +121,7 @@ export function AddCard({
     setMacros(EMPTY_MACROS)
     setSource("manual")
     setSuggestions(EMPTY_SUGGESTIONS)
+    setCuratingKey(null)
     clearAi()
   }
 
@@ -122,6 +148,7 @@ export function AddCard({
     setLabel(value)
     setSource("manual")
     setSuggestions((prev) => advanceSuggestions(prev, value, index))
+    setCuratingKey(null)
     if (
       ai.phase.kind !== "idle" ||
       ai.interpretation ||
@@ -142,6 +169,7 @@ export function AddCard({
     setMacros(macroInputsFrom(row))
     setSource("history")
     setSuggestions(EMPTY_SUGGESTIONS)
+    setCuratingKey(null)
     clearAi()
     labelRef.current?.focus()
   }
@@ -152,6 +180,7 @@ export function AddCard({
     const description = label.trim()
     if (disabled || thinking || description === "") return
     setSuggestions(EMPTY_SUGGESTIONS)
+    setCuratingKey(null)
     setFlags(NO_FLAGS)
     ai.start(description)
   }
@@ -159,6 +188,7 @@ export function AddCard({
   // A chip answer triggers the second and final round trip (#5, #21).
   const answerQuestion = (chip: string) => {
     setSuggestions(EMPTY_SUGGESTIONS)
+    setCuratingKey(null)
     setFlags(NO_FLAGS)
     ai.answer(chip)
   }
@@ -171,6 +201,31 @@ export function AddCard({
   }
 
   const zoneState = aiZoneStateOf(ai, flags.size > 0)
+
+  const curating =
+    curatingKey === null
+      ? null
+      : (index.products.find((p) => p.key === curatingKey) ?? null)
+  const detail = curating && (
+    <ProductDetail
+      product={curating}
+      mergeCandidates={sameKindOthers(index.products, curating)}
+      onClose={() => setCuratingKey(null)}
+      onEditReading={(reading, value) =>
+        curation.editReading(curating, reading, value)
+      }
+      onAddReading={(value) => curation.addReading(curating, value)}
+      onDeleteReading={(reading) => curation.deleteReading(curating, reading)}
+      onTogglePin={(reading) => curation.togglePin(curating, reading)}
+      // No undo bar here — the alias ✕ in the card is the merge's full inverse.
+      onMerge={(absorbed) => void curation.merge(curating, absorbed)}
+      onUnmerge={(alias) => curation.unmerge(curating.key, alias)}
+      onDeleteProduct={() => {
+        curation.removeProduct(curating)
+        setCuratingKey(null)
+      }}
+    />
+  )
 
   return (
     <div className="mx-4 mt-1 rounded-3xl border bg-card p-3 shadow-[0_1px_2px_rgba(43,32,21,0.05)]">
@@ -266,7 +321,13 @@ export function AddCard({
           <Plus className="h-5 w-5" strokeWidth={2.5} />
         </motion.button>
       </div>
-      <Suggestions rows={suggestions.rows} onPick={pick} />
+      <Suggestions
+        rows={suggestions.rows}
+        curating={curating}
+        detail={detail}
+        onPick={pick}
+        onCurate={(row) => setCuratingKey(row.productKey)}
+      />
       <AiZone
         state={zoneState}
         attribution={ai.attribution}
@@ -279,13 +340,31 @@ export function AddCard({
 
 // The response zone: history Suggestions below the pills. Height animates open
 // and shut so nothing on the screen jumps (spec § Add flow, cross-cutting).
+// While a Product's curation card is open (#73) its rows collapse into it: the
+// first backing row hosts the card through its FadeSwap — the same row →
+// editor fade-through as the Glossary — and the siblings hide, since the card
+// already lists every Reading. Unrelated rows stay tappable beside it.
 function Suggestions({
   rows,
+  curating,
+  detail,
   onPick,
+  onCurate,
 }: {
   rows: SuggestionRow[]
+  curating: Product | null
+  detail: React.ReactNode
   onPick: (row: SuggestionRow) => void
+  onCurate: (row: SuggestionRow) => void
 }) {
+  const hostIndex = curating
+    ? rows.findIndex((row) => row.productKey === curating.key)
+    : -1
+  const items = rows
+    .map((row, i) => ({ row, hosts: i === hostIndex }))
+    .filter(
+      ({ row, hosts }) => hosts || !curating || row.productKey !== curating.key
+    )
   return (
     <AnimatePresence initial={false}>
       {rows.length > 0 && (
@@ -298,9 +377,24 @@ function Suggestions({
           className="overflow-hidden"
         >
           <ul className="mt-2 flex flex-col gap-1.5 pt-1">
-            {rows.map((row) => (
+            {items.map(({ row, hosts }) => (
               <li key={row.key}>
-                <Suggestion row={row} onPick={() => onPick(row)} />
+                <FadeSwap
+                  swapKey={hosts ? "detail" : "row"}
+                  className={
+                    "rounded-2xl " + (hosts ? "border bg-card" : "bg-input")
+                  }
+                >
+                  {hosts ? (
+                    detail
+                  ) : (
+                    <Suggestion
+                      row={row}
+                      onPick={() => onPick(row)}
+                      onCurate={() => onCurate(row)}
+                    />
+                  )}
+                </FadeSwap>
               </li>
             ))}
           </ul>
@@ -312,22 +406,29 @@ function Suggestions({
 
 // One Suggestion row: label, ×votes, and — on a scaled row (#37) — the muted
 // base hint ("30g · 90") naming the portion the numbers scaled from. Plain
-// muted text, never dashed: dashed styling means AI Flagged values.
+// muted text, never dashed: dashed styling means AI Flagged values. Chrome
+// lives on the hosting FadeSwap. A tap fills the form; holding opens the
+// Product's curation card in place (#73).
 function Suggestion({
   row,
   onPick,
+  onCurate,
 }: {
   row: SuggestionRow
   onPick: () => void
+  onCurate: () => void
 }) {
   const { t, n } = useI18n()
+  const hold = useLongPress(onCurate)
   return (
     <motion.button
       type="button"
       onClick={onPick}
+      {...hold}
       whileTap={{ scale: 0.98 }}
       aria-label={t.addCard.use(row.label)}
-      className="w-full rounded-2xl bg-input px-3 py-2 text-left"
+      className="w-full px-3 py-2 text-left select-none"
+      style={{ WebkitTouchCallout: "none" }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">

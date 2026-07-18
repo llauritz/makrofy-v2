@@ -514,6 +514,8 @@ function labelHasPrefix(label: string, word: string): boolean {
  */
 export interface SuggestionRow extends Nutrients {
   key: string
+  /** The backing Product — the long-press curation card looks it up by this. */
+  productKey: string
   label: string
   /** Votes for this row's Reading (every use, for a Reading-less Product). */
   useCount: number
@@ -587,6 +589,7 @@ function productRows(
     return [
       {
         key: product.key,
+        productKey: product.key,
         label: e.label,
         useCount: product.useCount,
         kcal: e.kcal,
@@ -602,6 +605,7 @@ function productRows(
     if (!typed) {
       return {
         key,
+        productKey: product.key,
         label: r.base.label,
         useCount: r.votes,
         kcal: r.base.kcal,
@@ -616,6 +620,7 @@ function productRows(
       n === undefined ? undefined : Math.round(n * v * 10) / 10
     return {
       key,
+      productKey: product.key,
       label: `${product.label} ${typed.raw}`,
       useCount: r.votes,
       kcal: Math.round(r.rate.kcal * v),

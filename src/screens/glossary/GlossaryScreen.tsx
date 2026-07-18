@@ -3,21 +3,13 @@ import { ArrowLeft, Search } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
 import { useIdentity, useProductIndex } from "@/data/hooks"
-import {
-  appendReadingDeletion,
-  appendReadingEdit,
-  deleteProduct,
-  mergeProducts,
-  setPin,
-  unmergeAlias,
-} from "@/data/products"
-import { db } from "@/lib/firebase"
+import { useProductCuration } from "@/data/useProductCuration"
 import { useI18n } from "@/lib/i18n/useI18n"
-import { searchGlossary, toRate } from "@/lib/glossary"
-import type { Alias, Product, Reading } from "@/lib/suggestions"
+import { sameKindOthers, searchGlossary } from "@/lib/glossary"
+import type { Alias, Product } from "@/lib/suggestions"
 import { SPRING } from "@/screens/main/anim"
 import { FadeSwap } from "@/screens/main/FadeSwap"
-import { ProductDetail, type PerBasis } from "./ProductDetail"
+import { ProductDetail } from "./ProductDetail"
 import { productRateLine } from "./rate"
 
 // How long the "merged — undo" bar stays up before the merge is left to stand.
@@ -55,46 +47,13 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
   const products = searchGlossary(index, query)
   const hasAny = index.products.length > 0
 
-  // Every write guards on a resolved identity (the screen normally has one); the
-  // products module stamps each correction with its own timeline (which gates
-  // the votes it reaches in buildProductIndex), the way addEntry stamps Entries.
-  const editReading = (product: Product, reading: Reading, value: PerBasis) => {
-    if (!uid) return
-    appendReadingEdit(
-      db,
-      uid,
-      product.key,
-      { from: reading.rate.kcal, rate: toRate(product.kind, value) },
-      reading.pinned ?? false
-    )
-  }
-  const addReading = (product: Product, value: PerBasis) => {
-    if (!uid) return
-    appendReadingEdit(db, uid, product.key, {
-      from: null,
-      rate: toRate(product.kind, value),
-    })
-  }
-  const deleteReading = (product: Product, reading: Reading) => {
-    if (!uid) return
-    appendReadingDeletion(
-      db,
-      uid,
-      product.key,
-      reading.rate.kcal,
-      reading.pinned ?? false
-    )
-  }
-  const togglePin = (product: Product, reading: Reading) => {
-    if (!uid) return
-    setPin(db, uid, product.key, reading.pinned ? null : reading.rate.kcal)
-  }
+  // The overlay writes themselves live in useProductCuration (shared with the
+  // add card's long-press surface, #73); this screen adds only its own chrome —
+  // the merge-undo bar and collapsing a deleted Product's editor.
+  const curation = useProductCuration(uid)
   const merge = (survivor: Product, absorbed: Product) => {
-    if (!uid) return
-    const alias = mergeProducts(db, uid, survivor.key, {
-      key: absorbed.key,
-      label: absorbed.label,
-    })
+    const alias = curation.merge(survivor, absorbed)
+    if (!alias) return
     clearTimer()
     setPendingMerge({ survivorKey: survivor.key, alias })
     timer.current = setTimeout(() => {
@@ -103,19 +62,14 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
     }, MERGE_UNDO_MS)
   }
   const undoMerge = () => {
-    if (uid && pendingMerge) {
-      unmergeAlias(db, uid, pendingMerge.survivorKey, pendingMerge.alias)
+    if (pendingMerge) {
+      curation.unmerge(pendingMerge.survivorKey, pendingMerge.alias)
     }
     clearTimer()
     setPendingMerge(null)
   }
-  const unmerge = (product: Product, alias: Alias) => {
-    if (!uid) return
-    unmergeAlias(db, uid, product.key, alias)
-  }
   const removeProduct = (product: Product) => {
-    if (!uid) return
-    deleteProduct(db, uid, product.key)
+    curation.removeProduct(product)
     setExpandedKey(null)
   }
 
@@ -182,15 +136,21 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
                           )}
                           onClose={() => setExpandedKey(null)}
                           onEditReading={(reading, value) =>
-                            editReading(product, reading, value)
+                            curation.editReading(product, reading, value)
                           }
-                          onAddReading={(value) => addReading(product, value)}
+                          onAddReading={(value) =>
+                            curation.addReading(product, value)
+                          }
                           onDeleteReading={(reading) =>
-                            deleteReading(product, reading)
+                            curation.deleteReading(product, reading)
                           }
-                          onTogglePin={(reading) => togglePin(product, reading)}
+                          onTogglePin={(reading) =>
+                            curation.togglePin(product, reading)
+                          }
                           onMerge={(absorbed) => merge(product, absorbed)}
-                          onUnmerge={(alias) => unmerge(product, alias)}
+                          onUnmerge={(alias) =>
+                            curation.unmerge(product.key, alias)
+                          }
                           onDeleteProduct={() => removeProduct(product)}
                         />
                       ) : (
@@ -285,17 +245,6 @@ function Empty({ title, body }: { title: string; body: string }) {
       <div className="mt-1 text-xs text-muted-foreground">{body}</div>
     </div>
   )
-}
-
-// Same-kind Products other than the survivor — the only merge targets (a
-// cross-kind merge needs a grams-per-piece mapping and is out of v1, so the UI
-// never offers it).
-function sameKindOthers(products: Product[], survivor: Product): Product[] {
-  return products
-    .filter((p) => p.kind === survivor.kind && p.key !== survivor.key)
-    .sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
-    )
 }
 
 // The survivor's current label for the undo bar; falls back to a generic word

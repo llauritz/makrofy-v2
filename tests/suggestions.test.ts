@@ -443,3 +443,37 @@ describe("advanceSuggestions — scaled rows (#37)", () => {
     expect(s.rows[0].hint).toBeUndefined()
   })
 })
+
+describe("SuggestionRow.productKey (#73)", () => {
+  // The long-press curation card looks its Product up by this key — every row
+  // shape must name its backing Product explicitly, never via the row key.
+  it("names the backing Product on baseline and competing-Reading rows", () => {
+    const index = buildProductIndex(
+      [
+        entry("banana", { kcal: 200, ageDays: 2 }),
+        entry("banana", { kcal: 50, ageDays: 1 }),
+      ],
+      NOW,
+    )
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "banana", index)
+    expect(s.rows).toHaveLength(2)
+    for (const row of s.rows) {
+      expect(row.productKey).toBe(index.products[0].key)
+    }
+  })
+
+  it("names the backing Product on a rate-less Product's row", () => {
+    const index = buildProductIndex([entry("water 500ml")], NOW)
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "water", index)
+    expect(s.rows[0].productKey).toBe(index.products[0].key)
+  })
+
+  it("names the backing Product on a scaled row", () => {
+    const index = buildProductIndex(
+      [entry("Banana 30g", { kcal: 90, ageDays: 1 })],
+      NOW,
+    )
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "Banana 40g", index)
+    expect(s.rows[0].productKey).toBe(index.products[0].key)
+  })
+})
