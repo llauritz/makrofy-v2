@@ -1,4 +1,4 @@
-import { toRate } from "@/lib/glossary"
+import { toRate, type PerBasis } from "@/lib/glossary"
 import type { Alias, Product, Reading } from "@/lib/suggestions"
 import { db } from "@/lib/firebase"
 import {
@@ -9,7 +9,6 @@ import {
   setPin,
   unmergeAlias,
 } from "@/data/products"
-import type { PerBasis } from "@/screens/glossary/ProductDetail"
 
 // The curation writes behind a ProductDetail card, shared by the Glossary
 // screen and the add card's long-press surface (#73). Every write goes through

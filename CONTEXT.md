@@ -35,7 +35,7 @@ _Avoid_: anonymous user (auth-implementation term)
 What happens when a Guest signs into an account that already has data: both sets of Entries are kept, combined without prompting.
 
 **Suggestion**:
-A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. A Product's competing Readings appear as adjacent Suggestions, never collapsed into one winning row. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from its Reading's rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills numbers only — the typed label stays.
+A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. Holding one (~½ s) opens its Product's curation card inline — the same card the Glossary opens; there is no keyboard equivalent for the hold in v1, so keyboard and screen-reader users curate in the Glossary. A Product's competing Readings appear as adjacent Suggestions, never collapsed into one winning row; while its curation card is open they collapse into it. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from its Reading's rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills numbers only — the typed label stays.
 _Avoid_: favorite (V1 concept, superseded), autofill
 
 **Frecency**:
@@ -66,7 +66,7 @@ A label absorbed into another Product by a merge — a live mapping: the old lab
 _Avoid_: synonym
 
 **Glossary**:
-The user's browsable, alphabetical index of every Product with its Rate and use count. All curation happens here — editing, deleting and pinning Readings, merging and deleting Products — and none of it ever changes logged Entries or past Days. Deleting a Product forgets its past; logging it again recreates it fresh.
+The user's browsable, alphabetical index of every Product with its Rate and use count. It is the home of curation — editing, deleting and pinning Readings, merging and deleting Products — and its curation card also opens inline from a held Suggestion in the add card. No curation ever changes logged Entries or past Days. Deleting a Product forgets its past; logging it again recreates it fresh.
 _Avoid_: food database, catalog, favorites
 
 **AI fill**:

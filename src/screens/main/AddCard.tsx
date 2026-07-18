@@ -70,9 +70,13 @@ export function AddCard({
   const [suggestions, setSuggestions] = React.useState(EMPTY_SUGGESTIONS)
   // The Product whose curation card a long-pressed Suggestion opened (#73) —
   // the Glossary's ProductDetail inline, writing the same synced overlay. Kept
-  // as a key and resolved against the live index, so a Product merged away on
-  // another device quietly falls back to its row instead of crashing.
-  const [curatingKey, setCuratingKey] = React.useState<string | null>(null)
+  // as keys and resolved against the live index, so a Product merged away on
+  // another device quietly falls back to its row instead of crashing. The row
+  // key names which row hosts the card: the one that was held.
+  const [curatingKey, setCuratingKey] = React.useState<{
+    product: string
+    row: string
+  } | null>(null)
   const curation = useProductCuration(uid ?? null)
   const { flags, setFlags, acceptFlag } = useFormFlags()
   const ai = useAiFill({
@@ -205,7 +209,7 @@ export function AddCard({
   const curating =
     curatingKey === null
       ? null
-      : (index.products.find((p) => p.key === curatingKey) ?? null)
+      : (index.products.find((p) => p.key === curatingKey.product) ?? null)
   const detail = curating && (
     <ProductDetail
       product={curating}
@@ -324,9 +328,12 @@ export function AddCard({
       <Suggestions
         rows={suggestions.rows}
         curating={curating}
+        hostRowKey={curatingKey?.row ?? null}
         detail={detail}
         onPick={pick}
-        onCurate={(row) => setCuratingKey(row.productKey)}
+        onCurate={(row) =>
+          setCuratingKey({ product: row.productKey, row: row.key })
+        }
       />
       <AiZone
         state={zoneState}
@@ -347,19 +354,29 @@ export function AddCard({
 function Suggestions({
   rows,
   curating,
+  hostRowKey,
   detail,
   onPick,
   onCurate,
 }: {
   rows: SuggestionRow[]
   curating: Product | null
+  hostRowKey: string | null
   detail: React.ReactNode
   onPick: (row: SuggestionRow) => void
   onCurate: (row: SuggestionRow) => void
 }) {
-  const hostIndex = curating
+  // The held row hosts the card; if a re-derive dropped that exact row (row
+  // keys shift as Readings reorder), the Product's first row inherits it.
+  const backing = curating
     ? rows.findIndex((row) => row.productKey === curating.key)
     : -1
+  const held = curating
+    ? rows.findIndex(
+        (row) => row.key === hostRowKey && row.productKey === curating.key
+      )
+    : -1
+  const hostIndex = held !== -1 ? held : backing
   const items = rows
     .map((row, i) => ({ row, hosts: i === hostIndex }))
     .filter(
@@ -377,26 +394,38 @@ function Suggestions({
           className="overflow-hidden"
         >
           <ul className="mt-2 flex flex-col gap-1.5 pt-1">
-            {items.map(({ row, hosts }) => (
-              <li key={row.key}>
-                <FadeSwap
-                  swapKey={hosts ? "detail" : "row"}
-                  className={
-                    "rounded-2xl " + (hosts ? "border bg-card" : "bg-input")
-                  }
+            {/* popLayout so a sibling collapsing into the card fades while the
+                list reflows — no sudden jumps (spec § Motion), the same list
+                grammar as the Glossary. */}
+            <AnimatePresence mode="popLayout" initial={false}>
+              {items.map(({ row, hosts }) => (
+                <motion.li
+                  key={row.key}
+                  layout="position"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={SPRING}
                 >
-                  {hosts ? (
-                    detail
-                  ) : (
-                    <Suggestion
-                      row={row}
-                      onPick={() => onPick(row)}
-                      onCurate={() => onCurate(row)}
-                    />
-                  )}
-                </FadeSwap>
-              </li>
-            ))}
+                  <FadeSwap
+                    swapKey={hosts ? "detail" : "row"}
+                    className={
+                      "rounded-2xl " + (hosts ? "border bg-card" : "bg-input")
+                    }
+                  >
+                    {hosts ? (
+                      detail
+                    ) : (
+                      <Suggestion
+                        row={row}
+                        onPick={() => onPick(row)}
+                        onCurate={() => onCurate(row)}
+                      />
+                    )}
+                  </FadeSwap>
+                </motion.li>
+              ))}
+            </AnimatePresence>
           </ul>
         </motion.div>
       )}

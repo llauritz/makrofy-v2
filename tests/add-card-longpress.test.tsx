@@ -113,11 +113,25 @@ describe("AddCard long-press curation (#73)", () => {
     longPress(screen.getAllByLabelText("Use banana")[0])
 
     await screen.findByText("Readings")
-    // Both banana rows collapse into the card; the loaf's row survives.
-    expect(screen.queryByLabelText("Use banana")).toBeNull()
+    // Both banana rows collapse into the card (the sibling exits animated);
+    // the loaf's row survives.
+    await waitFor(() => expect(screen.queryByLabelText("Use banana")).toBeNull())
     expect(screen.getByLabelText("Use bandana bread")).toBeTruthy()
     // The hold never filled the form — the trailing click was swallowed.
     expect(kcalField().value).toBe("")
+  })
+
+  it("hosts the card at the held row, not the Product's first row", async () => {
+    renderCard()
+    const second = screen.getAllByLabelText("Use banana")[1]
+    const li = second.closest("li")!
+
+    longPress(second)
+
+    await screen.findByText("Readings")
+    // The held row's own box fade-swaps to the card (spec § UI); its sibling
+    // above is the one that leaves.
+    expect(li.textContent).toContain("Readings")
   })
 
   it("keeps the short tap filling the form, card shut", () => {

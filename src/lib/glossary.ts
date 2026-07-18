@@ -71,10 +71,19 @@ export function productRate(product: Product): GlossaryRate | null {
  * productRate's scaling, used when the curation editor commits an edited or
  * newly-entered Reading value.
  */
-export function toRate(
-  kind: QuantityKind,
-  perBasis: { kcal: number; protein?: number; fat?: number; carbs?: number }
-): Rate {
+/**
+ * The value a Reading edit / new Reading commits — kcal and any macros the
+ * user typed, all against the Product's display basis (per 100 g / 100 ml /
+ * piece). toRate converts it to the per-unit Rate the overlay stores.
+ */
+export interface PerBasis {
+  kcal: number
+  protein?: number
+  fat?: number
+  carbs?: number
+}
+
+export function toRate(kind: QuantityKind, perBasis: PerBasis): Rate {
   const factor = BASIS_FACTOR[kind]
   const down = (n: number | undefined) =>
     n === undefined ? undefined : n / factor
