@@ -514,6 +514,8 @@ function labelHasPrefix(label: string, word: string): boolean {
  */
 export interface SuggestionRow extends Nutrients {
   key: string
+  /** The backing Product — the long-press curation card looks it up by this. */
+  productKey: string
   label: string
   /** Votes for this row's Reading (every use, for a Reading-less Product). */
   useCount: number
@@ -558,6 +560,29 @@ export function advanceSuggestions(
   return rows.length > 0 ? { word, rows } : prev
 }
 
+/**
+ * Recompute the rows on screen against a re-derived index (#73) — a curation
+ * write from the long-press card, or a remote device, changed the data under
+ * them. Same STICKY word (the input's last word may be mid-typing or a
+ * trailing space — exactly the states advanceSuggestions deliberately sticks
+ * in), current input's Quantity, fresh values. Unlike advanceSuggestions, a
+ * vanished match empties rather than sticks: the data moved, not the typing.
+ */
+export function refreshSuggestions(
+  prev: SuggestState,
+  input: string,
+  index: ProductIndex
+): SuggestState {
+  if (prev.rows.length === 0) return prev
+  if (input.trim() === "") return EMPTY_SUGGESTIONS
+  const { quantity } = parseLabel(input)
+  const products = rankForQuantity(matchProducts(index, prev.word), quantity)
+  const rows = products
+    .flatMap((p) => productRows(p, quantity))
+    .slice(0, MAX_ROWS)
+  return { word: prev.word, rows }
+}
+
 // A typed unit boosts same-kind Products to the front of the ranking — it
 // never filters, and frecency order survives within each part (spec § Add
 // flow, #37). A bare number carries no unit and boosts nothing.
@@ -587,6 +612,7 @@ function productRows(
     return [
       {
         key: product.key,
+        productKey: product.key,
         label: e.label,
         useCount: product.useCount,
         kcal: e.kcal,
@@ -602,6 +628,7 @@ function productRows(
     if (!typed) {
       return {
         key,
+        productKey: product.key,
         label: r.base.label,
         useCount: r.votes,
         kcal: r.base.kcal,
@@ -616,6 +643,7 @@ function productRows(
       n === undefined ? undefined : Math.round(n * v * 10) / 10
     return {
       key,
+      productKey: product.key,
       label: `${product.label} ${typed.raw}`,
       useCount: r.votes,
       kcal: Math.round(r.rate.kcal * v),

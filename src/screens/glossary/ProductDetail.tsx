@@ -11,7 +11,12 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
-import { displayRate, productRate, type GlossaryRate } from "@/lib/glossary"
+import {
+  displayRate,
+  productRate,
+  type GlossaryRate,
+  type PerBasis,
+} from "@/lib/glossary"
 import { useI18n } from "@/lib/i18n/useI18n"
 import type { QuantityKind } from "@/lib/quantity"
 import type { Alias, Product, Reading } from "@/lib/suggestions"
@@ -24,16 +29,6 @@ import {
 } from "@/screens/main/fields"
 import { FadeSwap } from "@/screens/main/FadeSwap"
 import { SPRING } from "@/screens/main/anim"
-
-// The value a Reading edit / new-Reading commits — kcal and any macros the user
-// typed, all against the Product's display basis (per 100 g / 100 ml / piece).
-// The screen converts it to the per-unit Rate the overlay stores.
-export interface PerBasis {
-  kcal: number
-  protein?: number
-  fat?: number
-  carbs?: number
-}
 
 // The inline curation editor a Glossary row fade-throughs to (issue #40) — the
 // same row → editor pattern as the home screen's EntryList. Chrome-less: the

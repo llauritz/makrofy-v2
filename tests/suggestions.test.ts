@@ -13,6 +13,7 @@ import {
   dedupKey,
   EMPTY_SUGGESTIONS,
   matchProducts,
+  refreshSuggestions,
 } from "@/lib/suggestions"
 
 // A fixed "now" and a minimal history-entry builder: the index reads only the
@@ -441,5 +442,89 @@ describe("advanceSuggestions — scaled rows (#37)", () => {
     expect(s.rows[0].kcal).toBe(0)
     expect(s.rows[0].useCount).toBe(2)
     expect(s.rows[0].hint).toBeUndefined()
+  })
+})
+
+describe("SuggestionRow.productKey (#73)", () => {
+  // The long-press curation card looks its Product up by this key — every row
+  // shape must name its backing Product explicitly, never via the row key.
+  it("names the backing Product on baseline and competing-Reading rows", () => {
+    const index = buildProductIndex(
+      [
+        entry("banana", { kcal: 200, ageDays: 2 }),
+        entry("banana", { kcal: 50, ageDays: 1 }),
+      ],
+      NOW,
+    )
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "banana", index)
+    expect(s.rows).toHaveLength(2)
+    for (const row of s.rows) {
+      expect(row.productKey).toBe(index.products[0].key)
+    }
+  })
+
+  it("names the backing Product on a rate-less Product's row", () => {
+    const index = buildProductIndex([entry("water 500ml")], NOW)
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "water", index)
+    expect(s.rows[0].productKey).toBe(index.products[0].key)
+  })
+
+  it("names the backing Product on a scaled row", () => {
+    const index = buildProductIndex(
+      [entry("Banana 30g", { kcal: 90, ageDays: 1 })],
+      NOW,
+    )
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "Banana 40g", index)
+    expect(s.rows[0].productKey).toBe(index.products[0].key)
+  })
+})
+
+describe("refreshSuggestions (#73)", () => {
+  const before = buildProductIndex([entry("banana", { kcal: 50 })], NOW)
+  const after = buildProductIndex([entry("banana", { kcal: 120 })], NOW)
+
+  it("recomputes stuck rows against a re-derived index — trailing space", () => {
+    // The sticky search deliberately keeps rows while the input's last word
+    // isn't matching ("banana "). A curation edit re-derives the index in
+    // exactly that state; the refresh must recompute from the STICKY word,
+    // not the in-progress one.
+    let s = advanceSuggestions(EMPTY_SUGGESTIONS, "banana", before)
+    s = advanceSuggestions(s, "banana ", before)
+    expect(s.rows[0].kcal).toBe(50)
+
+    const r = refreshSuggestions(s, "banana ", after)
+    expect(r.rows[0].kcal).toBe(120)
+    expect(r.word).toBe("banana")
+  })
+
+  it("recomputes when the next word is still too short to search", () => {
+    let s = advanceSuggestions(EMPTY_SUGGESTIONS, "banana", before)
+    s = advanceSuggestions(s, "banana a", before)
+    const r = refreshSuggestions(s, "banana a", after)
+    expect(r.rows[0].kcal).toBe(120)
+  })
+
+  it("keeps scaling by the typed Quantity", () => {
+    const mass = buildProductIndex([entry("rice 30g", { kcal: 90 })], NOW)
+    const massAfter = buildProductIndex([entry("rice 30g", { kcal: 120 })], NOW)
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "rice 60g", mass)
+    expect(s.rows[0].kcal).toBe(180)
+    const r = refreshSuggestions(s, "rice 60g", massAfter)
+    expect(r.rows[0].kcal).toBe(240)
+  })
+
+  it("empties rather than sticks when the shown Product vanished", () => {
+    // advanceSuggestions sticks on no-match (typing case); a refresh must
+    // not — the data moved, not the typing.
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "banana", before)
+    const gone = buildProductIndex([entry("toast", { kcal: 80 })], NOW)
+    const r = refreshSuggestions(s, "banana", gone)
+    expect(r.rows).toEqual([])
+  })
+
+  it("leaves the resting state alone", () => {
+    expect(refreshSuggestions(EMPTY_SUGGESTIONS, "", after)).toBe(
+      EMPTY_SUGGESTIONS,
+    )
   })
 })

@@ -71,10 +71,19 @@ export function productRate(product: Product): GlossaryRate | null {
  * productRate's scaling, used when the curation editor commits an edited or
  * newly-entered Reading value.
  */
-export function toRate(
-  kind: QuantityKind,
-  perBasis: { kcal: number; protein?: number; fat?: number; carbs?: number }
-): Rate {
+/**
+ * The value a Reading edit / new Reading commits — kcal and any macros the
+ * user typed, all against the Product's display basis (per 100 g / 100 ml /
+ * piece). toRate converts it to the per-unit Rate the overlay stores.
+ */
+export interface PerBasis {
+  kcal: number
+  protein?: number
+  fat?: number
+  carbs?: number
+}
+
+export function toRate(kind: QuantityKind, perBasis: PerBasis): Rate {
   const factor = BASIS_FACTOR[kind]
   const down = (n: number | undefined) =>
     n === undefined ? undefined : n / factor
@@ -112,4 +121,21 @@ export function searchGlossary(index: ProductIndex, query: string): Product[] {
   return index.products
     .filter((p) => words.every((w) => productMatchesWord(p, w)))
     .sort(byLabel)
+}
+
+/**
+ * Same-kind Products other than the survivor — the only merge targets (a
+ * cross-kind merge needs a grams-per-piece mapping and is out of v1, so no
+ * surface ever offers it). Shared by the Glossary screen and the add card's
+ * long-press card (#73).
+ */
+export function sameKindOthers(
+  products: Product[],
+  survivor: Product
+): Product[] {
+  return products
+    .filter((p) => p.kind === survivor.kind && p.key !== survivor.key)
+    .sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+    )
 }
