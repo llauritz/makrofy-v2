@@ -34,6 +34,7 @@ vi.mock("@/data/identity", () => ({ refreshIdentity: vi.fn() }))
 vi.mock("@/data/hooks", () => ({
   useIdentity: () => "test-uid",
   useDay: (_uid: string, day: string) => dayLog.get(day) ?? [],
+  useCoverage: () => null,
   useGoal: () => ({ kcal: 2000 }),
   useLoggedDays: () => new Set<string>(),
   useProductIndex: () => ({ products: new Map(), totalEntries: 0 }),
