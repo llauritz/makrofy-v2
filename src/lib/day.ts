@@ -21,6 +21,13 @@ export function narrowWeekdays(locale: string = "en"): string[] {
   return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2023, 0, 1 + i)))
 }
 
+/** One Day's single-letter weekday in the locale — chart axis labels (#22). */
+export function narrowWeekday(day: string, locale: string = "en"): string {
+  return new Intl.DateTimeFormat(locale, { weekday: "narrow" }).format(
+    parseDay(day),
+  )
+}
+
 /** The device-local Day a moment belongs to, as 'YYYY-MM-DD'. */
 export function localDay(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0")
@@ -44,7 +51,7 @@ export function stepDay(day: string, delta: number): string {
 }
 
 /** Whole calendar days from `b` to `a` (positive when `a` is later). */
-function dayDiff(a: string, b: string): number {
+export function dayDiff(a: string, b: string): number {
   // Round to shrug off the ±1h a DST transition puts between two midnights.
   return Math.round((parseDay(a).getTime() - parseDay(b).getTime()) / 86_400_000)
 }

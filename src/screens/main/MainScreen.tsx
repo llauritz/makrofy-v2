@@ -34,6 +34,7 @@ import { DayStrip } from "./DayStrip"
 import { EntryList } from "./EntryList"
 import type { EntryDraft } from "./fields"
 import { Header } from "./Header"
+import { MorningStrip } from "./MorningStrip"
 import { SummaryCard } from "./SummaryCard"
 import { summarize } from "./summary"
 import { UndoSnackbar } from "./UndoSnackbar"
@@ -43,9 +44,16 @@ const DELETE_UNDO_MS = 6000
 
 // The walking skeleton (#15): the shell wired to live data for the full manual
 // loop — add, edit, delete+undo, Backfill and Day navigation — all offline
-// capable through the Firestore cache (ADR 0001). `onOpenGlossary` lifts to the
-// app-level screen switch (#40); Settings hosts the entry point.
-export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
+// capable through the Firestore cache (ADR 0001). `onOpenGlossary` and
+// `onOpenStats` lift to the app-level screen switch (#40, #22); Settings and
+// the summary card's stats button host the entry points.
+export function MainScreen({
+  onOpenGlossary,
+  onOpenStats,
+}: {
+  onOpenGlossary: () => void
+  onOpenStats: () => void
+}) {
   const uid = useIdentity()
   const [selectedDay, setSelectedDay] = React.useState(() =>
     localDay(new Date())
@@ -184,7 +192,12 @@ export function MainScreen({ onOpenGlossary }: { onOpenGlossary: () => void }) {
           <AnimatePresence initial={false}>
             {pending && <UndoSnackbar key="undo" onUndo={undo} />}
           </AnimatePresence>
-          <SummaryCard summary={summary} onOpenSettings={openSettings} />
+          <MorningStrip uid={uid} goalKcal={goalKcal} />
+          <SummaryCard
+            summary={summary}
+            onOpenSettings={openSettings}
+            onOpenStats={onOpenStats}
+          />
         </div>
       </main>
       <CalendarSheet

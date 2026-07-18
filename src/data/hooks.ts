@@ -14,7 +14,12 @@ import * as React from "react"
 import { onAuthStateChanged, onIdTokenChanged, type User } from "firebase/auth"
 
 import { readBootMirror } from "@/data/boot-mirror"
-import { listenToCoverage, type CoverageLevel } from "@/data/days"
+import {
+  listenToCoverage,
+  listenToCoverageInRange,
+  type CoverageLevel,
+  type CoverageMap,
+} from "@/data/days"
 import {
   listenToAllEntries,
   listenToDay,
@@ -253,6 +258,48 @@ export function useLoggedDays(uid: string | null): Set<string> {
     )
   }, [uid])
   return days
+}
+
+/**
+ * The full Entry history, live — the stats feed (#22). A third subscriber on
+ * the same all-entries listener the typeahead index and the Day-strip dots
+ * already hold; the SDK serves them from one cache, so no extra server read.
+ */
+export function useAllEntries(uid: string | null): Entry[] {
+  const [entries, setEntries] = React.useState<Entry[]>([])
+  React.useEffect(() => {
+    if (!uid) return
+    return listenToAllEntries(db, uid, setEntries)
+  }, [uid])
+  return entries
+}
+
+const EMPTY_COVERAGE: CoverageMap = new Map()
+
+/**
+ * Every Coverage label between `start` and `end` (inclusive Days), live — the
+ * stats admission feed (#22, ADR 0006). Keyed like useCoverage: a snapshot
+ * from a previous window reads as empty rather than gating the new window
+ * with stale labels while its own snapshot is in flight.
+ */
+export function useCoverageRange(
+  uid: string | null,
+  start: string,
+  end: string,
+): CoverageMap {
+  const [state, setState] = React.useState<{
+    window: string
+    labels: CoverageMap
+  } | null>(null)
+  React.useEffect(() => {
+    if (!uid) return
+    return listenToCoverageInRange(db, uid, start, end, (labels) =>
+      setState({ window: `${start}..${end}`, labels }),
+    )
+  }, [uid, start, end])
+  return state !== null && state.window === `${start}..${end}`
+    ? state.labels
+    : EMPTY_COVERAGE
 }
 
 /** Adapt a Firestore Entry to the nutrients-plus-log-time shape the index reads. */
