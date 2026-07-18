@@ -53,10 +53,14 @@ export function CoverageControl({
           transition={SPRING}
           className="mx-4 pb-3"
         >
-          <div className="px-1 text-[11px] text-muted-foreground">
+          {/* A quiet, centered afterthought to the list, not a card: the
+              caption whispers, unselected chips are bare outlines with
+              softened text, and the stored label is a plain ink outline —
+              never a fill. */}
+          <div className="px-1 text-center text-[11px] text-muted-foreground/70">
             {t.coverage.question}
           </div>
-          <div className="mt-2 flex flex-wrap gap-1.5 px-1">
+          <div className="mt-2 flex flex-wrap justify-center gap-1.5 px-1">
             {COVERAGE_LEVELS.map((chip) => (
               <motion.button
                 key={chip}
@@ -65,10 +69,10 @@ export function CoverageControl({
                 onClick={() => onSelect(chip)}
                 whileTap={{ scale: 0.95 }}
                 className={
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 " +
+                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150 " +
                   (level === chip
-                    ? "bg-foreground text-background"
-                    : "border bg-card")
+                    ? "border-foreground"
+                    : "text-muted-foreground")
                 }
               >
                 {t.coverage[chip]}
