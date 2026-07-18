@@ -62,7 +62,7 @@ export function EntryList({
             </div>
           </motion.div>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-2.5">
             {entries.map((entry) => {
               const editing = editingId === entry.id
               // A 0-kcal row is dashed; the editor is always a solid card. The
@@ -154,7 +154,7 @@ function EntryRow({
     // its Enter-key click bubbles up here too.
     <div
       onClick={onEdit}
-      className="w-full cursor-pointer rounded-2xl px-4 py-3"
+      className="w-full cursor-pointer rounded-2xl px-4 py-4"
     >
       <div className="flex items-center justify-between gap-3">
         <button
