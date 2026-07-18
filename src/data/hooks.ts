@@ -4,12 +4,16 @@
 // deleteEntry, setGoal), which take the same db handle. Each hook owns one
 // listener, torn down on unmount or when its inputs change, so day-stepping
 // swaps the Day listener cleanly (ADR 0001 — the SDK cache serves the switch
-// instantly and offline). Until the Guest identity resolves, uid is null and no
-// listener is opened; the initial empty state stands (V2 has no sign-out — that
-// arrives with #19).
+// instantly and offline). Launch is seeded from the boot mirror (issue #69):
+// online, Firebase Auth blocks its first event on a server round-trip and
+// Firestore holds even cached snapshots until then, so the identity, Goal and
+// today's Entries first render from the mirrored copy and hand over to the
+// live values the moment the SDK settles. A first-ever launch has no mirror;
+// uid stays null and no listener is opened until the Guest is minted.
 import * as React from "react"
 import { onAuthStateChanged, onIdTokenChanged, type User } from "firebase/auth"
 
+import { readBootMirror } from "@/data/boot-mirror"
 import {
   listenToAllEntries,
   listenToDay,
@@ -33,10 +37,15 @@ import {
   type ProductIndex,
 } from "@/lib/suggestions"
 
-/** The app's current Firebase uid, or null until the Guest identity resolves. */
+/**
+ * The app's current Firebase uid. Before auth settles it reads the mirrored
+ * uid (null only on a first-ever launch); once auth speaks, the settled state
+ * wins outright — including a null, which is how a server-side deletion or the
+ * sign-out gap still reach the splash.
+ */
 export function useIdentity(): string | null {
   const [uid, setUid] = React.useState<string | null>(
-    () => auth.currentUser?.uid ?? null
+    () => auth.currentUser?.uid ?? readBootMirror()?.uid ?? null
   )
   React.useEffect(
     () => onAuthStateChanged(auth, (user) => setUid(user?.uid ?? null)),
@@ -151,7 +160,14 @@ export function useSyncStatus(uid: string | null): SyncStatus {
 
 /** One Day's Entries, live and in log order (oldest first). */
 export function useDay(uid: string | null, day: string): Entry[] {
-  const [entries, setEntries] = React.useState<Entry[]>([])
+  const [entries, setEntries] = React.useState<Entry[]>(() => {
+    // Seed only an exact uid + Day match: a launch on a later day correctly
+    // starts empty, and another profile's Entries can never leak in.
+    const mirror = readBootMirror()
+    return mirror && mirror.uid === uid && mirror.day === day
+      ? mirror.entries
+      : []
+  })
   React.useEffect(() => {
     if (!uid) return
     return listenToDay(db, uid, day, setEntries)
@@ -161,7 +177,10 @@ export function useDay(uid: string | null, day: string): Entry[] {
 
 /** The synced Goal; null until onboarding sets one (#17). */
 export function useGoal(uid: string | null): Goal | null {
-  const [goal, setGoal] = React.useState<Goal | null>(null)
+  const [goal, setGoal] = React.useState<Goal | null>(() => {
+    const mirror = readBootMirror()
+    return mirror && mirror.uid === uid ? mirror.goal : null
+  })
   React.useEffect(() => {
     if (!uid) return
     return listenToGoal(db, uid, setGoal)
@@ -176,9 +195,15 @@ export function useGoal(uid: string | null): Goal | null {
  * screen while the first snapshot is in flight. "unset" is decided from the
  * local snapshot so first run works offline; a future signed-in user opening a
  * fresh device (#19) is the one case that could momentarily read "unset".
+ * A mirrored launch resolves at once — this is what actually ends the splash
+ * before auth settles (issue #69).
  */
 export function useGoalStatus(uid: string | null): GoalStatus {
-  const [status, setStatus] = React.useState<GoalStatus>("loading")
+  const [status, setStatus] = React.useState<GoalStatus>(() => {
+    const mirror = readBootMirror()
+    if (!mirror || mirror.uid !== uid) return "loading"
+    return mirror.goal ? "set" : "unset"
+  })
   React.useEffect(() => {
     if (!uid) return
     return listenToGoal(db, uid, (goal) => setStatus(goal ? "set" : "unset"))

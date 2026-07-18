@@ -34,6 +34,10 @@ _Avoid_: anonymous user (auth-implementation term)
 **Union merge**:
 What happens when a Guest signs into an account that already has data: both sets of Entries are kept, combined without prompting.
 
+**Boot mirror**:
+The last-rendered launch state — uid, Goal, today's Entries — kept in localStorage so a returning launch paints instantly instead of waiting out Firebase Auth's online round-trip (ADR 0011). Never the source of truth: live listeners replace it the moment the SDK settles, and any doubt (new day, changed uid, corrupt state) reads as "nothing mirrored".
+_Avoid_: offline cache (that's the Firestore SDK's job, ADR 0001)
+
 **Suggestion**:
 A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. A Product's competing Readings appear as adjacent Suggestions, never collapsed into one winning row. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from its Reading's rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills numbers only — the typed label stays.
 _Avoid_: favorite (V1 concept, superseded), autofill

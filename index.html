@@ -12,6 +12,13 @@
        #17110c) so it follows the in-app toggle, not just the OS preference. -->
   <meta name="theme-color" content="#f6f1e6" />
 
+  <!-- Warm up DNS+TLS to Firebase while the JS parses: the launch paints from
+       the boot mirror (#69), but auth's background accounts:lookup and the
+       Firestore streams follow immediately — on mobile the handshakes are a
+       real slice of that first round-trip. -->
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+  <link rel="preconnect" href="https://firestore.googleapis.com" />
+
   <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
