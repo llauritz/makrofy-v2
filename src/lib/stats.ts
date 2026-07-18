@@ -48,7 +48,7 @@ export function statDays(
   coverage: CoverageMap,
   start: string,
   end: string,
-  today: string,
+  today: string
 ): StatDay[] {
   const totals = new Map<
     string,
@@ -102,14 +102,14 @@ export function averageKcal(days: readonly StatDay[]): number | null {
   const admitted = days.filter(countsInAverages)
   if (admitted.length === 0) return null
   return Math.round(
-    admitted.reduce((sum, d) => sum + (d.kcal as number), 0) / admitted.length,
+    admitted.reduce((sum, d) => sum + (d.kcal as number), 0) / admitted.length
   )
 }
 
 /** Rounded % change of `current` vs `previous`; null when either is missing. */
 export function deltaPct(
   current: number | null,
-  previous: number | null,
+  previous: number | null
 ): number | null {
   if (current === null || previous === null || previous === 0) return null
   return Math.round(((current - previous) / previous) * 100)
@@ -133,9 +133,10 @@ export function rangeBounds(goalKcal: number): { lo: number; hi: number } {
  * A day's mark in the in-range dot row. 'in'/'out' are assessable verdicts;
  * the rest say why there is no verdict: a gap (untracked), today (still
  * forming), *Some* (excluded, drawn distinct from a gap), *Most* (counted in
- * averages but not judgeable against the band).
+ * averages but not judgeable against the band), future (no mark at all).
  */
-export type RangeDotState = "in" | "out" | "gap" | "today" | "some" | "most"
+export type RangeDotState =
+  "in" | "out" | "gap" | "today" | "some" | "most" | "future"
 
 export interface RangeDot {
   day: string
@@ -152,14 +153,50 @@ export interface InRangeWeek {
   dots: RangeDot[]
 }
 
+/** The last-7-days reading every stats surface opens with. */
+export interface WeekSummary {
+  /** The window's final 7 days. */
+  week: StatDay[]
+  /** Mean kcal over the week's admitted days; null when none. */
+  avg: number | null
+  /** Rounded % change vs the 7 days before; null when either side is silent. */
+  delta: number | null
+  range: InRangeWeek
+}
+
+/**
+ * The reading the dashboard tiles, week report header and morning strip all
+ * share: 7-day average, delta vs the prior week, and the in-range verdict.
+ * `days` is any window ending on the week's last Day, carrying at least the
+ * prior 7 days of lead-in for the delta.
+ */
+export function weekSummary(
+  days: readonly StatDay[],
+  goalKcal: number
+): WeekSummary {
+  const week = days.slice(-7)
+  const avg = averageKcal(week)
+  return {
+    week,
+    avg,
+    delta: deltaPct(avg, averageKcal(days.slice(-14, -7))),
+    range: inRangeWeek(week, goalKcal),
+  }
+}
+
 /** Judge one window (typically 7 days) against the Goal's in-range band. */
 export function inRangeWeek(
   days: readonly StatDay[],
-  goalKcal: number,
+  goalKcal: number
 ): InRangeWeek {
   const { lo, hi } = rangeBounds(goalKcal)
-  const dots: RangeDot[] = days.map((d) => ({ day: d.day, state: dotState(d, lo, hi) }))
-  const assessable = dots.filter((d) => d.state === "in" || d.state === "out").length
+  const dots: RangeDot[] = days.map((d) => ({
+    day: d.day,
+    state: dotState(d, lo, hi),
+  }))
+  const assessable = dots.filter(
+    (d) => d.state === "in" || d.state === "out"
+  ).length
   return {
     enough: goalKcal > 0 && days.length === 7 && assessable >= 5,
     inRange: dots.filter((d) => d.state === "in").length,
@@ -170,7 +207,8 @@ export function inRangeWeek(
 
 function dotState(d: StatDay, lo: number, hi: number): RangeDotState {
   if (d.isToday) return "today"
-  if (d.kcal === null || d.isFuture) return "gap"
+  if (d.isFuture) return "future"
+  if (d.kcal === null) return "gap"
   if (d.coverage === "some") return "some"
   if (d.coverage === "most") return "most"
   return d.kcal >= lo && d.kcal <= hi ? "in" : "out"
@@ -203,15 +241,20 @@ export function dayShare(d: StatDay): MacroShare | null {
  * admitted macro days (so each day weighs equally, matching the columns).
  */
 export function weekMacroShare(days: readonly StatDay[]): MacroShare | null {
-  const shares = days.filter(countsInAverages).map(dayShare).filter(
-    (s): s is MacroShare => s !== null,
-  )
+  const shares = days
+    .filter(countsInAverages)
+    .map(dayShare)
+    .filter((s): s is MacroShare => s !== null)
   if (shares.length === 0) return null
   const sum = shares.reduce(
     (acc, s) => ({ p: acc.p + s.p, f: acc.f + s.f, c: acc.c + s.c }),
-    { p: 0, f: 0, c: 0 },
+    { p: 0, f: 0, c: 0 }
   )
-  return { p: sum.p / shares.length, f: sum.f / shares.length, c: sum.c / shares.length }
+  return {
+    p: sum.p / shares.length,
+    f: sum.f / shares.length,
+    c: sum.c / shares.length,
+  }
 }
 
 /**
@@ -220,7 +263,7 @@ export function weekMacroShare(days: readonly StatDay[]): MacroShare | null {
  */
 export function weekWindow(
   offset: number,
-  today: string,
+  today: string
 ): { start: string; end: string } {
   const end = stepDay(today, -offset * 7)
   return { start: stepDay(end, -6), end }
@@ -242,26 +285,4 @@ export function earliestDay(entries: readonly StatEntry[]): string | null {
     if (min === null || e.date < min) min = e.date
   }
   return min
-}
-
-/**
- * The pager pill's name for a past window: "27 Jun – 3 Jul", collapsing a
- * shared month to "1 – 7 Jul". Day-before-month order kept explicit so it
- * reads the same across locales (matching shortDayLabel in day.ts).
- */
-export function weekRangeLabel(
-  start: string,
-  end: string,
-  locale: string,
-): string {
-  const month = (day: string) => {
-    const [y, m, d] = day.split("-").map(Number)
-    return new Intl.DateTimeFormat(locale, { month: "short" }).format(
-      new Date(y, m - 1, d),
-    )
-  }
-  const dayNum = (day: string) => Number(day.slice(8))
-  const sameMonth = start.slice(0, 7) === end.slice(0, 7)
-  const from = sameMonth ? `${dayNum(start)}` : `${dayNum(start)} ${month(start)}`
-  return `${from} – ${dayNum(end)} ${month(end)}`
 }

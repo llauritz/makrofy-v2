@@ -3,23 +3,20 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import type { Entry } from "@/data/entries"
 import { useCoverageRange, useIdentity } from "@/data/hooks"
-import { localDay } from "@/lib/day"
+import { localDay, weekRangeLabel } from "@/lib/day"
 import { useI18n } from "@/lib/i18n/useI18n"
 import {
-  averageKcal,
-  deltaPct,
   earliestDay,
-  inRangeWeek,
   maxWeekOffset,
   rangeBounds,
   statDays,
-  weekRangeLabel,
+  weekSummary,
   weekWindow,
 } from "@/lib/stats"
 import { useDaySwipe } from "@/lib/useDaySwipe"
 import { FadeSwap } from "@/screens/main/FadeSwap"
 import { RangeDots, WeekColumns } from "./charts"
-import { ScreenChrome } from "./StatsScreen"
+import { ScreenChrome } from "./ScreenChrome"
 
 // The week report subpage (issue #22): one 7-day window at a time, paged by
 // the wide pill selector (borderless chevrons + a label reading "This week"
@@ -42,19 +39,16 @@ export function WeekReport({
   const [offset, setOffset] = React.useState(0)
   const maxOffset = maxWeekOffset(earliestDay(entries), today)
 
-  const window = weekWindow(offset, today)
-  const prevWindow = weekWindow(offset + 1, today)
-  const coverage = useCoverageRange(uid, prevWindow.start, window.end)
+  const win = weekWindow(offset, today)
+  const prevWin = weekWindow(offset + 1, today)
+  const coverage = useCoverageRange(uid, prevWin.start, win.end)
   // Both windows in one build: the current week plus the one before it for
   // the delta line.
   const days = React.useMemo(
-    () => statDays(entries, coverage, prevWindow.start, window.end, today),
-    [entries, coverage, prevWindow.start, window.end, today],
+    () => statDays(entries, coverage, prevWin.start, win.end, today),
+    [entries, coverage, prevWin.start, win.end, today]
   )
-  const week = days.slice(7)
-  const avg = averageKcal(week)
-  const delta = deltaPct(avg, averageKcal(days.slice(0, 7)))
-  const range = inRangeWeek(week, goalKcal)
+  const { week, avg, delta, range } = weekSummary(days, goalKcal)
   const bounds = rangeBounds(goalKcal)
 
   const older = () => setOffset((o) => Math.min(maxOffset, o + 1))
@@ -78,7 +72,7 @@ export function WeekReport({
         <span className="text-[13px] font-semibold" aria-live="polite">
           {offset === 0
             ? t.stats.thisWeek
-            : weekRangeLabel(window.start, window.end, language)}
+            : weekRangeLabel(win.start, win.end, language)}
         </span>
         <button
           type="button"

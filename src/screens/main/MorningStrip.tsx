@@ -1,18 +1,13 @@
 import * as React from "react"
 import { X } from "lucide-react"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 
 import { clearCoverage, setCoverage, type CoverageLevel } from "@/data/days"
 import { useAllEntries, useCoverageRange } from "@/data/hooks"
 import { localDay, relativeDayLabel, stepDay } from "@/lib/day"
 import { db } from "@/lib/firebase"
 import { useI18n } from "@/lib/i18n/useI18n"
-import {
-  averageKcal,
-  deltaPct,
-  inRangeWeek,
-  statDays,
-} from "@/lib/stats"
+import { statDays, weekSummary } from "@/lib/stats"
 import { WeekColumns } from "@/screens/stats/charts"
 import { SPRING } from "./anim"
 import { COVERAGE_LEVELS } from "./coverage"
@@ -42,6 +37,7 @@ export function MorningStrip({
   goalKcal: number
 }) {
   const { t, n, language } = useI18n()
+  const reduce = useReducedMotion()
   const today = localDay(new Date())
   const start = stepDay(today, -(STRIP_DAYS - 1))
   const entries = useAllEntries(uid)
@@ -50,15 +46,12 @@ export function MorningStrip({
 
   const days = React.useMemo(
     () => statDays(entries, coverage, start, today, today),
-    [entries, coverage, start, today],
+    [entries, coverage, start, today]
   )
   const todayCount = entries.filter((e) => e.date === today).length
   const visible = showMorningStrip(days, todayCount, dismissedDay, today)
 
-  const week = days.slice(-7)
-  const avg7 = averageKcal(week)
-  const delta = deltaPct(avg7, averageKcal(days.slice(0, 7)))
-  const range = inRangeWeek(week, goalKcal)
+  const { week, avg, delta, range } = weekSummary(days, goalKcal)
 
   const nudgeDay = morningNudgeDay(days)
   const nudgeLevel = nudgeDay === null ? null : (coverage.get(nudgeDay) ?? null)
@@ -78,88 +71,105 @@ export function MorningStrip({
   return (
     <AnimatePresence initial={false}>
       {visible && (
+        // Space-making entrance and exit (spec § Motion): the strip's box
+        // grows and collapses for real — the summary card below settles in
+        // lockstep instead of jumping — while the content just fades. Height
+        // is a plain style value, so it needs its own reduced-motion guard
+        // (matching FadeSwap).
         <motion.div
           key="morning-strip"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 16 }}
-          transition={SPRING}
-          className="mb-2 rounded-3xl border bg-card px-4 py-3 shadow-[0_8px_30px_rgba(43,32,21,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={reduce ? { duration: 0 } : SPRING}
+          className="overflow-hidden"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-              {t.stats.last7Days}
-            </span>
-            <div className="flex items-center gap-2">
-              {range.enough && (
-                <span className="text-[11px] text-muted-foreground">
-                  {t.stats.inRangeShort(n(range.inRange), n(range.assessable))}
-                </span>
-              )}
-              <button
-                type="button"
-                aria-label={t.stats.dismissStrip}
-                onClick={dismiss}
-                className="-mr-1 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-          <div className="mt-2 flex items-center justify-between gap-4">
-            <WeekColumns
-              days={week}
-              goalKcal={goalKcal}
-              caption={t.stats.last7Days}
-              height={54}
-              mini
-            />
-            <div className="flex shrink-0 flex-col items-end">
-              <div className="flex items-baseline gap-1">
-                <span className="text-[20px] leading-none font-semibold">
-                  {avg7 === null ? "—" : n(avg7)}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {t.stats.kcalAvg}
-                </span>
+          <div className="mb-2 rounded-3xl border bg-card px-4 py-3 shadow-[0_8px_30px_rgba(43,32,21,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                {t.stats.last7Days}
+              </span>
+              <div className="flex items-center gap-2">
+                {/* The in-range count, or the quiet placeholder while the band
+                  hasn't earned its place (the gate rule applies to the strip
+                  too — issue #22). */}
+                {range.enough ? (
+                  <span className="text-[11px] text-muted-foreground">
+                    {t.stats.inRangeShort(
+                      n(range.inRange),
+                      n(range.assessable)
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground/70">
+                    {t.stats.rangeGateNote}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  aria-label={t.stats.dismissStrip}
+                  onClick={dismiss}
+                  className="-mr-1 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
-              {delta !== null && (
-                <span className="mt-0.5 text-[10px] text-muted-foreground">
-                  {delta >= 0
-                    ? t.stats.stripDeltaUp(n(Math.abs(delta)))
-                    : t.stats.stripDeltaDown(n(Math.abs(delta)))}
-                </span>
-              )}
             </div>
-          </div>
-          {nudgeDay !== null && (
-            <div className="mt-2.5 border-t pt-2.5">
-              <div className="text-[11px] text-muted-foreground/70">
-                {t.stats.nudgeQuestion(
-                  relativeDayLabel(nudgeDay, t.day, language),
+            <div className="mt-2 flex items-center justify-between gap-4">
+              <WeekColumns
+                days={week}
+                goalKcal={goalKcal}
+                caption={t.stats.last7Days}
+                height={54}
+                mini
+              />
+              <div className="flex shrink-0 flex-col items-end">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[20px] leading-none font-semibold">
+                    {avg === null ? "—" : n(avg)}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {t.stats.kcalAvg}
+                  </span>
+                </div>
+                {delta !== null && (
+                  <span className="mt-0.5 text-[10px] text-muted-foreground">
+                    {delta >= 0
+                      ? t.stats.stripDeltaUp(n(Math.abs(delta)))
+                      : t.stats.stripDeltaDown(n(Math.abs(delta)))}
+                  </span>
                 )}
               </div>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {COVERAGE_LEVELS.map((chip) => (
-                  <motion.button
-                    key={chip}
-                    type="button"
-                    aria-pressed={nudgeLevel === chip}
-                    onClick={() => labelNudgeDay(chip)}
-                    whileTap={{ scale: 0.95 }}
-                    className={
-                      "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150 " +
-                      (nudgeLevel === chip
-                        ? "border-foreground"
-                        : "text-muted-foreground")
-                    }
-                  >
-                    {t.coverage[chip]}
-                  </motion.button>
-                ))}
-              </div>
             </div>
-          )}
+            {nudgeDay !== null && (
+              <div className="mt-2.5 border-t pt-2.5">
+                <div className="text-[11px] text-muted-foreground/70">
+                  {t.stats.nudgeQuestion(
+                    relativeDayLabel(nudgeDay, t.day, language)
+                  )}
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {COVERAGE_LEVELS.map((chip) => (
+                    <motion.button
+                      key={chip}
+                      type="button"
+                      aria-pressed={nudgeLevel === chip}
+                      onClick={() => labelNudgeDay(chip)}
+                      whileTap={{ scale: 0.95 }}
+                      className={
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150 " +
+                        (nudgeLevel === chip
+                          ? "border-foreground"
+                          : "text-muted-foreground")
+                      }
+                    >
+                      {t.coverage[chip]}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

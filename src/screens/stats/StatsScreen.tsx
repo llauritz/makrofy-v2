@@ -1,20 +1,23 @@
 import * as React from "react"
-import { ArrowLeft, ChevronRight } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { motion } from "motion/react"
 
 import type { Entry } from "@/data/entries"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
-import { useAllEntries, useCoverageRange, useGoal, useIdentity } from "@/data/hooks"
+import {
+  useAllEntries,
+  useCoverageRange,
+  useGoal,
+  useIdentity,
+} from "@/data/hooks"
 import { localDay, stepDay } from "@/lib/day"
 import { useI18n } from "@/lib/i18n/useI18n"
 import {
-  averageKcal,
-  deltaPct,
-  inRangeWeek,
   rangeBounds,
   rolling7,
   statDays,
   weekMacroShare,
+  weekSummary,
 } from "@/lib/stats"
 import { FADE_IN } from "@/screens/main/anim"
 import { MACROS } from "@/screens/main/macros"
@@ -26,6 +29,7 @@ import {
   TrendLine,
   WeekColumns,
 } from "./charts"
+import { ScreenChrome } from "./ScreenChrome"
 import { WeekReport } from "./WeekReport"
 
 // The trend chart's window, plus the lead-in its rolling average needs so the
@@ -51,11 +55,25 @@ export function StatsScreen({
   const goalKcal = goal?.kcal ?? DEFAULT_GOAL_KCAL
 
   return report ? (
-    <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={FADE_IN}>
-      <WeekReport entries={entries} goalKcal={goalKcal} onBack={() => setReport(false)} />
+    <motion.div
+      key="report"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={FADE_IN}
+    >
+      <WeekReport
+        entries={entries}
+        goalKcal={goalKcal}
+        onBack={() => setReport(false)}
+      />
     </motion.div>
   ) : (
-    <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={FADE_IN}>
+    <motion.div
+      key="dashboard"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={FADE_IN}
+    >
       <Dashboard
         entries={entries}
         goalKcal={goalKcal}
@@ -88,16 +106,17 @@ function Dashboard({
 
   const days = React.useMemo(
     () => statDays(entries, coverage, start, today, today),
-    [entries, coverage, start, today],
+    [entries, coverage, start, today]
   )
-  const week = days.slice(-7)
-  const avg7 = averageKcal(week)
-  const delta = deltaPct(avg7, averageKcal(days.slice(-14, -7)))
-  const range = inRangeWeek(week, goalKcal)
+  const { week, avg, delta, range } = weekSummary(days, goalKcal)
   const bounds = rangeBounds(goalKcal)
   const rolling = React.useMemo(() => rolling7(days), [days])
   const share = weekMacroShare(week)
-  const macroName = { p: t.macros.protein, f: t.macros.fat, c: t.macros.carbs } as const
+  const macroName = {
+    p: t.macros.protein,
+    f: t.macros.fat,
+    c: t.macros.carbs,
+  } as const
 
   return (
     <ScreenChrome title={t.stats.title} onBack={onBack}>
@@ -107,13 +126,17 @@ function Dashboard({
           sub={t.stats.thisWeekSub}
           onOpen={onOpenWeek}
         >
-          <WeekColumns days={week} goalKcal={goalKcal} caption={t.stats.thisWeek} />
+          <WeekColumns
+            days={week}
+            goalKcal={goalKcal}
+            caption={t.stats.thisWeek}
+          />
         </Section>
 
         <div className="flex gap-3">
           <StatTile
             label={t.stats.sevenDayAverage}
-            value={avg7 === null ? "—" : n(avg7)}
+            value={avg === null ? "—" : n(avg)}
             unit={t.units.kcal}
             note={
               delta === null
@@ -188,40 +211,13 @@ function Dashboard({
           onClick={onOpenGlossary}
           className="flex items-center justify-between rounded-3xl border bg-card p-4 text-left"
         >
-          <span className="text-[13px] font-semibold">{t.settings.foodGlossary}</span>
+          <span className="text-[13px] font-semibold">
+            {t.settings.foodGlossary}
+          </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
       </div>
     </ScreenChrome>
-  )
-}
-
-/** The stats screens' shared chrome: back button, title, a max-w-md column. */
-export function ScreenChrome({
-  title,
-  onBack,
-  children,
-}: {
-  title: string
-  onBack: () => void
-  children: React.ReactNode
-}) {
-  const { t } = useI18n()
-  return (
-    <div className="mx-auto flex min-h-svh max-w-md flex-col px-4 pb-8">
-      <header className="flex items-center gap-1 pt-7 pb-4">
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label={t.common.back}
-          className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-[22px] font-semibold">{title}</h1>
-      </header>
-      {children}
-    </div>
   )
 }
 
@@ -242,7 +238,9 @@ function Section({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-[13px] font-semibold">{title}</h2>
-          {sub && <p className="mt-0.5 text-[11px] text-muted-foreground">{sub}</p>}
+          {sub && (
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{sub}</p>
+          )}
         </div>
         {onOpen && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </div>

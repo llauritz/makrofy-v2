@@ -4,6 +4,7 @@
 // normative rule from #22 is pinned here, not in components.
 import { describe, expect, it } from "vitest"
 import type { CoverageMap } from "@/data/days"
+import { weekRangeLabel } from "@/lib/day"
 import {
   averageKcal,
   dayShare,
@@ -15,7 +16,7 @@ import {
   rolling7,
   statDays,
   weekMacroShare,
-  weekRangeLabel,
+  weekSummary,
   weekWindow,
 } from "@/lib/stats"
 
@@ -23,7 +24,7 @@ import {
 const entry = (
   date: string,
   kcal: number,
-  macros: { protein?: number; fat?: number; carbs?: number } = {},
+  macros: { protein?: number; fat?: number; carbs?: number } = {}
 ) => ({ date, kcal, ...macros })
 
 const TODAY = "2026-07-10" // Fri
@@ -32,7 +33,13 @@ const none: CoverageMap = new Map()
 
 describe("statDays", () => {
   it("builds the inclusive window with untracked days as null, never zero", () => {
-    const days = statDays([entry("2026-07-08", 500)], none, "2026-07-06", TODAY, TODAY)
+    const days = statDays(
+      [entry("2026-07-08", 500)],
+      none,
+      "2026-07-06",
+      TODAY,
+      TODAY
+    )
     expect(days.map((d) => d.day)).toEqual([
       "2026-07-06",
       "2026-07-07",
@@ -53,13 +60,19 @@ describe("statDays", () => {
       none,
       "2026-07-08",
       "2026-07-08",
-      TODAY,
+      TODAY
     )
     expect(days[0]).toMatchObject({ kcal: 500, protein: 12, fat: 5, carbs: 30 })
   })
 
   it("ignores Entries outside the window", () => {
-    const days = statDays([entry("2026-07-01", 999)], none, "2026-07-06", TODAY, TODAY)
+    const days = statDays(
+      [entry("2026-07-01", 999)],
+      none,
+      "2026-07-06",
+      TODAY,
+      TODAY
+    )
     expect(days.every((d) => d.kcal === null)).toBe(true)
   })
 
@@ -70,7 +83,7 @@ describe("statDays", () => {
       labels,
       "2026-07-09",
       "2026-07-11",
-      TODAY,
+      TODAY
     )
     expect(days[0].coverage).toBe("some")
     expect(days[1]).toMatchObject({ coverage: null, isToday: true })
@@ -85,7 +98,7 @@ describe("averageKcal — tracked days only, Coverage gates admission", () => {
       none,
       "2026-07-04",
       "2026-07-09",
-      TODAY,
+      TODAY
     )
     expect(averageKcal(days)).toBe(1500)
   })
@@ -96,7 +109,7 @@ describe("averageKcal — tracked days only, Coverage gates admission", () => {
       none,
       "2026-07-09",
       TODAY,
-      TODAY,
+      TODAY
     )
     expect(averageKcal(days)).toBe(2000)
   })
@@ -115,7 +128,7 @@ describe("averageKcal — tracked days only, Coverage gates admission", () => {
       labels,
       "2026-07-07",
       "2026-07-09",
-      TODAY,
+      TODAY
     )
     expect(averageKcal(days)).toBe(1500)
   })
@@ -142,7 +155,7 @@ describe("rolling7", () => {
   it("averages the trailing 7 admitted days at each position", () => {
     // 8 tracked days, 1000..8000 — at the last day the window is 2000..8000.
     const entries = Array.from({ length: 8 }, (_, i) =>
-      entry(`2026-07-0${i + 1}`, (i + 1) * 1000),
+      entry(`2026-07-0${i + 1}`, (i + 1) * 1000)
     )
     const days = statDays(entries, none, "2026-07-01", "2026-07-08", TODAY)
     const out = rolling7(days)
@@ -159,11 +172,15 @@ describe("rolling7", () => {
   it("skips *Some* days inside the window", () => {
     const labels: CoverageMap = new Map([["2026-07-02", "some"]])
     const days = statDays(
-      [entry("2026-07-01", 1000), entry("2026-07-02", 9000), entry("2026-07-03", 2000)],
+      [
+        entry("2026-07-01", 1000),
+        entry("2026-07-02", 9000),
+        entry("2026-07-03", 2000),
+      ],
       labels,
       "2026-07-01",
       "2026-07-03",
-      TODAY,
+      TODAY
     )
     expect(rolling7(days)[2]).toBe(1500)
   })
@@ -192,7 +209,7 @@ describe("in range — 80–110% of Goal, gated on assessable days", () => {
       labels,
       "2026-07-04",
       TODAY,
-      TODAY,
+      TODAY
     )
     const week = inRangeWeek(days, goal)
     expect(week.dots.map((d) => d.state)).toEqual([
@@ -212,7 +229,7 @@ describe("in range — 80–110% of Goal, gated on assessable days", () => {
       none,
       "2026-07-04",
       TODAY,
-      TODAY,
+      TODAY
     )
     expect(inRangeWeek(five, goal)).toMatchObject({
       enough: true,
@@ -225,7 +242,7 @@ describe("in range — 80–110% of Goal, gated on assessable days", () => {
       none,
       "2026-07-04",
       TODAY,
-      TODAY,
+      TODAY
     )
     expect(inRangeWeek(four, goal).enough).toBe(false)
   })
@@ -237,9 +254,12 @@ describe("in range — 80–110% of Goal, gated on assessable days", () => {
       labels,
       "2026-07-04",
       TODAY,
-      TODAY,
+      TODAY
     )
-    expect(inRangeWeek(days, goal)).toMatchObject({ enough: false, assessable: 4 })
+    expect(inRangeWeek(days, goal)).toMatchObject({
+      enough: false,
+      assessable: 4,
+    })
   })
 
   it("a partial window at the data edge is never enough, even with 5 assessable days", () => {
@@ -248,7 +268,7 @@ describe("in range — 80–110% of Goal, gated on assessable days", () => {
       none,
       "2026-07-05",
       "2026-07-09",
-      TODAY,
+      TODAY
     )
     expect(days).toHaveLength(5)
     const week = inRangeWeek(days, goal)
@@ -256,8 +276,29 @@ describe("in range — 80–110% of Goal, gated on assessable days", () => {
     expect(week.enough).toBe(false)
   })
 
+  it("future days get no mark — not even a gap", () => {
+    const days = statDays(
+      [entry(TODAY, 500)],
+      none,
+      "2026-07-09",
+      "2026-07-11",
+      TODAY
+    )
+    expect(inRangeWeek(days, goal).dots.map((d) => d.state)).toEqual([
+      "gap",
+      "today",
+      "future",
+    ])
+  })
+
   it("tolerates a zero goal without NaN", () => {
-    const days = statDays([entry("2026-07-09", 2000)], none, "2026-07-09", TODAY, TODAY)
+    const days = statDays(
+      [entry("2026-07-09", 2000)],
+      none,
+      "2026-07-09",
+      TODAY,
+      TODAY
+    )
     const week = inRangeWeek(days, 0)
     expect(week.enough).toBe(false)
     expect(week.inRange).toBe(0)
@@ -271,7 +312,7 @@ describe("macro share of calories", () => {
       none,
       "2026-07-09",
       "2026-07-09",
-      TODAY,
+      TODAY
     )
     const share = dayShare(days[0])
     // P 200, F 180, C 220 of 600 macro kcal
@@ -282,7 +323,13 @@ describe("macro share of calories", () => {
   })
 
   it("is null for untracked days and days without macros", () => {
-    const days = statDays([entry("2026-07-09", 500)], none, "2026-07-08", "2026-07-09", TODAY)
+    const days = statDays(
+      [entry("2026-07-09", 500)],
+      none,
+      "2026-07-08",
+      "2026-07-09",
+      TODAY
+    )
     expect(dayShare(days[0])).toBeNull()
     expect(dayShare(days[1])).toBeNull()
   })
@@ -298,7 +345,7 @@ describe("macro share of calories", () => {
       labels,
       "2026-07-07",
       TODAY,
-      TODAY,
+      TODAY
     )
     const avg = weekMacroShare(days)
     expect(avg).not.toBeNull()
@@ -307,10 +354,41 @@ describe("macro share of calories", () => {
   })
 
   it("week average is null with no admitted macro days", () => {
-    const days = statDays([entry(TODAY, 400, { fat: 10 })], none, "2026-07-09", TODAY, TODAY)
+    const days = statDays(
+      [entry(TODAY, 400, { fat: 10 })],
+      none,
+      "2026-07-09",
+      TODAY,
+      TODAY
+    )
     expect(weekMacroShare(days)).toBeNull()
   })
 })
+
+describe("weekSummary", () => {
+  it("bundles the last-7-days reading: average, delta vs the prior week, range", () => {
+    const entries = [
+      ...Array.from({ length: 7 }, (_, i) => entry(stepBack(13 - i), 1000)),
+      ...Array.from({ length: 6 }, (_, i) => entry(stepBack(6 - i), 2000)),
+    ]
+    const days = statDays(entries, none, stepBack(13), TODAY, TODAY)
+    const summary = weekSummary(days, 2200)
+    expect(summary.week.map((d) => d.day)).toEqual(
+      Array.from({ length: 7 }, (_, i) => stepBack(6 - i))
+    )
+    expect(summary.avg).toBe(2000)
+    expect(summary.delta).toBe(100)
+    expect(summary.range.enough).toBe(true)
+    expect(summary.range.inRange).toBe(6)
+  })
+})
+
+// The Day `n` days before TODAY, for windows that straddle a month boundary.
+function stepBack(n: number): string {
+  const d = new Date(2026, 6, 10 - n)
+  const pad = (x: number) => String(x).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
 
 describe("week paging", () => {
   it("offset 0 is the trailing 7 days ending today", () => {
@@ -318,7 +396,10 @@ describe("week paging", () => {
   })
 
   it("each offset steps a whole week back", () => {
-    expect(weekWindow(2, TODAY)).toEqual({ start: "2026-06-20", end: "2026-06-26" })
+    expect(weekWindow(2, TODAY)).toEqual({
+      start: "2026-06-20",
+      end: "2026-06-26",
+    })
   })
 
   it("maxWeekOffset reaches the earliest Entry and no further", () => {
@@ -330,13 +411,15 @@ describe("week paging", () => {
 
   it("earliestDay finds the oldest Entry date", () => {
     expect(earliestDay([entry("2026-07-08", 1), entry("2026-06-30", 1)])).toBe(
-      "2026-06-30",
+      "2026-06-30"
     )
     expect(earliestDay([])).toBeNull()
   })
 
   it("labels a window compactly, collapsing a shared month", () => {
-    expect(weekRangeLabel("2026-06-27", "2026-07-03", "en")).toBe("27 Jun – 3 Jul")
+    expect(weekRangeLabel("2026-06-27", "2026-07-03", "en")).toBe(
+      "27 Jun – 3 Jul"
+    )
     expect(weekRangeLabel("2026-07-01", "2026-07-07", "en")).toBe("1 – 7 Jul")
   })
 })

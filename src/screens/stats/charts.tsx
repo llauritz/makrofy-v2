@@ -17,8 +17,9 @@ import { MACROS } from "@/screens/main/macros"
 //   untracked → a dashed slot (a gap, never a zero) · today → a lighter "now"
 //   bar, no value counted · *Some* → a small solid tan stub, distinct from a
 //   gap · *Most* → an approximate (dash-outlined, washed) bar.
-// Every chart pairs its SVG with a visually-hidden table — the screen-reader
-// equivalent the prototype skipped — and native <title> tooltips per mark.
+// Every chart pairs an aria-hidden SVG with a visually-hidden table — the
+// screen-reader equivalent the prototype skipped, one announcement, not two —
+// and native <title> tooltips per mark for pointer users.
 
 const INK = "var(--foreground)"
 const MUTED = "var(--muted-foreground)"
@@ -34,13 +35,27 @@ function topRoundedRect(x: number, y: number, w: number, h: number, r: number) {
   return `M${x},${y + h} L${x},${y + rr} Q${x},${y} ${x + rr},${y} L${x + w - rr},${y} Q${x + w},${y} ${x + w},${y + rr} L${x + w},${y + h} Z`
 }
 
-function bottomRoundedRect(x: number, y: number, w: number, h: number, r: number) {
+function bottomRoundedRect(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
   const rr = Math.min(r, h, w / 2)
   return `M${x},${y} L${x + w},${y} L${x + w},${y + h - rr} Q${x + w},${y + h} ${x + w - rr},${y + h} L${x + rr},${y + h} Q${x},${y + h} ${x},${y + h - rr} Z`
 }
 
 /** The dashed baseline slot an untracked day gets — a gap, never a zero bar. */
-function GapSlot({ x, w, baseline }: { x: number; w: number; baseline: number }) {
+function GapSlot({
+  x,
+  w,
+  baseline,
+}: {
+  x: number
+  w: number
+  baseline: number
+}) {
   return (
     <rect
       x={x}
@@ -57,7 +72,15 @@ function GapSlot({ x, w, baseline }: { x: number; w: number; baseline: number })
 }
 
 /** The solid tan stub a *Some* day gets — "tracked badly", distinct from a gap. */
-function SomeStub({ x, w, baseline }: { x: number; w: number; baseline: number }) {
+function SomeStub({
+  x,
+  w,
+  baseline,
+}: {
+  x: number
+  w: number
+  baseline: number
+}) {
   return <rect x={x} y={baseline - 7} width={w} height={6} rx={3} fill={TAN} />
 }
 
@@ -117,7 +140,7 @@ export function WeekColumns({
 }: {
   days: StatDay[]
   goalKcal: number
-  /** The sr-table's caption; also the SVG's accessible name. */
+  /** The sr-table's caption — the chart's one accessible name. */
   caption: string
   height?: number
   mini?: boolean
@@ -136,10 +159,11 @@ export function WeekColumns({
   // The one value label the chart carries: the biggest completed bar.
   const maxDay = days.reduce<StatDay | null>(
     (best, d) =>
-      countsInAverages(d) && (best === null || (d.kcal as number) > (best.kcal as number))
+      countsInAverages(d) &&
+      (best === null || (d.kcal as number) > (best.kcal as number))
         ? d
         : best,
-    null,
+    null
   )
   return (
     <>
@@ -148,8 +172,7 @@ export function WeekColumns({
         width={width}
         height={height}
         className="block max-w-full"
-        role="img"
-        aria-label={caption}
+        aria-hidden="true"
       >
         <line
           x1={0}
@@ -162,7 +185,13 @@ export function WeekColumns({
           opacity={0.6}
         />
         {!mini && (
-          <text x={width - 2} y={y(goalKcal) - 4} textAnchor="end" fontSize={9} fill={MUTED}>
+          <text
+            x={width - 2}
+            y={y(goalKcal) - 4}
+            textAnchor="end"
+            fontSize={9}
+            fill={MUTED}
+          >
             {t.stats.goalLine(n(goalKcal))}
           </text>
         )}
@@ -182,7 +211,9 @@ export function WeekColumns({
               {narrowWeekday(d.day, language)}
             </text>
           )
-          const tooltip = <title>{`${shortDayLabel(d.day, new Date(), language)} · ${dayValue(d)}`}</title>
+          const tooltip = (
+            <title>{`${shortDayLabel(d.day, new Date(), language)} · ${dayValue(d)}`}</title>
+          )
           if (d.kcal === null || d.isFuture) {
             return (
               <g key={d.day}>
@@ -215,12 +246,24 @@ export function WeekColumns({
                 strokeDasharray={approximate ? "3 3" : undefined}
               />
               {!mini && maxDay === d && (
-                <text x={cx} y={y(d.kcal) - 4} textAnchor="middle" fontSize={9} fill={MUTED}>
+                <text
+                  x={cx}
+                  y={y(d.kcal) - 4}
+                  textAnchor="middle"
+                  fontSize={9}
+                  fill={MUTED}
+                >
                   {n(d.kcal)}
                 </text>
               )}
               {!mini && d.isToday && (
-                <text x={cx} y={y(d.kcal) - 4} textAnchor="middle" fontSize={9} fill={MUTED}>
+                <text
+                  x={cx}
+                  y={y(d.kcal) - 4}
+                  textAnchor="middle"
+                  fontSize={9}
+                  fill={MUTED}
+                >
                   {t.stats.now}
                 </text>
               )}
@@ -229,7 +272,10 @@ export function WeekColumns({
           )
         })}
       </svg>
-      <SrTable caption={caption} rows={days.map((d) => ({ day: d.day, value: dayValue(d) }))} />
+      <SrTable
+        caption={caption}
+        rows={days.map((d) => ({ day: d.day, value: dayValue(d) }))}
+      />
     </>
   )
 }
@@ -253,7 +299,9 @@ function segments(points: { x: number; y: number | null }[]) {
 }
 
 const toPath = (seg: { x: number; y: number }[]) =>
-  seg.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")
+  seg
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+    .join(" ")
 
 export function TrendLine({
   days,
@@ -282,19 +330,26 @@ export function TrendLine({
   // Daily marks: admitted days plus today-as-nothing; a *Some* day leaves the
   // line (excluded from the aggregate view) and gets its distinct marker below.
   const daily = days.map((d) => (countsInAverages(d) ? d.kcal : null))
-  const all = [...daily, ...avg, goalKcal].filter((v): v is number => v !== null)
+  const all = [...daily, ...avg, goalKcal].filter(
+    (v): v is number => v !== null
+  )
   const lo = Math.min(...all) - 120
   const hi = Math.max(...all) + 120
   const x = (i: number) => padL + (i / Math.max(1, days.length - 1)) * plotW
-  const y = (v: number) => top + plotH - ((v - lo) / Math.max(1, hi - lo)) * plotH
+  const y = (v: number) =>
+    top + plotH - ((v - lo) / Math.max(1, hi - lo)) * plotH
   const ticks: number[] = []
   for (let v = Math.ceil(lo / 500) * 500; v < hi; v += 500) ticks.push(v)
   const avgPts = avg.map((v, i) => ({ x: x(i), y: v === null ? null : y(v) }))
-  const dailyPts = daily.map((v, i) => ({ x: x(i), y: v === null ? null : y(v) }))
+  const dailyPts = daily.map((v, i) => ({
+    x: x(i),
+    y: v === null ? null : y(v),
+  }))
   const lastIdx = avg.length - 1
   const lastAvg = avg[lastIdx]
   const mid = Math.floor(days.length / 2)
-  const dateLabel = (i: number) => shortDayLabel(days[i].day, new Date(), language)
+  const dateLabel = (i: number) =>
+    shortDayLabel(days[i].day, new Date(), language)
   return (
     <>
       <svg
@@ -302,13 +357,25 @@ export function TrendLine({
         width={width}
         height={height}
         className="block max-w-full"
-        role="img"
-        aria-label={caption}
+        aria-hidden="true"
       >
         {ticks.map((tick) => (
           <g key={tick}>
-            <line x1={padL} x2={width - padR} y1={y(tick)} y2={y(tick)} stroke={TRACK} strokeWidth={1} />
-            <text x={padL - 4} y={y(tick) + 3} textAnchor="end" fontSize={9} fill={MUTED}>
+            <line
+              x1={padL}
+              x2={width - padR}
+              y1={y(tick)}
+              y2={y(tick)}
+              stroke={TRACK}
+              strokeWidth={1}
+            />
+            <text
+              x={padL - 4}
+              y={y(tick) + 3}
+              textAnchor="end"
+              fontSize={9}
+              fill={MUTED}
+            >
               {t.stats.kTick(n(tick / 1000))}
             </text>
           </g>
@@ -346,14 +413,20 @@ export function TrendLine({
               stroke={TAN}
               strokeWidth={1.5}
             />
-          ) : null,
+          ) : null
         )}
         {/* A *Some* day is out of the aggregate but not invisible: a tan dot
             at the axis marks "tracked badly", distinct from a plain gap. */}
         {days.map((d, i) =>
           d.coverage === "some" && d.kcal !== null && !d.isToday ? (
-            <circle key={`s${d.day}`} cx={x(i)} cy={top + plotH} r={2} fill={TAN} />
-          ) : null,
+            <circle
+              key={`s${d.day}`}
+              cx={x(i)}
+              cy={top + plotH}
+              r={2}
+              fill={TAN}
+            />
+          ) : null
         )}
         {segments(avgPts).map((seg, i) => (
           <path
@@ -370,7 +443,13 @@ export function TrendLine({
           <g>
             <circle cx={x(lastIdx)} cy={y(lastAvg)} r={6.5} fill={SURFACE} />
             <circle cx={x(lastIdx)} cy={y(lastAvg)} r={4.5} fill={INK} />
-            <text x={x(lastIdx) + 9} y={y(lastAvg) + 3} fontSize={10} fontWeight={600} fill={INK}>
+            <text
+              x={x(lastIdx) + 9}
+              y={y(lastAvg) + 3}
+              fontSize={10}
+              fontWeight={600}
+              fill={INK}
+            >
               {n(lastAvg)}
             </text>
           </g>
@@ -380,7 +459,9 @@ export function TrendLine({
             key={i}
             x={x(i)}
             y={height - 2}
-            textAnchor={i === 0 ? "start" : i === days.length - 1 ? "end" : "middle"}
+            textAnchor={
+              i === 0 ? "start" : i === days.length - 1 ? "end" : "middle"
+            }
             fontSize={9}
             fill={MUTED}
           >
@@ -388,7 +469,10 @@ export function TrendLine({
           </text>
         ))}
       </svg>
-      <SrTable caption={caption} rows={days.map((d) => ({ day: d.day, value: dayValue(d) }))} />
+      <SrTable
+        caption={caption}
+        rows={days.map((d) => ({ day: d.day, value: dayValue(d) }))}
+      />
     </>
   )
 }
@@ -421,10 +505,22 @@ export function Sparkline({
       aria-hidden="true"
     >
       {segments(pts).map((seg, i) => (
-        <path key={i} d={toPath(seg)} fill="none" stroke={TAN} strokeWidth={1.5} strokeLinecap="round" />
+        <path
+          key={i}
+          d={toPath(seg)}
+          fill="none"
+          stroke={TAN}
+          strokeWidth={1.5}
+          strokeLinecap="round"
+        />
       ))}
       {lastIdx >= 0 && values[lastIdx] !== null && (
-        <circle cx={x(lastIdx)} cy={y(values[lastIdx] as number)} r={2.5} fill={INK} />
+        <circle
+          cx={x(lastIdx)}
+          cy={y(values[lastIdx] as number)}
+          r={2.5}
+          fill={INK}
+        />
       )}
     </svg>
   )
@@ -456,7 +552,7 @@ export function MacroStackWeek({
     return t.stats.macroShareRow(
       n(Math.round(share.p * 100)),
       n(Math.round(share.f * 100)),
-      n(Math.round(share.c * 100)),
+      n(Math.round(share.c * 100))
     )
   }
   return (
@@ -466,8 +562,7 @@ export function MacroStackWeek({
         width={width}
         height={height}
         className="block max-w-full"
-        role="img"
-        aria-label={caption}
+        aria-hidden="true"
       >
         {days.map((d, i) => {
           const cx = i * band + band / 2
@@ -484,7 +579,9 @@ export function MacroStackWeek({
               {narrowWeekday(d.day, language)}
             </text>
           )
-          const tooltip = <title>{`${shortDayLabel(d.day, new Date(), language)} · ${shareText(d)}`}</title>
+          const tooltip = (
+            <title>{`${shortDayLabel(d.day, new Date(), language)} · ${shareText(d)}`}</title>
+          )
           const share = dayShare(d)
           if (share === null || d.isFuture) {
             return (
@@ -537,14 +634,23 @@ export function MacroStackWeek({
           )
         })}
       </svg>
-      <SrTable caption={caption} rows={days.map((d) => ({ day: d.day, value: shareText(d) }))} />
+      <SrTable
+        caption={caption}
+        rows={days.map((d) => ({ day: d.day, value: shareText(d) }))}
+      />
     </>
   )
 }
 
 /* ------------------------------------------------------------ range dots */
 
-export function RangeDots({ dots, size = 12 }: { dots: RangeDot[]; size?: number }) {
+export function RangeDots({
+  dots,
+  size = 12,
+}: {
+  dots: RangeDot[]
+  size?: number
+}) {
   const { t, language } = useI18n()
   const c = size / 2
   const stateText: Record<RangeDot["state"], string> = {
@@ -554,6 +660,8 @@ export function RangeDots({ dots, size = 12 }: { dots: RangeDot[]; size?: number
     today: t.day.today,
     some: t.coverage.some,
     most: t.coverage.most,
+    // A future day gets no mark at all — the empty slot needs no announcement.
+    future: "",
   }
   return (
     <div className="flex shrink-0 items-end gap-2">
@@ -564,22 +672,55 @@ export function RangeDots({ dots, size = 12 }: { dots: RangeDot[]; size?: number
             width={size}
             height={size}
             className="block"
-            role="img"
-            aria-label={`${shortDayLabel(dot.day, new Date(), language)} · ${stateText[dot.state]}`}
+            role={dot.state === "future" ? undefined : "img"}
+            aria-hidden={dot.state === "future" || undefined}
+            aria-label={
+              dot.state === "future"
+                ? undefined
+                : `${shortDayLabel(dot.day, new Date(), language)} · ${stateText[dot.state]}`
+            }
           >
-            {dot.state === "in" && <circle cx={c} cy={c} r={c - 1} fill={INK} />}
+            {dot.state === "in" && (
+              <circle cx={c} cy={c} r={c - 1} fill={INK} />
+            )}
             {dot.state === "out" && (
-              <circle cx={c} cy={c} r={c - 1.5} fill="none" stroke={INK} strokeWidth={1.5} />
+              <circle
+                cx={c}
+                cy={c}
+                r={c - 1.5}
+                fill="none"
+                stroke={INK}
+                strokeWidth={1.5}
+              />
             )}
             {dot.state === "gap" && (
-              <circle cx={c} cy={c} r={c - 1.5} fill="none" stroke={DASH} strokeWidth={1} strokeDasharray="2.5 2.5" />
+              <circle
+                cx={c}
+                cy={c}
+                r={c - 1.5}
+                fill="none"
+                stroke={DASH}
+                strokeWidth={1}
+                strokeDasharray="2.5 2.5"
+              />
             )}
-            {dot.state === "today" && <circle cx={c} cy={c} r={2.5} fill={INK} />}
+            {dot.state === "today" && (
+              <circle cx={c} cy={c} r={2.5} fill={INK} />
+            )}
             {/* Coverage marks in tan: *Some* a small solid dot (excluded but
                 not a gap), *Most* a hollow ring (counted, not assessable). */}
-            {dot.state === "some" && <circle cx={c} cy={c} r={2.5} fill={TAN} />}
+            {dot.state === "some" && (
+              <circle cx={c} cy={c} r={2.5} fill={TAN} />
+            )}
             {dot.state === "most" && (
-              <circle cx={c} cy={c} r={c - 1.5} fill="none" stroke={TAN} strokeWidth={1.5} />
+              <circle
+                cx={c}
+                cy={c}
+                r={c - 1.5}
+                fill="none"
+                stroke={TAN}
+                strokeWidth={1.5}
+              />
             )}
           </svg>
           <span
@@ -625,13 +766,19 @@ export function StatTile({
       <div className="text-[11px] text-muted-foreground">{label}</div>
       <div className="mt-1 flex items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-1">
-          <span className="text-[22px] leading-none font-semibold">{value}</span>
-          {unit && <span className="text-[11px] text-muted-foreground">{unit}</span>}
+          <span className="text-[22px] leading-none font-semibold">
+            {value}
+          </span>
+          {unit && (
+            <span className="text-[11px] text-muted-foreground">{unit}</span>
+          )}
         </div>
         {spark}
       </div>
       {note && (
-        <div className="mt-1.5 text-[10px] leading-snug text-muted-foreground">{note}</div>
+        <div className="mt-1.5 text-[10px] leading-snug text-muted-foreground">
+          {note}
+        </div>
       )}
     </div>
   )
