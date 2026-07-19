@@ -104,6 +104,16 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* The wordmark Lottie's letterforms are exported in the brand ink
+   (#3f0f02); in dark theme that ink flips to the foreground token so the
+   mark stays legible, tracking theme toggles live. The bird's plumage keeps
+   its authored colors in both themes. lottie-web's SVG renderer writes
+   solid fills as floored rgb() attributes — #3f0f02 comes out as
+   rgb(63,14,1), which is what the selector must match. */
+.dark .wordmark-anim svg path[fill="rgb(63,14,1)"] {
+    fill: var(--foreground);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
