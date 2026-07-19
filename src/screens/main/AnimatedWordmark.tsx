@@ -14,6 +14,11 @@ import { useI18n } from "@/lib/i18n/useI18n"
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
 
+// A hidden stretch at least this long reads as "opening the app again" —
+// resurfacing then replays the intro. Shorter hops (checking a message,
+// pasting from another app mid-log) keep the settled wordmark.
+const REPLAY_AFTER_HIDDEN_MS = 5 * 60_000
+
 // The last entrance keyframe in the export sits at frame 25; everything after
 // is a static hold to frame 304. Playback stops just past the settle instead
 // of ticking silently through the hold — but must reach past 25, or the
@@ -66,6 +71,35 @@ export function AnimatedWordmark() {
     return () => {
       anim.destroy()
       animRef.current = null
+    }
+  }, [player])
+
+  // Relaunches that never remount React must still play the intro — opening
+  // the app should never greet with the previous run's frozen end frame. Two
+  // signals: a bfcache restore (pageshow with persisted), and the tab or
+  // installed PWA resurfacing after a long stretch in the background.
+  React.useEffect(() => {
+    if (!player) return
+    const replay = () => animRef.current?.goToAndPlay(0, true)
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) replay()
+    }
+    let hiddenAt: number | null = null
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now()
+      } else if (
+        hiddenAt !== null &&
+        Date.now() - hiddenAt >= REPLAY_AFTER_HIDDEN_MS
+      ) {
+        replay()
+      }
+    }
+    window.addEventListener("pageshow", onPageShow)
+    document.addEventListener("visibilitychange", onVisibilityChange)
+    return () => {
+      window.removeEventListener("pageshow", onPageShow)
+      document.removeEventListener("visibilitychange", onVisibilityChange)
     }
   }, [player])
 

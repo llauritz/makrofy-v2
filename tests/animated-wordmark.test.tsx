@@ -110,3 +110,67 @@ describe("AnimatedWordmark", () => {
     expect(destroy).toHaveBeenCalled()
   })
 })
+
+// Relaunches that never remount React — a bfcache restore, or the installed
+// PWA resurfacing from the app switcher — must replay the intro rather than
+// greet with the previous run's frozen end frame.
+describe("AnimatedWordmark relaunch", () => {
+  function firePageShow(persisted: boolean) {
+    const event = new Event("pageshow")
+    Object.defineProperty(event, "persisted", { value: persisted })
+    window.dispatchEvent(event)
+  }
+
+  function setVisibility(state: "hidden" | "visible") {
+    Object.defineProperty(document, "visibilityState", {
+      value: state,
+      configurable: true,
+    })
+    document.dispatchEvent(new Event("visibilitychange"))
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    Object.defineProperty(document, "visibilityState", {
+      value: "visible",
+      configurable: true,
+    })
+  })
+
+  it("replays on a bfcache restore, not on a first-load pageshow", async () => {
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    firePageShow(false)
+    expect(goToAndPlay).not.toHaveBeenCalled()
+    firePageShow(true)
+    expect(goToAndPlay).toHaveBeenCalledWith(0, true)
+  })
+
+  it("replays when the app resurfaces after a long background stretch", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000)
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    setVisibility("hidden")
+    now.mockReturnValue(1_000_000 + 6 * 60_000)
+    setVisibility("visible")
+    expect(goToAndPlay).toHaveBeenCalledWith(0, true)
+  })
+
+  it("stays put after a brief hop to another app", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000)
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    setVisibility("hidden")
+    now.mockReturnValue(1_000_000 + 30_000)
+    setVisibility("visible")
+    expect(goToAndPlay).not.toHaveBeenCalled()
+  })
+
+  it("ignores relaunch signals once unmounted", async () => {
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    cleanup()
+    firePageShow(true)
+    expect(goToAndPlay).not.toHaveBeenCalled()
+  })
+})
