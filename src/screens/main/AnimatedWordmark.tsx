@@ -78,11 +78,26 @@ export function AnimatedWordmark() {
   // the app should never greet with the previous run's frozen end frame. Two
   // signals: a bfcache restore (pageshow with persisted), and the tab or
   // installed PWA resurfacing after a long stretch in the background.
+  //
+  // The bfcache path also scrubs its own snapshot: pagehide hides the
+  // animation via a direct DOM write (React state wouldn't flush before the
+  // page freezes), so the restored DOM paints clean and pageshow unhides
+  // into the replay. OS-level gesture previews are pixel screenshots of the
+  // last painted frame and stay out of reach — this only cleans the live
+  // first paint.
   React.useEffect(() => {
     if (!player) return
     const replay = () => animRef.current?.goToAndPlay(0, true)
+    const onPageHide = (event: PageTransitionEvent) => {
+      if (event.persisted && containerRef.current) {
+        containerRef.current.style.visibility = "hidden"
+      }
+    }
     const onPageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) replay()
+      if (event.persisted) {
+        if (containerRef.current) containerRef.current.style.visibility = ""
+        replay()
+      }
     }
     let hiddenAt: number | null = null
     const onVisibilityChange = () => {
@@ -95,9 +110,11 @@ export function AnimatedWordmark() {
         replay()
       }
     }
+    window.addEventListener("pagehide", onPageHide)
     window.addEventListener("pageshow", onPageShow)
     document.addEventListener("visibilitychange", onVisibilityChange)
     return () => {
+      window.removeEventListener("pagehide", onPageHide)
       window.removeEventListener("pageshow", onPageShow)
       document.removeEventListener("visibilitychange", onVisibilityChange)
     }

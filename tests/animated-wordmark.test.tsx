@@ -173,4 +173,35 @@ describe("AnimatedWordmark relaunch", () => {
     firePageShow(true)
     expect(goToAndPlay).not.toHaveBeenCalled()
   })
+
+  // The bfcache freezes the DOM as the pagehide handlers leave it, and the
+  // restored page paints that DOM before pageshow runs — so the wordmark
+  // hides itself into the snapshot and the restore never flashes the
+  // previous run's end frame.
+  it("hides into the bfcache snapshot and unhides on restore", async () => {
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    const container = screen
+      .getByRole("button", { name: "Yaffle" })
+      .querySelector("div")!
+    const event = new Event("pagehide")
+    Object.defineProperty(event, "persisted", { value: true })
+    window.dispatchEvent(event)
+    expect(container.style.visibility).toBe("hidden")
+    firePageShow(true)
+    expect(container.style.visibility).toBe("")
+    expect(goToAndPlay).toHaveBeenCalledWith(0, true)
+  })
+
+  it("does not bother hiding when the page is dying for real", async () => {
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    const container = screen
+      .getByRole("button", { name: "Yaffle" })
+      .querySelector("div")!
+    const event = new Event("pagehide")
+    Object.defineProperty(event, "persisted", { value: false })
+    window.dispatchEvent(event)
+    expect(container.style.visibility).toBe("")
+  })
 })
