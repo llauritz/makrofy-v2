@@ -2,12 +2,13 @@ import { Settings2 } from "lucide-react"
 
 import { useI18n } from "@/lib/i18n/useI18n"
 import type { SyncStatus } from "@/lib/sync"
+import { AnimatedWordmark } from "./AnimatedWordmark"
 import { SyncIndicator } from "./SyncIndicator"
 
-// Fraunces wordmark, sync indicator, settings gear. The sync indicator is live
-// as of #19 (silent when synced, so the header is usually just wordmark + gear);
-// its tap explains or re-auths, and the gear opens Settings (owned by
-// MainScreen).
+// Animated wordmark (#79), sync indicator, settings gear. The sync indicator
+// is live as of #19 (silent when synced, so the header is usually just
+// wordmark + gear); its tap explains or re-auths, and the gear opens Settings
+// (owned by MainScreen).
 export function Header({
   onOpenSettings,
   syncStatus,
@@ -20,9 +21,7 @@ export function Header({
   const { t } = useI18n()
   return (
     <header className="flex items-center justify-between px-5 pt-7 pb-4">
-      <div className="font-wordmark text-[30px] leading-none font-semibold">
-        {t.app.name}
-      </div>
+      <AnimatedWordmark />
       <div className="flex items-center gap-1">
         <SyncIndicator status={syncStatus} onReauth={onReauth} />
         <button
