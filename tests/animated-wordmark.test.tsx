@@ -110,3 +110,98 @@ describe("AnimatedWordmark", () => {
     expect(destroy).toHaveBeenCalled()
   })
 })
+
+// Relaunches that never remount React — a bfcache restore, or the installed
+// PWA resurfacing from the app switcher — must replay the intro rather than
+// greet with the previous run's frozen end frame.
+describe("AnimatedWordmark relaunch", () => {
+  function firePageShow(persisted: boolean) {
+    const event = new Event("pageshow")
+    Object.defineProperty(event, "persisted", { value: persisted })
+    window.dispatchEvent(event)
+  }
+
+  function setVisibility(state: "hidden" | "visible") {
+    Object.defineProperty(document, "visibilityState", {
+      value: state,
+      configurable: true,
+    })
+    document.dispatchEvent(new Event("visibilitychange"))
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    Object.defineProperty(document, "visibilityState", {
+      value: "visible",
+      configurable: true,
+    })
+  })
+
+  it("replays on a bfcache restore, not on a first-load pageshow", async () => {
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    firePageShow(false)
+    expect(goToAndPlay).not.toHaveBeenCalled()
+    firePageShow(true)
+    expect(goToAndPlay).toHaveBeenCalledWith(0, true)
+  })
+
+  it("replays when the app resurfaces after a long background stretch", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000)
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    setVisibility("hidden")
+    now.mockReturnValue(1_000_000 + 11_000)
+    setVisibility("visible")
+    expect(goToAndPlay).toHaveBeenCalledWith(0, true)
+  })
+
+  it("stays put after a brief hop to another app", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000)
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    setVisibility("hidden")
+    now.mockReturnValue(1_000_000 + 5_000)
+    setVisibility("visible")
+    expect(goToAndPlay).not.toHaveBeenCalled()
+  })
+
+  it("ignores relaunch signals once unmounted", async () => {
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    cleanup()
+    firePageShow(true)
+    expect(goToAndPlay).not.toHaveBeenCalled()
+  })
+
+  // The bfcache freezes the DOM as the pagehide handlers leave it, and the
+  // restored page paints that DOM before pageshow runs — so the wordmark
+  // hides itself into the snapshot and the restore never flashes the
+  // previous run's end frame.
+  it("hides into the bfcache snapshot and unhides on restore", async () => {
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    const container = screen
+      .getByRole("button", { name: "Yaffle" })
+      .querySelector("div")!
+    const event = new Event("pagehide")
+    Object.defineProperty(event, "persisted", { value: true })
+    window.dispatchEvent(event)
+    expect(container.style.visibility).toBe("hidden")
+    firePageShow(true)
+    expect(container.style.visibility).toBe("")
+    expect(goToAndPlay).toHaveBeenCalledWith(0, true)
+  })
+
+  it("does not bother hiding when the page is dying for real", async () => {
+    setup()
+    await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1))
+    const container = screen
+      .getByRole("button", { name: "Yaffle" })
+      .querySelector("div")!
+    const event = new Event("pagehide")
+    Object.defineProperty(event, "persisted", { value: false })
+    window.dispatchEvent(event)
+    expect(container.style.visibility).toBe("")
+  })
+})
