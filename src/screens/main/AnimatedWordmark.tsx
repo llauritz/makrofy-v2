@@ -15,9 +15,9 @@ import { useI18n } from "@/lib/i18n/useI18n"
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
 
 // A hidden stretch at least this long reads as "opening the app again" —
-// resurfacing then replays the intro. Shorter hops (checking a message,
-// pasting from another app mid-log) keep the settled wordmark.
-const REPLAY_AFTER_HIDDEN_MS = 5 * 60_000
+// resurfacing then replays the intro. Shorter hops (a quick paste from
+// another app mid-log) keep the settled wordmark.
+const REPLAY_AFTER_HIDDEN_MS = 10_000
 
 // The last entrance keyframe in the export sits at frame 25; everything after
 // is a static hold to frame 304. Playback stops just past the settle instead
