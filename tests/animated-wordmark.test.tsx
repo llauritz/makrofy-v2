@@ -9,7 +9,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { LanguageProvider } from "@/components/language-provider"
-import { AnimatedWordmark } from "@/components/AnimatedWordmark"
+import { AnimatedWordmark } from "@/screens/main/AnimatedWordmark"
 
 const loadAnimation = vi.fn()
 const goToAndPlay = vi.fn()
@@ -99,6 +99,8 @@ describe("AnimatedWordmark", () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(loadAnimation).not.toHaveBeenCalled()
     expect(screen.getByText("Yaffle")).toBeTruthy()
+    // With no player to replay, no button reaches the accessibility tree.
+    expect(screen.queryByRole("button")).toBeNull()
   })
 
   it("destroys the player on unmount", async () => {

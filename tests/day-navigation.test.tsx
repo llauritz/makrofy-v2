@@ -75,7 +75,8 @@ function entry(date: string, label: string): Entry {
 beforeAll(() => {
   // jsdom offers none of these; the strip's auto-scroll, FadeSwap's height
   // measuring and motion's reduced-motion probe all degrade gracefully with
-  // inert stand-ins.
+  // inert stand-ins. Reduced motion reads as ON so the header's wordmark
+  // (#79) never pulls the real Lottie player into a jsdom run.
   Element.prototype.scrollIntoView = () => {}
   window.ResizeObserver = class {
     observe() {}
@@ -83,7 +84,7 @@ beforeAll(() => {
     disconnect() {}
   }
   window.matchMedia = ((query: string) => ({
-    matches: false,
+    matches: query.includes("prefers-reduced-motion"),
     media: query,
     onchange: null,
     addEventListener: () => {},

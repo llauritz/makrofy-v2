@@ -1,8 +1,8 @@
 import { Settings2 } from "lucide-react"
 
-import { AnimatedWordmark } from "@/components/AnimatedWordmark"
 import { useI18n } from "@/lib/i18n/useI18n"
 import type { SyncStatus } from "@/lib/sync"
+import { AnimatedWordmark } from "./AnimatedWordmark"
 import { SyncIndicator } from "./SyncIndicator"
 
 // Animated wordmark (#79), sync indicator, settings gear. The sync indicator
