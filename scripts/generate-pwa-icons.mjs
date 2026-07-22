@@ -18,6 +18,13 @@ import { fileURLToPath } from "node:url"
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const INK = "#2b2015"
 const FLOUR = "#f6f1e6"
+// The monochrome mark must be WHITE on the transparent (black) field, NOT ink.
+// Android themes this icon by recolouring it — it keeps the shape and discards
+// our colour — so the source needs luminance contrast: a bright mark on a dark
+// field. A dark mark on transparent black is near-uniformly dark, which some
+// launcher pipelines read inverted, rendering it as a tinted square with the
+// letter stamped out. White is the platform convention every other app follows.
+const MONO = "#ffffff"
 
 // The italic Y letterform, verbatim from the wordmark's first letter
 // (branding "Asset 8.svg" = layer "Asset 8.svg 3" in the Lottie). The box is
@@ -33,7 +40,7 @@ const SPECS = [
   { name: "icon-192", size: 192, bg: FLOUR, fg: INK, glyphFrac: 0.64 },
   { name: "icon-512", size: 512, bg: FLOUR, fg: INK, glyphFrac: 0.64 },
   { name: "maskable-512", size: 512, bg: FLOUR, fg: INK, glyphFrac: 0.5 },
-  { name: "monochrome-512", size: 512, bg: null, fg: INK, glyphFrac: 0.5 },
+  { name: "monochrome-512", size: 512, bg: null, fg: MONO, glyphFrac: 0.5 },
   { name: "apple-touch-icon", size: 180, bg: FLOUR, fg: INK, glyphFrac: 0.64 },
   { name: "favicon-32", size: 32, bg: FLOUR, fg: INK, glyphFrac: 0.72 },
 ]
