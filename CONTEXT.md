@@ -1,4 +1,4 @@
-# Makrofy
+# Yaffle
 
 A mobile-first, easy-above-all calorie/macro tracker. One user, one food log; every design decision defers to "the app is easy".
 

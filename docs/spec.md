@@ -1,4 +1,4 @@
-# Makrofy V2 — build spec
+# Yaffle V2 — build spec
 
 The consolidated output of the [V2 wayfinder map](https://github.com/llauritz/makrofy-v2/issues/1) (all decisions 2026-07-10). Every section gists a locked decision and links where the full rationale lives — the ADRs in `docs/adr/`, the research notes in `docs/research/`, and the closed decision tickets. Domain vocabulary is normative in [CONTEXT.md](../CONTEXT.md) (Entry, Day, Goal, Guest, Suggestion, Frecency, AI fill, Flagged value, Source, Meal type, Backfill, Union merge).
 
@@ -124,7 +124,7 @@ One goal screen on first run, **prefilled 2000 kcal**, one tap into the app. Set
 
 ## Export / import
 
-V2 JSON only (`"format": "makrofy/2"`): all Entries (full schema) + Goal + the `days` (ADR 0006) and `products` curation overlays (ADR 0009), or those annotations are lost on migration. Import previews new-vs-duplicate by Entry id, writes through the normal entries module. **No V1 support** — no V1 data survives and V2 carries zero V1 requirements ([#11](https://github.com/llauritz/makrofy-v2/issues/11)).
+V2 JSON only (`"format": "yaffle/2"`): all Entries (full schema) + Goal + the `days` (ADR 0006) and `products` curation overlays (ADR 0009), or those annotations are lost on migration. Import previews new-vs-duplicate by Entry id, writes through the normal entries module. **No V1 support** — no V1 data survives and V2 carries zero V1 requirements ([#11](https://github.com/llauritz/makrofy-v2/issues/11)).
 
 ## i18n
 
