@@ -18,7 +18,16 @@
  */
 export function narrowWeekdays(locale: string = "en"): string[] {
   const fmt = new Intl.DateTimeFormat(locale, { weekday: "narrow" })
-  return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2023, 0, 1 + i)))
+  return Array.from({ length: 7 }, (_, i) =>
+    fmt.format(new Date(2023, 0, 1 + i))
+  )
+}
+
+/** One Day's single-letter weekday in the locale — chart axis labels (#22). */
+export function narrowWeekday(day: string, locale: string = "en"): string {
+  return new Intl.DateTimeFormat(locale, { weekday: "narrow" }).format(
+    parseDay(day)
+  )
 }
 
 /** The device-local Day a moment belongs to, as 'YYYY-MM-DD'. */
@@ -44,9 +53,11 @@ export function stepDay(day: string, delta: number): string {
 }
 
 /** Whole calendar days from `b` to `a` (positive when `a` is later). */
-function dayDiff(a: string, b: string): number {
+export function dayDiff(a: string, b: string): number {
   // Round to shrug off the ±1h a DST transition puts between two midnights.
-  return Math.round((parseDay(a).getTime() - parseDay(b).getTime()) / 86_400_000)
+  return Math.round(
+    (parseDay(a).getTime() - parseDay(b).getTime()) / 86_400_000
+  )
 }
 
 export function isToday(day: string, now: Date = new Date()): boolean {
@@ -116,7 +127,7 @@ export function isOffStrip(day: string, now: Date = new Date()): boolean {
 export function stripWindow(
   selected: string,
   now: Date = new Date(),
-  locale: string = "en",
+  locale: string = "en"
 ): DayCell[] {
   const today = localDay(now)
   const first = stripFloor(now)
@@ -200,16 +211,40 @@ export function monthGrid(month: string): MonthCell[] {
 export function shortDayLabel(
   day: string,
   now: Date = new Date(),
-  locale: string = "en",
+  locale: string = "en"
 ): string {
   const d = parseDay(day)
   // Day-before-month order, kept explicit so it reads the same across locales
   // (matches relativeDayLabel; a plain Intl date string would reorder per region).
-  const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(d)
-  const base = `${d.getDate()} ${month}`
+  const base = `${d.getDate()} ${shortMonth(day, locale)}`
   return d.getFullYear() === now.getFullYear()
     ? base
     : `${base} ${d.getFullYear()}`
+}
+
+/** A Day's short month name in the locale — "Jul" / "jul". Internal. */
+function shortMonth(day: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { month: "short" }).format(
+    parseDay(day)
+  )
+}
+
+/**
+ * The week report pager's name for a 7-day window (#22): "27 Jun – 3 Jul",
+ * collapsing a shared month to "1 – 7 Jul". Day-before-month order kept
+ * explicit so it reads the same across locales (matches shortDayLabel).
+ */
+export function weekRangeLabel(
+  start: string,
+  end: string,
+  locale: string = "en"
+): string {
+  const dayNum = (day: string) => parseDay(day).getDate()
+  const sameMonth = monthOf(start) === monthOf(end)
+  const from = sameMonth
+    ? `${dayNum(start)}`
+    : `${dayNum(start)} ${shortMonth(start, locale)}`
+  return `${from} – ${dayNum(end)} ${shortMonth(end, locale)}`
 }
 
 /** The near-day words relativeDayLabel needs, from the active dictionary (#25). */
@@ -231,7 +266,7 @@ export function relativeDayLabel(
   day: string,
   labels: RelativeDayLabels,
   locale: string,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): string {
   const diff = dayDiff(day, localDay(now))
   if (diff === 0) return labels.today
@@ -240,7 +275,9 @@ export function relativeDayLabel(
   const d = parseDay(day)
   // Day-before-month order, kept explicit so it reads the same across locales
   // (a plain Intl date string would reorder and add punctuation per region).
-  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d)
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+    d
+  )
   const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(d)
   return `${weekday} ${d.getDate()} ${month}`
 }

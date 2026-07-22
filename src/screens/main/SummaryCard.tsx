@@ -55,16 +55,18 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
 }
 
 // Floating summary card: ring, Remaining/Over + % of goal, outlined macro
-// pills, stats button (opens the dashboard once #22 lands). The ring and the
+// pills, stats button (opens the dashboard, #22). The ring and the
 // Remaining/Over readout open Settings (where the goal they measure against is
 // edited); the stats button and macro pills keep their own roles. The sticky
 // footer and undo snackbar around it are the MainScreen's.
 export function SummaryCard({
   summary,
   onOpenSettings,
+  onOpenStats,
 }: {
   summary: DaySummary
   onOpenSettings: () => void
+  onOpenStats: () => void
 }) {
   const { t, n } = useI18n()
   const headline = summary.isOver
@@ -95,8 +97,9 @@ export function SummaryCard({
           </button>
           <button
             type="button"
+            onClick={onOpenStats}
             aria-label={t.summary.statistics}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-input text-muted-foreground"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-input text-muted-foreground outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
           >
             <BarChart3 className="h-4 w-4" />
           </button>

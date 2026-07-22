@@ -8,6 +8,7 @@ import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
 import { MainScreen } from "@/screens/main/MainScreen"
 import { resolveAppView } from "@/screens/onboarding/gate"
+import { StatsScreen } from "@/screens/stats/StatsScreen"
 
 // Dev convenience: ?theme=dark|light forces the mode (shareable per-mode links,
 // headless screenshots of both modes) on top of the real Settings control.
@@ -20,8 +21,10 @@ function useThemeParam() {
 }
 
 // The top-level screens the app switches between. Onboarding is parked (#35);
-// the Glossary (#40) is a full screen reached from Settings and returns to Main.
-type AppScreen = "main" | "glossary"
+// the Glossary (#40) is a full screen reached from Settings — and from the
+// stats dashboard (#22), which is itself the full screen behind the summary
+// card's stats button. Back returns to whichever screen opened the Glossary.
+type AppScreen = "main" | "glossary" | "stats"
 
 export function App() {
   useThemeParam()
@@ -29,10 +32,16 @@ export function App() {
   const uid = useIdentity()
   const goalStatus = useGoalStatus(uid)
   const view = resolveAppView(uid, goalStatus)
-  // App-level view state (the mechanism #22's stats dashboard will also use):
-  // which full screen is showing. The two screens swap by a plain conditional
-  // below — only one is mounted at a time.
+  // App-level view state: which full screen is showing. The screens swap by a
+  // plain conditional below — only one is mounted at a time. The Glossary
+  // remembers its opener (Settings on Main, or the stats dashboard) so its
+  // back button returns where the user came from.
   const [screen, setScreen] = React.useState<AppScreen>("main")
+  const glossaryFrom = React.useRef<AppScreen>("main")
+  const openGlossary = (from: AppScreen) => {
+    glossaryFrom.current = from
+    setScreen("glossary")
+  }
 
   // Splash until identity and the first Goal snapshot settle, so the ring never
   // flashes the fallback goal before the synced value arrives.
@@ -65,7 +74,19 @@ export function App() {
           animate={{ opacity: 1 }}
           transition={SPRING}
         >
-          <GlossaryScreen onBack={() => setScreen("main")} />
+          <GlossaryScreen onBack={() => setScreen(glossaryFrom.current)} />
+        </motion.div>
+      ) : screen === "stats" ? (
+        <motion.div
+          key="stats"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={SPRING}
+        >
+          <StatsScreen
+            onBack={() => setScreen("main")}
+            onOpenGlossary={() => openGlossary("stats")}
+          />
         </motion.div>
       ) : (
         <motion.div
@@ -74,7 +95,10 @@ export function App() {
           animate={{ opacity: 1 }}
           transition={FADE_IN}
         >
-          <MainScreen onOpenGlossary={() => setScreen("glossary")} />
+          <MainScreen
+            onOpenGlossary={() => openGlossary("main")}
+            onOpenStats={() => setScreen("stats")}
+          />
         </motion.div>
       )}
     </MotionConfig>

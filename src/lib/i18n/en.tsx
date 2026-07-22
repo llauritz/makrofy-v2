@@ -76,6 +76,63 @@ export const en = {
     everything: "Everything",
   },
 
+  stats: {
+    title: "Statistics",
+    thisWeek: "This week",
+    thisWeekSub: "Daily calories · tap for the week report",
+    weekReport: "Week report",
+    goalLine: (goal: string) => `goal ${goal}`,
+    now: "now",
+    sevenDayAverage: "7-day average",
+    kcalPerDay: "kcal / day",
+    trackedDaysOnly: "tracked days only",
+    // The stat tile's delta note; the sign rides on the number ("−18").
+    vsWeekBefore: (pct: string) => `${pct}% vs week before`,
+    upOnWeekBefore: (pct: string) => `up ${pct}% on the week before`,
+    downOnWeekBefore: (pct: string) => `down ${pct}% on the week before`,
+    inRange: "In range",
+    daysUnit: "days",
+    ofCount: (a: string, b: string) => `${a} of ${b}`,
+    rangeBand: (lo: string, hi: string) => `${lo}–${hi} kcal (80–110% of goal)`,
+    // The quiet placeholder while the band hasn't earned its place: a 7-day
+    // window needs ≥5 assessable days (Coverage Everything or unlabelled).
+    rangeGateNote: "shows after a week of near-daily tracking",
+    rangeGateBody: (assessable: string) =>
+      `Shows after a week of near-daily tracking — ${assessable} of 7 days assessable in this window.`,
+    daysInRange: (a: string, b: string) => `${a} of ${b} days in range`,
+    trend: "Trend",
+    last30Days: "Last 30 days",
+    legendDaily: "daily",
+    legendAverage: "7-day average",
+    macros: "Macros",
+    macrosSub: "Share of calories per day",
+    untrackedNote: "Untracked days are left out of averages.",
+    olderWeek: "Older week",
+    newerWeek: "Newer week",
+    // Axis tick in thousands — "2k" / "2.5k"; the number is already localized.
+    kTick: (value: string) => `${value}k`,
+    // The morning glance strip (also hosts the Coverage nudge chips).
+    last7Days: "Last 7 days",
+    inRangeShort: (a: string, b: string) => `${a} of ${b} in range`,
+    kcalAvg: "kcal avg",
+    stripDeltaUp: (pct: string) => `↑ ${pct}% vs week before`,
+    stripDeltaDown: (pct: string) => `↓ ${pct}% vs week before`,
+    dismissStrip: "Dismiss until tomorrow",
+    // The nudge caption names the Day it asks about ("Yesterday", "Tue 8 Jul").
+    nudgeQuestion: (day: string) => `${day} — how much made it into the log?`,
+    // Screen-reader equivalents of the charts (the a11y table views).
+    chartDay: "Day",
+    chartKcal: "kcal",
+    chartValueGap: "untracked",
+    chartValueApprox: (kcal: string) => `about ${kcal}`,
+    chartValueExcluded: "excluded (Coverage: Some)",
+    chartValueToday: (kcal: string) => `${kcal} so far today`,
+    macroShareRow: (p: string, f: string, c: string) =>
+      `protein ${p}%, fat ${f}%, carbs ${c}%`,
+    dotIn: "in range",
+    dotOut: "out of range",
+  },
+
   entryEditor: {
     deleteEntry: "Delete entry",
     cancel: "Cancel",

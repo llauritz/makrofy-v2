@@ -39,6 +39,10 @@ vi.mock("@/data/hooks", () => ({
   useLoggedDays: () => new Set<string>(),
   useProductIndex: () => ({ products: new Map(), totalEntries: 0 }),
   useSyncStatus: () => "synced",
+  // The morning strip's feeds (#22): an empty history keeps it hidden, so day
+  // navigation is exercised without the strip in the tree.
+  useAllEntries: () => [],
+  useCoverageRange: () => new Map(),
 }))
 
 import { MainScreen } from "@/screens/main/MainScreen"
@@ -49,7 +53,7 @@ import { MainScreen } from "@/screens/main/MainScreen"
 function renderMain() {
   return render(
     <LanguageProvider>
-      <MainScreen onOpenGlossary={() => {}} />
+      <MainScreen onOpenGlossary={() => {}} onOpenStats={() => {}} />
     </LanguageProvider>
   )
 }
