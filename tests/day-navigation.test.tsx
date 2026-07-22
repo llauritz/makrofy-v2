@@ -189,4 +189,21 @@ describe("MainScreen day navigation (#34)", () => {
       `Open calendar, ${shortDayLabel(landed)}`
     )
   })
+
+  it("switches Day when swiping the empty space below the log", () => {
+    const { container } = renderMain()
+    // The flex spacer that soaks up the gap between the log and the footer is
+    // the "empty space" a user drags on. It must lie inside the swipe surface,
+    // not beside it, or the gesture dies wherever the content stops.
+    const empty = container.querySelectorAll('[class="flex-1"]')
+    expect(empty).toHaveLength(1)
+
+    for (let i = 0; i < 15; i++) swipe(empty[0], 120)
+
+    const landed = stepDay(TODAY, -15)
+    expect(document.querySelector('[aria-current="date"]')).toBeNull()
+    expect(calendarButton().getAttribute("aria-label")).toBe(
+      `Open calendar, ${shortDayLabel(landed)}`
+    )
+  })
 })

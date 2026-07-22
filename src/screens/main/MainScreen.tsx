@@ -166,9 +166,11 @@ export function MainScreen({
         />
         {/* The log is the swipe surface: touch-pan-y lets the browser own
             vertical scroll while horizontal gestures reach the pointer
-            handlers un-cancelled — the fix for the dead V1 swipe (#33). The
-            Day strip owns its own horizontal scroll, so it stays outside. */}
-        <div {...swipe} className="touch-pan-y">
+            handlers un-cancelled — the fix for the dead V1 swipe (#33). It
+            grows to fill the column (flex-1 + an inner spacer) so the empty
+            gap below the log swipes too, not just the content itself. The Day
+            strip owns its own horizontal scroll, so it stays outside. */}
+        <div {...swipe} className="flex flex-1 flex-col touch-pan-y">
           <AddCard onAdd={handleAdd} index={productIndex} uid={uid} />
           <EntryList
             entries={newestFirst}
@@ -186,8 +188,8 @@ export function MainScreen({
             level={coverage}
             onSelect={handleCoverage}
           />
+          <div className="flex-1" />
         </div>
-        <div className="flex-1" />
         <div className="sticky bottom-0 px-3 pb-3">
           <AnimatePresence initial={false}>
             {pending && <UndoSnackbar key="undo" onUndo={undo} />}
