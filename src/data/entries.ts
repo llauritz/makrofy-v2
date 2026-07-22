@@ -10,13 +10,13 @@ import {
   setDoc,
   updateDoc,
   where,
-  writeBatch,
   type Firestore,
   type QuerySnapshot,
   type Timestamp,
   type Unsubscribe,
 } from "firebase/firestore"
 
+import { commitInChunks } from "@/data/firestore-batch"
 import { localDay } from "@/lib/day"
 import type { SnapshotMeta } from "@/lib/sync"
 
@@ -252,21 +252,19 @@ export async function readAllEntries(db: Firestore, uid: string): Promise<Entry[
 /**
  * Batch-write whole Entries under a uid, each keeping its id and every stored
  * field — original timestamps included. This is the copy half of the union
- * merge (ADR 0002): Firestore auto-ids are collision-free, so writing a Guest's
- * Entries into an existing account is a clean union that never clobbers what is
- * already there. A no-op for an empty set.
+ * merge (ADR 0002) and the write half of a backup import (#24): Firestore
+ * auto-ids are collision-free, so writing another profile's Entries in by id is
+ * a clean union that never clobbers what is already there. Chunked under the
+ * 500-op batch cap for whole-history writes; a no-op for an empty set.
  */
 export async function writeEntries(
   db: Firestore,
   uid: string,
   entries: Entry[],
 ): Promise<void> {
-  if (entries.length === 0) return
-  const batch = writeBatch(db)
-  for (const entry of entries) {
-    batch.set(doc(entriesCollection(db, uid), entry.id), toDocData(entry))
-  }
-  await batch.commit()
+  await commitInChunks(db, entries.length, (batch, i) => {
+    batch.set(doc(entriesCollection(db, uid), entries[i].id), toDocData(entries[i]))
+  })
 }
 
 // An Entry's persisted shape — every stored field but the id (that's the

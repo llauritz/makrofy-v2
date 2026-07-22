@@ -1,4 +1,4 @@
-import { ArrowLeftRight, BookText, ChevronRight } from "lucide-react"
+import { BookText, ChevronRight } from "lucide-react"
 import * as React from "react"
 
 import { useLanguage } from "@/components/language-provider"
@@ -17,6 +17,7 @@ import { useI18n } from "@/lib/i18n/useI18n"
 import type { Language } from "@/lib/language"
 import { cn } from "@/lib/utils"
 import { InstallAppEntry } from "@/pwa/InstallApp"
+import { ExportImport } from "@/screens/settings/ExportImport"
 import { SignInSetting } from "@/screens/settings/SignInSetting"
 
 // The real settings surface (#17): goal · glossary · theme · language, then the
@@ -60,10 +61,7 @@ export function SettingsSheet({
         <div className="flex flex-col gap-1 border-t pt-4">
           <SignInSetting />
           <InstallAppEntry />
-          <StubRow
-            icon={<ArrowLeftRight className="h-[18px] w-[18px]" />}
-            label={t.settings.exportImport}
-          />
+          <ExportImport />
         </div>
       </BottomSheetContent>
     </BottomSheet>
@@ -261,22 +259,6 @@ function Segmented<T extends string>({
           </button>
         )
       })}
-    </div>
-  )
-}
-
-// A settings slot whose feature hasn't shipped yet — visible so the surface
-// reads as complete, inert until its ticket lands (sign-in #19, export #24).
-function StubRow({ icon, label }: { icon: React.ReactNode; label: string }) {
-  const { t } = useI18n()
-  return (
-    <div
-      aria-disabled="true"
-      className="flex items-center gap-3 rounded-2xl px-4 py-3 opacity-45"
-    >
-      <span className="text-muted-foreground">{icon}</span>
-      <span className="flex-1 text-[15px] font-medium">{label}</span>
-      <span className="text-[13px] text-muted-foreground">{t.common.soon}</span>
     </div>
   )
 }

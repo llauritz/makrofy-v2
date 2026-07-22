@@ -203,6 +203,25 @@ export const es: Dictionary = {
     ),
   },
 
+  backup: {
+    export: "Exportar datos",
+    exportHint: "Descargar",
+    import: "Importar datos",
+    importHint: "Restaurar",
+    previewTitle: "Importar copia",
+    previewBody:
+      "Restaura tu objetivo, la cobertura de días y el glosario de alimentos, y añade las entradas que aún no estén en tu registro.",
+    newEntries: (count: string) => `${count} entradas por añadir`,
+    duplicatesSkipped: (count: string) => `${count} ya en el registro — omitidas`,
+    confirm: "Importar",
+    cancel: "Cancelar",
+    invalidFile: "Ese archivo no es una copia de Yaffle.",
+    importing: "Importando…",
+    doneTitle: "Importación completa",
+    doneBody: (count: string) => `Se añadieron ${count} entradas a tu registro.`,
+    done: "Listo",
+  },
+
   onboarding: {
     intro:
       "Fija un objetivo diario de calorías para empezar. Puedes cambiarlo cuando quieras en Ajustes.",
