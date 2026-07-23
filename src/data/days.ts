@@ -15,6 +15,8 @@ import {
   type Unsubscribe,
 } from "firebase/firestore"
 
+import { commitInChunks } from "@/data/firestore-batch"
+
 // The per-Day metadata sidecar: /users/{uid}/days/{YYYY-MM-DD} (ADR 0006).
 // A doc exists only for Days the user has labelled; absence means "no
 // metadata", never "no day" — Entries stay the single source of truth, this
@@ -135,6 +137,24 @@ export async function writeMissingDays(
     pending += 1
   }
   if (pending > 0) await batch.commit()
+}
+
+/**
+ * Overwrite every given Day's label, incoming winning any date already present
+ * — the restore half of a backup import (#24). Unlike writeMissingDays (the
+ * union merge, where the existing account wins), an import is a deliberate
+ * restore, so the backup's labels replace what's there. Chunked under the batch
+ * cap; a no-op for an empty set.
+ */
+export async function writeDays(
+  db: Firestore,
+  uid: string,
+  days: DayDoc[],
+): Promise<void> {
+  await commitInChunks(db, days.length, (batch, i) => {
+    const { day, ...data } = days[i]
+    batch.set(dayDoc(db, uid, day), data)
+  })
 }
 
 function daysCollection(db: Firestore, uid: string) {

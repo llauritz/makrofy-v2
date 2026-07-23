@@ -14,6 +14,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore"
 
+import { commitInChunks } from "@/data/firestore-batch"
 import type { Alias, OverlayMap, ProductOverlay, Rate } from "@/lib/suggestions"
 
 // The Glossary's curation overlay (issue #40, ADR 0009). All of a Product's
@@ -185,6 +186,24 @@ export async function writeMissingOverlays(
     pending += 1
   }
   if (pending > 0) await batch.commit()
+}
+
+/**
+ * Overwrite every given overlay, incoming winning any Product key already
+ * present — the restore half of a backup import (#24). Unlike
+ * writeMissingOverlays (the union merge, where the existing account wins), an
+ * import is a deliberate restore, so each overlay is set whole (not merged), the
+ * same replace deleteProduct relies on. Chunked under the batch cap; a no-op for
+ * an empty set.
+ */
+export async function writeOverlays(
+  db: Firestore,
+  uid: string,
+  overlays: ProductOverlay[]
+): Promise<void> {
+  await commitInChunks(db, overlays.length, (batch, i) => {
+    batch.set(productDoc(db, uid, overlays[i].key), toDocData(overlays[i]))
+  })
 }
 
 // Queue a merge write and log any eventual failure — the fire-and-forget shape

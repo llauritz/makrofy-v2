@@ -1,5 +1,6 @@
 import {
   doc,
+  getDoc,
   onSnapshot,
   setDoc,
   type Firestore,
@@ -39,6 +40,15 @@ export function setGoal(db: Firestore, uid: string, goal: Goal): void {
   setDoc(goalDoc(db, uid), data).catch((err) => {
     console.error("Goal write failed", err)
   })
+}
+
+/**
+ * One-shot read of the Goal; null before onboarding has set one — the export
+ * source (#24), mirroring readAllEntries on the entries side.
+ */
+export async function readGoal(db: Firestore, uid: string): Promise<Goal | null> {
+  const snap = await getDoc(goalDoc(db, uid))
+  return snap.exists() ? (snap.data() as Goal) : null
 }
 
 /** Observe the Goal; null until onboarding has set one. */

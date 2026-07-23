@@ -228,6 +228,25 @@ export const en = {
     ),
   },
 
+  backup: {
+    export: "Export data",
+    exportHint: "Download",
+    import: "Import data",
+    importHint: "Restore",
+    previewTitle: "Import backup",
+    previewBody:
+      "Restores your goal, day coverage and food glossary, and adds any entries not already in your log.",
+    newEntries: (count: string) => `${count} entries to add`,
+    duplicatesSkipped: (count: string) => `${count} already logged — skipped`,
+    confirm: "Import",
+    cancel: "Cancel",
+    invalidFile: "That file isn’t a Yaffle backup.",
+    importing: "Importing…",
+    doneTitle: "Import complete",
+    doneBody: (count: string) => `Added ${count} entries to your log.`,
+    done: "Done",
+  },
+
   onboarding: {
     intro:
       "Set a daily calorie goal to get started. You can change it any time in Settings.",
