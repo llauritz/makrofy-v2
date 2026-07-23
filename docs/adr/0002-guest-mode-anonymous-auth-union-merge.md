@@ -1,6 +1,6 @@
 # Guest mode is Anonymous Auth; sign-in links; collisions union-merge
 
-The app must be fully usable signed out. A Guest is a Firebase **Anonymous Auth** user created on first launch, so signed-out and signed-in users run the identical Firestore data path. Signing in with Google **links** the credential to the anonymous user — same UID, all Guest data already in place, nothing copied. When linking fails because the Google account already has Makrofy data (second-device case), we perform an **automatic union merge** with no prompt: hold the Guest's entries in memory, sign into the existing account, batch-write the Guest entries in (UUID/auto-ids make it a clean union), and keep the existing account's settings.
+The app must be fully usable signed out. A Guest is a Firebase **Anonymous Auth** user created on first launch, so signed-out and signed-in users run the identical Firestore data path. Signing in with Google **links** the credential to the anonymous user — same UID, all Guest data already in place, nothing copied. When linking fails because the Google account already has Yaffle data (second-device case), we perform an **automatic union merge** with no prompt: hold the Guest's entries in memory, sign into the existing account, batch-write the Guest entries in (UUID/auto-ids make it a clean union), and keep the existing account's settings.
 
 ## Consequences
 
