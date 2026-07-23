@@ -1,6 +1,6 @@
 // Seam: the export/import data layer (src/data/backup.ts) — the whole-profile
 // round-trip of spec § Export / import (issue #24). Export reads every
-// collection into a makrofy/2 file; import writes it back through the normal
+// collection into a yaffle/2 file; import writes it back through the normal
 // modules so sync, typeahead and stats pick it up. The acceptance is here:
 // export → wipe → import restores every field losslessly (to the millisecond,
 // the format's Timestamp precision), duplicates are skipped not doubled, and an
@@ -125,13 +125,13 @@ async function seedWholeProfile(): Promise<void> {
   await waitForPendingWrites(ctx.db)
 }
 
-describe("export gathers the whole profile as makrofy/2", () => {
+describe("export gathers the whole profile as yaffle/2", () => {
   it("carries every collection and the format tag", async () => {
     await seedWholeProfile()
 
     const file = await exportBackup(ctx.db, uid, 1_700_009_999_000)
 
-    expect(file.format).toBe("makrofy/2")
+    expect(file.format).toBe("yaffle/2")
     expect(file.exportedAtMs).toBe(1_700_009_999_000)
     expect(file.goal).toEqual({ kcal: 2100, protein: 150 })
     expect(file.entries).toHaveLength(3)

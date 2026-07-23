@@ -15,13 +15,13 @@ import {
 // The export/import data layer (spec § Export / import, issue #24). Export reads
 // every user-authored collection — Entries (ADR 0003), Goal, the Coverage days
 // sidecar (ADR 0006) and the Glossary curation overlay (ADR 0009) — into one
-// makrofy/2 file. Import writes it back through the normal module functions, so
+// yaffle/2 file. Import writes it back through the normal module functions, so
 // the same listeners feed sync, typeahead and stats with no special-casing. The
 // pure shape and its validation live in src/lib/backup.ts; this layer only adds
 // Firestore I/O and the Timestamp ↔ epoch-ms conversion at the boundary.
 
 /**
- * Gather a whole profile into a makrofy/2 file. Reads the four collections
+ * Gather a whole profile into a yaffle/2 file. Reads the four collections
  * concurrently and flattens each Entry's and Day's Firestore Timestamps to
  * epoch ms (the overlay already stores plain ms). `exportedAtMs` is stamped by
  * the caller — the module never reads the clock.

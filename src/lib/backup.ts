@@ -1,9 +1,9 @@
-// The makrofy/2 backup format (spec § Export / import, issue #24). A single
+// The yaffle/2 backup format (spec § Export / import, issue #24). A single
 // versioned JSON file carrying a whole profile: every Entry (full ADR 0003
 // schema), the Goal, the per-Day Coverage sidecar (ADR 0006) and the Glossary
 // curation overlay (ADR 0009) — the annotations a plain Entry dump would lose.
 // V2 speaks only its own format: this parse rejects anything not tagged
-// makrofy/2 rather than attempting a V1 conversion ([#11]).
+// yaffle/2 rather than attempting a V1 conversion ([#11]).
 //
 // Kept Firestore-free, so it stays trivially testable and is the one home for
 // the shape and its validation. Firestore Timestamps live outside JSON, so the
@@ -16,7 +16,7 @@ import type { EntrySource, FlaggableField, MealType } from "@/data/entries"
 import type { Goal } from "@/data/goal"
 import type { ProductOverlay } from "@/lib/suggestions"
 
-export const BACKUP_FORMAT = "makrofy/2"
+export const BACKUP_FORMAT = "yaffle/2"
 
 /** An Entry as it travels in a backup: the stored doc plus its id, Timestamps flattened to epoch ms. */
 export interface BackupEntry {
@@ -53,7 +53,7 @@ export interface BackupFile {
   overlays: ProductOverlay[]
 }
 
-/** A file that isn't a makrofy/2 backup — surfaced to the user as "not a valid backup". */
+/** A file that isn't a yaffle/2 backup — surfaced to the user as "not a valid backup". */
 export class BackupParseError extends Error {
   constructor(message: string) {
     super(message)
@@ -68,7 +68,7 @@ export function serializeBackup(file: BackupFile): string {
 
 /**
  * Parse and validate a picked file into a BackupFile, throwing BackupParseError
- * on anything that isn't a makrofy/2 backup. Validation guards the envelope (the
+ * on anything that isn't a yaffle/2 backup. Validation guards the envelope (the
  * format tag and the three collections) and each Entry's identifying fields, so
  * a truncated or foreign file is refused before import writes a single doc —
  * rather than trusting the shape blindly. Goal, days and overlays travel as our

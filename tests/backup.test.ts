@@ -1,9 +1,9 @@
 // Seam: the backup format core (src/lib/backup.ts) — the pure JSON shape of a
-// makrofy/2 export and its validating parse. Firestore-free, so tested without
+// yaffle/2 export and its validating parse. Firestore-free, so tested without
 // the emulator: the data-layer round-trip against a real profile lives in
 // export-import.test.ts. Two things matter and are cheap to get wrong: a file
 // survives serialize → parse unchanged, and parse rejects anything that isn't a
-// makrofy/2 backup rather than writing garbage on import.
+// yaffle/2 backup rather than writing garbage on import.
 import { describe, expect, it } from "vitest"
 
 import {
@@ -57,8 +57,8 @@ describe("serialize / parse round-trip", () => {
     expect(parseBackup(serializeBackup(file))).toEqual(file)
   })
 
-  it("tags the payload as makrofy/2", () => {
-    expect(JSON.parse(serializeBackup(sampleFile())).format).toBe("makrofy/2")
+  it("tags the payload as yaffle/2", () => {
+    expect(JSON.parse(serializeBackup(sampleFile())).format).toBe("yaffle/2")
   })
 
   it("preserves a null goal and empty collections", () => {
@@ -67,7 +67,7 @@ describe("serialize / parse round-trip", () => {
   })
 })
 
-describe("parse rejects anything that isn't a makrofy/2 backup", () => {
+describe("parse rejects anything that isn't a yaffle/2 backup", () => {
   it("rejects non-JSON text", () => {
     expect(() => parseBackup("not json {")).toThrow(BackupParseError)
   })
@@ -78,7 +78,7 @@ describe("parse rejects anything that isn't a makrofy/2 backup", () => {
   })
 
   it("rejects a foreign or absent format tag — V2 speaks only its own format", () => {
-    expect(() => parseBackup(JSON.stringify({ format: "makrofy/1", entries: [] }))).toThrow(
+    expect(() => parseBackup(JSON.stringify({ format: "yaffle/1", entries: [] }))).toThrow(
       BackupParseError,
     )
     expect(() => parseBackup(JSON.stringify({ entries: [], days: [], overlays: [] }))).toThrow(
@@ -86,7 +86,7 @@ describe("parse rejects anything that isn't a makrofy/2 backup", () => {
     )
   })
 
-  it("rejects a makrofy/2 payload whose collections are missing or malformed", () => {
+  it("rejects a yaffle/2 payload whose collections are missing or malformed", () => {
     expect(() => parseBackup(JSON.stringify({ format: BACKUP_FORMAT }))).toThrow(BackupParseError)
     expect(() =>
       parseBackup(JSON.stringify({ format: BACKUP_FORMAT, entries: {}, days: [], overlays: [] })),

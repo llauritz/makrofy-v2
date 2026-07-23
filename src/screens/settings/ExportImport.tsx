@@ -27,7 +27,7 @@ import { db } from "@/lib/firebase"
 import { useI18n } from "@/lib/i18n/useI18n"
 
 // The export/import settings surface (spec § Export / import, #24). Export
-// downloads the whole profile as one makrofy/2 file; import picks a file,
+// downloads the whole profile as one yaffle/2 file; import picks a file,
 // previews the new-vs-duplicate Entry split, and on confirm restores it. All the
 // weight lives in src/data/backup.ts — this only wires the file picker, the
 // download and the confirm sheet, so the live listeners reflect the restore.
