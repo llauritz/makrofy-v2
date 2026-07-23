@@ -1,6 +1,6 @@
-# Health Connect integration — go/no-go for Makrofy V2
+# Health Connect integration — go/no-go for Yaffle V2
 
-**Scope:** Can Makrofy (Vite SPA + PWA, Firebase/Firestore backend) integrate with Google Health Connect to READ body weight and WRITE calories/nutrition, and through what vehicle — Capacitor wrap, Flutter companion, or defer to V3?
+**Scope:** Can Yaffle (Vite SPA + PWA, Firebase/Firestore backend) integrate with Google Health Connect to READ body weight and WRITE calories/nutrition, and through what vehicle — Capacitor wrap, Flutter companion, or defer to V3?
 **Date:** 2026-07-10
 
 ---
@@ -38,7 +38,7 @@ val banana = NutritionRecord(
 ([write-data](https://developer.android.com/health-and-fitness/health-connect/write-data))
 
 - **Energy** is an `Energy` unit (kilocalories or joules); **all nutrients** (protein, `totalCarbohydrate`, `totalFat`, saturated/unsaturated/mono/poly/trans fat, fiber, sugar, sodium, potassium, calcium, magnesium, iron, zinc, cholesterol, caffeine, vitamins A/B-complex/C/D/E/K, etc.) are `Mass` units ([data-types](https://developer.android.com/health-and-fitness/health-connect/data-types), [NutritionRecord reference](https://developer.android.com/reference/kotlin/androidx/health/connect/client/records/NutritionRecord)).
-- **`mealType` is mandatory** (breakfast/lunch/dinner/snack/unknown), so Makrofy must attach a meal type and a time window to every write.
+- **`mealType` is mandatory** (breakfast/lunch/dinner/snack/unknown), so Yaffle must attach a meal type and a time window to every write.
 - Calories + all macros go in **one** `NutritionRecord` — no need to split into multiple records.
 
 **`WeightRecord`** is an instantaneous record. Mandatory fields: `time`, `weight`, `metadata`. `weight` is a `Mass` unit (kilograms, grams, pounds, etc.) ([data-types](https://developer.android.com/health-and-fitness/health-connect/data-types), [WeightRecord reference](https://developer.android.com/reference/androidx/health/connect/client/records/WeightRecord)).
@@ -48,9 +48,9 @@ val banana = NutritionRecord(
 - Nutrition: `android.permission.health.READ_NUTRITION` / `android.permission.health.WRITE_NUTRITION`
 - Weight: `android.permission.health.READ_WEIGHT` / `android.permission.health.WRITE_WEIGHT`
 
-Makrofy's stated needs (READ weight, WRITE nutrition) map to exactly two permissions: `READ_WEIGHT` + `WRITE_NUTRITION` ([data-types](https://developer.android.com/health-and-fitness/health-connect/data-types)). Runtime requests use `PermissionController.createRequestPermissionResultContract()` with `HealthPermission.getReadPermission(...)` / `getWritePermission(...)` ([get-started](https://developer.android.com/health-and-fitness/health-connect/get-started), [permissions UI](https://developer.android.com/health-and-fitness/health-connect/ui/permissions)).
+Yaffle's stated needs (READ weight, WRITE nutrition) map to exactly two permissions: `READ_WEIGHT` + `WRITE_NUTRITION` ([data-types](https://developer.android.com/health-and-fitness/health-connect/data-types)). Runtime requests use `PermissionController.createRequestPermissionResultContract()` with `HealthPermission.getReadPermission(...)` / `getWritePermission(...)` ([get-started](https://developer.android.com/health-and-fitness/health-connect/get-started), [permissions UI](https://developer.android.com/health-and-fitness/health-connect/ui/permissions)).
 
-- **Background reads need a separate permission.** Foreground reads work with the per-type read permission, but reading while the app is in the background requires the `FEATURE_READ_HEALTH_DATA_IN_BACKGROUND` capability, and reading data **older than 30 days** before the grant requires `PERMISSION_READ_HEALTH_DATA_HISTORY` ([get-started](https://developer.android.com/health-and-fitness/health-connect/get-started)). Makrofy's foreground READ-weight / WRITE-nutrition use case needs **neither**, which keeps the review scope minimal.
+- **Background reads need a separate permission.** Foreground reads work with the per-type read permission, but reading while the app is in the background requires the `FEATURE_READ_HEALTH_DATA_IN_BACKGROUND` capability, and reading data **older than 30 days** before the grant requires `PERMISSION_READ_HEALTH_DATA_HISTORY` ([get-started](https://developer.android.com/health-and-fitness/health-connect/get-started)). Yaffle's foreground READ-weight / WRITE-nutrition use case needs **neither**, which keeps the review scope minimal.
 
 **Minimum version & distribution:**
 - SDK supports Android 8 (API 26)+; apps that use it target Android 9 (API 28)+ ([get-started](https://developer.android.com/health-and-fitness/health-connect/get-started)).
@@ -66,10 +66,10 @@ Accessing Health Connect on a Play-distributed app is a **reviewed, gated** capa
 - **You must complete a health-apps permissions declaration** in Play Console for every publish that changes the set of Health Connect data types used — for new apps and updates alike. For each data type you must give "a clear and detailed justification explaining how your app uses the data to benefit the user," and request only the minimum types needed ([declare-access](https://developer.android.com/health-and-fitness/guides/health-connect/publish/declare-access)).
 - **Access must map to a real, user-facing feature.** "Only request permissions and access data types that support the specific, user-facing health features you offer. Don't request broader access than necessary." ([declare-access](https://developer.android.com/health-and-fitness/guides/health-connect/publish/declare-access)).
 - **Allowed use cases** include **Fitness & Wellness** — "apps designed to help users track, monitor, analyze, manage, and improve their physical fitness" — alongside Medical Care, Human-Subjects Research, Corporate Wellness/Rewards, and health-integrated Games ([Play Console health permissions policy](https://support.google.com/googleplay/android-developer/answer/12991134?hl=en)).
-  - **Is Makrofy's use allowed?** Yes. `NUTRITION` and `WEIGHT` are standard declarable Health Connect data types ([data-types](https://developer.android.com/health-and-fitness/health-connect/data-types)), and a calorie/macro tracker is squarely a **Fitness & Wellness** app. The use-case list gates *app purpose*, not individual data types — there is no separate "nutrition write" or "weight read" allowlist to clear beyond declaring and justifying each type. (Note: an automated read of the policy page suggested nutrition/weight were "not explicitly permitted"; that is a misreading — the categories are purpose-based and a tracker qualifies.)
+  - **Is Yaffle's use allowed?** Yes. `NUTRITION` and `WEIGHT` are standard declarable Health Connect data types ([data-types](https://developer.android.com/health-and-fitness/health-connect/data-types)), and a calorie/macro tracker is squarely a **Fitness & Wellness** app. The use-case list gates *app purpose*, not individual data types — there is no separate "nutrition write" or "weight read" allowlist to clear beyond declaring and justifying each type. (Note: an automated read of the policy page suggested nutrition/weight were "not explicitly permitted"; that is a misreading — the categories are purpose-based and a tracker qualifies.)
 - **Privacy policy:** you must post a privacy policy on the Play listing, and it must be the **same** policy shown when users tap the privacy link inside Health Connect ([declare-access](https://developer.android.com/health-and-fitness/guides/health-connect/publish/declare-access)).
 - **Data Safety form:** you must complete Google Play's Data Safety section describing collection, sharing, and security ([declare-access](https://developer.android.com/health-and-fitness/guides/health-connect/publish/declare-access)).
-- **Prohibited uses** (relevant if Makrofy ever monetizes data): no selling/sharing health data with advertisers or data brokers; no use for credit/insurance/employment decisions; no "headless apps" ([Play Console health permissions policy](https://support.google.com/googleplay/android-developer/answer/12991134?hl=en)).
+- **Prohibited uses** (relevant if Yaffle ever monetizes data): no selling/sharing health data with advertisers or data brokers; no use for credit/insurance/employment decisions; no "headless apps" ([Play Console health permissions policy](https://support.google.com/googleplay/android-developer/answer/12991134?hl=en)).
 
 **Net:** the review is clearable for a genuine tracker, but it is a real gate — declaration + justification per type + public privacy policy + Data Safety + a working in-app feature. It cannot be faked and must be maintained across updates.
 
@@ -90,7 +90,7 @@ Community Capacitor Health Connect plugins surveyed:
 
 | Plugin | Nutrition write? | Weight read? | Latest activity | Stars | Open issues | Verdict |
 |---|---|---|---|---|---|---|
-| [ubie-oss/capacitor-health-connect](https://github.com/ubie-oss/capacitor-health-connect) | **No** (NutritionRecord not in supported list) | Yes (r/w) | v0.7.0, Aug 2024 | ~8 | ~10 | Most-established generic HC plugin, but **missing the one type Makrofy must write**. |
+| [ubie-oss/capacitor-health-connect](https://github.com/ubie-oss/capacitor-health-connect) | **No** (NutritionRecord not in supported list) | Yes (r/w) | v0.7.0, Aug 2024 | ~8 | ~10 | Most-established generic HC plugin, but **missing the one type Yaffle must write**. |
 | [devmaxime/capacitor-health-connect](https://github.com/devmaxime/capacitor-health-connect) | **Yes** (`NutritionRecord`) | **Yes** (`WeightRecord`) | ~9 commits, **no releases** | 0 | 0 | Covers the exact needs on paper, but **effectively abandoned/early**: no published releases, no adoption. Would require code review + self-maintenance/fork. |
 | [Cap-go/capacitor-health](https://github.com/Cap-go/capacitor-health) | **No** — `calories`/`basalCalories`/`totalCalories` are energy **burned**, not dietary intake | Yes (r/w) | v8.9.1, Jul 2026 | ~20 | 0 | Most actively maintained, uses Health Connect, but **only calories burned** — no dietary `NutritionRecord`. |
 | [mley/capacitor-health](https://github.com/mley/capacitor-health) | **No** | **No** (read-only, no weight) | v7.0.0, Aug 2025 | ~19 | ~3 | Read-only fitness metrics (steps/calories-burned/HR); not applicable. |
@@ -104,17 +104,17 @@ Community Capacitor Health Connect plugins surveyed:
 The [`health`](https://pub.dev/packages/health) package (verified publisher **carp.dk / cph-cachet**) is the mature option:
 
 - **Health Connect on Android: fully supported** (Google Fit support removed in v11.0.0 after Google's deprecation) ([pub.dev/packages/health](https://pub.dev/packages/health)).
-- **Nutrition write: supported and comprehensive.** `writeMeal(...)` "Saves meal record into Apple Health or Health Connect" and accepts `mealType` (required) plus optional calories, protein, carbohydrates, total fat, fiber, caffeine, cholesterol, water, and a full set of vitamins/minerals ([writeMeal docs](https://pub.dev/documentation/health/latest/health/Health/writeMeal.html)). This maps directly onto Makrofy's WRITE-calories/nutrition need.
+- **Nutrition write: supported and comprehensive.** `writeMeal(...)` "Saves meal record into Apple Health or Health Connect" and accepts `mealType` (required) plus optional calories, protein, carbohydrates, total fat, fiber, caffeine, cholesterol, water, and a full set of vitamins/minerals ([writeMeal docs](https://pub.dev/documentation/health/latest/health/Health/writeMeal.html)). This maps directly onto Yaffle's WRITE-calories/nutrition need.
 - **Weight read: supported** (`WEIGHT`, kilograms) on Android ([pub.dev/packages/health](https://pub.dev/packages/health)).
 - **Health & popularity:** v13.3.1, ~672 likes, ~122k weekly downloads, MIT, last updated ~5 months ago ([pub.dev/packages/health](https://pub.dev/packages/health)). Far healthier than any Capacitor HC plugin.
 
-**Effort of a minimal companion app:** the *bridge* logic is small (request permissions → read weight → write meals). The real cost is everything around it: a **separate Flutter codebase and Play listing**, its own Firebase Auth (Google) + Firestore access (`cloud_firestore`) to read the user's Makrofy nutrition/weight data, and a **second app the user must install**. The PWA stays untouched, which is the route's main appeal.
+**Effort of a minimal companion app:** the *bridge* logic is small (request permissions → read weight → write meals). The real cost is everything around it: a **separate Flutter codebase and Play listing**, its own Firebase Auth (Google) + Firestore access (`cloud_firestore`) to read the user's Yaffle nutrition/weight data, and a **second app the user must install**. The PWA stays untouched, which is the route's main appeal.
 
 ---
 
 ## 6. Architecture hooks for V2 now
 
-Reasoning from the facts above: Health Connect wants **energy in kcal, macros in grams, a `mealType`, and per-entry timestamps** on nutrition, and **mass + timestamp** on weight; any future vehicle (wrapped app or companion) will read Makrofy's data and re-emit it in those shapes. So the cheap hooks are all about **making the Firestore data trivially mappable and reachable from a future native process** — no native work now.
+Reasoning from the facts above: Health Connect wants **energy in kcal, macros in grams, a `mealType`, and per-entry timestamps** on nutrition, and **mass + timestamp** on weight; any future vehicle (wrapped app or companion) will read Yaffle's data and re-emit it in those shapes. So the cheap hooks are all about **making the Firestore data trivially mappable and reachable from a future native process** — no native work now.
 
 ### Cheap, do now (worth it)
 1. **Store nutrition with Health-Connect-shaped fields:** energy in **kcal**, macros in **grams**, an explicit **meal-type enum** (breakfast/lunch/dinner/snack), and a **per-entry timestamp/time-window**. This is essentially free while designing the schema and yields a 1:1 map to `NutritionRecord` later — no migration ([data-types](https://developer.android.com/health-and-fitness/health-connect/data-types)).
