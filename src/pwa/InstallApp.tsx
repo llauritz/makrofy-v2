@@ -8,6 +8,7 @@ import {
   BottomSheetDescription,
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet"
+import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 
 import { useInstallPrompt } from "./useInstallPrompt"
@@ -36,19 +37,23 @@ export function InstallAppEntry() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-muted"
-      >
-        <Download className="h-[18px] w-[18px] text-muted-foreground" />
-        <span className="flex-1 text-[15px] font-medium">
-          {t.install.installApp}
-        </span>
-        <span className="text-[13px] text-muted-foreground">
-          {affordance === "ios-guide" ? t.install.howTo : t.install.addToHomeScreen}
-        </span>
-      </button>
+      <Squircle asChild radius="2xl">
+        <button
+          type="button"
+          onClick={onClick}
+          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
+        >
+          <Download className="h-[18px] w-[18px] text-muted-foreground" />
+          <span className="flex-1 text-[15px] font-medium">
+            {t.install.installApp}
+          </span>
+          <span className="text-[13px] text-muted-foreground">
+            {affordance === "ios-guide"
+              ? t.install.howTo
+              : t.install.addToHomeScreen}
+          </span>
+        </button>
+      </Squircle>
 
       <IosInstallGuide open={iosGuideOpen} onOpenChange={setIosGuideOpen} />
     </>

@@ -1,6 +1,7 @@
 import { BarChart3 } from "lucide-react"
 import { motion } from "motion/react"
 
+import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { MACROS, macroTint } from "./macros"
 import type { DaySummary } from "./summary"
@@ -73,54 +74,62 @@ export function SummaryCard({
     ? t.summary.over(n(summary.over))
     : t.summary.remaining(n(summary.remaining))
   return (
-    <div className="flex items-center gap-4 rounded-[28px] border bg-card p-4 shadow-[0_8px_30px_rgba(43,32,21,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
-      <button
-        type="button"
-        onClick={onOpenSettings}
-        aria-label={t.summary.openSettings}
-        className="shrink-0 rounded-full outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
+    // The squircle clips the card, and a clip erases an outer box-shadow, so
+    // the shadow hangs on a wrapper as a drop-shadow — that one follows the
+    // clipped silhouette rather than the border-radius.
+    <div className="drop-shadow-[0_8px_30px_rgba(43,32,21,0.12)] dark:drop-shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+      <Squircle
+        radius={28}
+        className="flex items-center gap-4 border bg-card p-4"
       >
-        <ProgressRing summary={summary} />
-      </button>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            aria-label={t.summary.openSettings}
-            className="rounded-md text-left outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring active:opacity-70"
-          >
-            <div className="text-lg leading-tight font-bold">{headline}</div>
-            <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-              {t.summary.pctOfGoal(n(summary.pctOfGoal), n(summary.goalKcal))}
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={onOpenStats}
-            aria-label={t.summary.statistics}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-input text-muted-foreground outline-none transition-transform focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
-          >
-            <BarChart3 className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="mt-2.5 flex items-center justify-between gap-1.5 border-t pt-2.5">
-          {MACROS.map((m) => (
-            <span
-              key={m.key}
-              className="rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap tabular-nums"
-              style={{
-                borderColor: m.mark,
-                backgroundColor: macroTint(m.mark, 8),
-                color: m.text,
-              }}
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          aria-label={t.summary.openSettings}
+          className="shrink-0 rounded-full transition-transform outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
+        >
+          <ProgressRing summary={summary} />
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              aria-label={t.summary.openSettings}
+              className="rounded-md text-left transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-ring active:opacity-70"
             >
-              {m.letter} {n(Math.round(summary.totals[m.field]))}
-              {t.units.g}
-            </span>
-          ))}
+              <div className="text-lg leading-tight font-bold">{headline}</div>
+              <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                {t.summary.pctOfGoal(n(summary.pctOfGoal), n(summary.goalKcal))}
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenStats}
+              aria-label={t.summary.statistics}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-input text-muted-foreground transition-transform outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
+            >
+              <BarChart3 className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between gap-1.5 border-t pt-2.5">
+            {MACROS.map((m) => (
+              <span
+                key={m.key}
+                className="rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap tabular-nums"
+                style={{
+                  borderColor: m.mark,
+                  backgroundColor: macroTint(m.mark, 8),
+                  color: m.text,
+                }}
+              >
+                {m.letter} {n(Math.round(summary.totals[m.field]))}
+                {t.units.g}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      </Squircle>
     </div>
   )
 }

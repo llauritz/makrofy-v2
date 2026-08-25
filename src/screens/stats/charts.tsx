@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 
+import { Squircle } from "@/components/ui/squircle"
 import { narrowWeekday, shortDayLabel } from "@/lib/day"
 import { useI18n } from "@/lib/i18n/useI18n"
 import {
@@ -755,9 +756,10 @@ export function StatTile({
   dashed?: boolean
 }) {
   return (
-    <div
+    <Squircle
+      radius="2xl"
       className={
-        "flex min-w-0 flex-1 flex-col rounded-2xl px-3.5 py-3 " +
+        "flex min-w-0 flex-1 flex-col px-3.5 py-3 " +
         (dashed
           ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
           : "border bg-card")
@@ -780,6 +782,6 @@ export function StatTile({
           {note}
         </div>
       )}
-    </div>
+    </Squircle>
   )
 }

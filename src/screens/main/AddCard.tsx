@@ -2,6 +2,7 @@ import * as React from "react"
 import { Plus, Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
+import { Squircle } from "@/components/ui/squircle"
 import type { EntrySource } from "@/data/entries"
 import { useProductCuration } from "@/data/useProductCuration"
 import { sameKindOthers } from "@/lib/glossary"
@@ -233,115 +234,120 @@ export function AddCard({
   )
 
   return (
-    <div className="mx-4 mt-1 rounded-3xl border bg-card p-3 shadow-[0_1px_2px_rgba(43,32,21,0.05)]">
-      <div className="flex items-center gap-2">
-        <div className="relative min-w-0 flex-1">
-          <input
-            ref={labelRef}
-            value={label}
-            onChange={(e) => onLabelChange(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder={t.addCard.placeholder}
-            aria-label={t.addCard.food}
-            className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
-          />
-          <div className="absolute inset-y-0 right-1.5 flex items-center">
-            <motion.button
-              type="button"
-              onClick={startAi}
-              disabled={disabled || thinking || label.trim() === ""}
-              whileTap={{ scale: 0.9 }}
-              aria-label={t.addCard.fillWithAi}
-              className={
-                "flex h-7 w-7 items-center justify-center rounded-full transition-opacity disabled:opacity-40" +
-                // Offline the button dims in place but stays tappable — the
-                // tap answers with the quiet connection note in the zone.
-                (online ? "" : " opacity-40")
-              }
-            >
-              <Sparkles
-                className={"h-4 w-4" + (thinking ? " animate-pulse" : "")}
-              />
-            </motion.button>
+    // The squircle's clip would erase a box-shadow, so this card's hairline
+    // shadow moves to the wrapper as a drop-shadow, which traces the clipped
+    // silhouette.
+    <div className="mx-4 mt-1 drop-shadow-[0_1px_2px_rgba(43,32,21,0.05)]">
+      <Squircle radius="3xl" className="border bg-card p-3">
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <input
+              ref={labelRef}
+              value={label}
+              onChange={(e) => onLabelChange(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={t.addCard.placeholder}
+              aria-label={t.addCard.food}
+              className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
+            />
+            <div className="absolute inset-y-0 right-1.5 flex items-center">
+              <motion.button
+                type="button"
+                onClick={startAi}
+                disabled={disabled || thinking || label.trim() === ""}
+                whileTap={{ scale: 0.9 }}
+                aria-label={t.addCard.fillWithAi}
+                className={
+                  "flex h-7 w-7 items-center justify-center rounded-full transition-opacity disabled:opacity-40" +
+                  // Offline the button dims in place but stays tappable — the
+                  // tap answers with the quiet connection note in the zone.
+                  (online ? "" : " opacity-40")
+                }
+              >
+                <Sparkles
+                  className={"h-4 w-4" + (thinking ? " animate-pulse" : "")}
+                />
+              </motion.button>
+            </div>
           </div>
-        </div>
-        <input
-          value={kcal}
-          onChange={(e) => setKcal(e.target.value)}
-          onKeyDown={onKeyDown}
-          onFocus={acceptFlag("kcal")}
-          placeholder={t.units.kcal}
-          inputMode="decimal"
-          aria-label={t.addCard.calories}
-          className={
-            "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
-            // outline-none (focus reset) and the dashed flag outline are
-            // mutually exclusive — both set outline-style.
-            (flags.has("kcal") ? FLAGGED_OUTLINE : "outline-none") +
-            (thinking ? " animate-pulse" : "")
-          }
-        />
-      </div>
-      <div className="mt-2.5 flex items-center gap-2">
-        {MACROS.map((m) => (
-          <label
-            key={m.key}
+          <input
+            value={kcal}
+            onChange={(e) => setKcal(e.target.value)}
+            onKeyDown={onKeyDown}
+            onFocus={acceptFlag("kcal")}
+            placeholder={t.units.kcal}
+            inputMode="decimal"
+            aria-label={t.addCard.calories}
             className={
-              "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2.5" +
-              (flags.has(m.key) ? " " + FLAGGED_OUTLINE : "") +
+              "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
+              // outline-none (focus reset) and the dashed flag outline are
+              // mutually exclusive — both set outline-style.
+              (flags.has("kcal") ? FLAGGED_OUTLINE : "outline-none") +
               (thinking ? " animate-pulse" : "")
             }
-            style={{ backgroundColor: macroTint(m.mark, 11) }}
-          >
-            <span
-              className="h-1.5 w-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: m.mark }}
-            />
-            <span className="text-xs font-medium text-muted-foreground">
-              {m.letter}
-            </span>
-            <input
-              value={macros[m.key]}
-              onChange={(e) =>
-                setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+          />
+        </div>
+        <div className="mt-2.5 flex items-center gap-2">
+          {MACROS.map((m) => (
+            <label
+              key={m.key}
+              className={
+                "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2.5" +
+                (flags.has(m.key) ? " " + FLAGGED_OUTLINE : "") +
+                (thinking ? " animate-pulse" : "")
               }
-              onKeyDown={onKeyDown}
-              onFocus={acceptFlag(m.key)}
-              placeholder="0"
-              inputMode="decimal"
-              aria-label={t.macros.grams(t.macros[m.field])}
-              className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
-            />
-            <span className="text-xs text-[#a5988a]">{t.units.g}</span>
-          </label>
-        ))}
-        <motion.button
-          type="button"
-          onClick={submit}
-          disabled={!canAdd}
-          whileTap={{ scale: 0.9 }}
-          aria-label={t.addCard.addEntry}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
-        >
-          <Plus className="h-5 w-5" strokeWidth={2.5} />
-        </motion.button>
-      </div>
-      <Suggestions
-        rows={suggestions.rows}
-        curating={curating}
-        hostRowKey={curatingKey?.row ?? null}
-        detail={detail}
-        onPick={pick}
-        onCurate={(row) =>
-          setCuratingKey({ product: row.productKey, row: row.key })
-        }
-      />
-      <AiZone
-        state={zoneState}
-        attribution={ai.attribution}
-        onAnswer={answerQuestion}
-        onDismiss={clearAi}
-      />
+              style={{ backgroundColor: macroTint(m.mark, 11) }}
+            >
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: m.mark }}
+              />
+              <span className="text-xs font-medium text-muted-foreground">
+                {m.letter}
+              </span>
+              <input
+                value={macros[m.key]}
+                onChange={(e) =>
+                  setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+                }
+                onKeyDown={onKeyDown}
+                onFocus={acceptFlag(m.key)}
+                placeholder="0"
+                inputMode="decimal"
+                aria-label={t.macros.grams(t.macros[m.field])}
+                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
+              />
+              <span className="text-xs text-[#a5988a]">{t.units.g}</span>
+            </label>
+          ))}
+          <motion.button
+            type="button"
+            onClick={submit}
+            disabled={!canAdd}
+            whileTap={{ scale: 0.9 }}
+            aria-label={t.addCard.addEntry}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
+          >
+            <Plus className="h-5 w-5" strokeWidth={2.5} />
+          </motion.button>
+        </div>
+        <Suggestions
+          rows={suggestions.rows}
+          curating={curating}
+          hostRowKey={curatingKey?.row ?? null}
+          detail={detail}
+          onPick={pick}
+          onCurate={(row) =>
+            setCuratingKey({ product: row.productKey, row: row.key })
+          }
+        />
+        <AiZone
+          state={zoneState}
+          attribution={ai.attribution}
+          onAnswer={answerQuestion}
+          onDismiss={clearAi}
+        />
+      </Squircle>
     </div>
   )
 }
@@ -408,22 +414,24 @@ function Suggestions({
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={SPRING}
                 >
-                  <FadeSwap
-                    swapKey={hosts ? "detail" : "row"}
-                    className={
-                      "rounded-2xl " + (hosts ? "border bg-card" : "bg-input")
-                    }
+                  {/* Chrome hangs on the squircle rather than on FadeSwap, so
+                    the clipped box persists while its contents swap. */}
+                  <Squircle
+                    radius="2xl"
+                    className={hosts ? "border bg-card" : "bg-input"}
                   >
-                    {hosts ? (
-                      detail
-                    ) : (
-                      <Suggestion
-                        row={row}
-                        onPick={() => onPick(row)}
-                        onCurate={() => onCurate(row)}
-                      />
-                    )}
-                  </FadeSwap>
+                    <FadeSwap swapKey={hosts ? "detail" : "row"}>
+                      {hosts ? (
+                        detail
+                      ) : (
+                        <Suggestion
+                          row={row}
+                          onPick={() => onPick(row)}
+                          onCurate={() => onCurate(row)}
+                        />
+                      )}
+                    </FadeSwap>
+                  </Squircle>
                 </motion.li>
               ))}
             </AnimatePresence>

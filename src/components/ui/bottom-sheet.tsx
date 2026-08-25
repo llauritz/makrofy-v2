@@ -3,6 +3,7 @@ import { Dialog } from "@base-ui/react/dialog"
 import { X } from "lucide-react"
 import * as React from "react"
 
+import { useSquircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { cn } from "@/lib/utils"
 
@@ -21,10 +22,21 @@ export function BottomSheetContent({
   className?: string
   children: React.ReactNode
 }) {
+  // The sheet rests on the viewport's bottom edge, so only its top corners are
+  // rounded — the one shape <Squircle> cannot express, since the package takes
+  // a single uniform radius. `rounded-t-3xl` stays on the class list as the
+  // border's own curve: the clip runs sub-pixel inside it, so the hairline
+  // border survives it (squircle.tsx).
+  const [squircleRef, squircleStyle] = useSquircle<HTMLDivElement>({
+    radius: "3xl",
+    corners: "top",
+  })
   return (
     <Dialog.Portal>
       <Dialog.Backdrop className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
       <Dialog.Popup
+        ref={squircleRef}
+        style={squircleStyle}
         className={cn(
           "fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-md flex-col rounded-t-3xl border border-b-0 border-border bg-card px-5 pt-5 pb-8 transition-transform duration-300 ease-out data-[ending-style]:translate-y-full data-[starting-style]:translate-y-full",
           className

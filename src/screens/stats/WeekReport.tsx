@@ -1,6 +1,7 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
+import { Squircle } from "@/components/ui/squircle"
 import type { Entry } from "@/data/entries"
 import { useCoverageRange, useIdentity } from "@/data/hooks"
 import { localDay, weekRangeLabel } from "@/lib/day"
@@ -118,7 +119,10 @@ export function WeekReport({
             </div>
 
             {range.enough ? (
-              <div className="mt-6 flex items-center justify-between gap-3 rounded-3xl border bg-card px-4 py-3.5">
+              <Squircle
+                radius="3xl"
+                className="mt-6 flex items-center justify-between gap-3 border bg-card px-4 py-3.5"
+              >
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold">
                     {t.stats.daysInRange(n(range.inRange), n(range.assessable))}
@@ -128,16 +132,19 @@ export function WeekReport({
                   </div>
                 </div>
                 <RangeDots dots={range.dots} />
-              </div>
+              </Squircle>
             ) : (
-              <div className="mt-6 rounded-3xl border border-dashed border-[#cbbfa4] px-4 py-3.5 dark:border-[#4a3e2e]">
+              <Squircle
+                radius="3xl"
+                className="mt-6 border border-dashed border-[#cbbfa4] px-4 py-3.5 dark:border-[#4a3e2e]"
+              >
                 <div className="text-[13px] font-semibold text-muted-foreground">
                   {t.stats.inRange}
                 </div>
                 <div className="mt-0.5 text-[11px] text-muted-foreground">
                   {t.stats.rangeGateBody(n(range.assessable))}
                 </div>
-              </div>
+              </Squircle>
             )}
 
             <p className="mt-4 text-[11px] text-muted-foreground">

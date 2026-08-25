@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
+import { Squircle } from "@/components/ui/squircle"
 import type { Entry, EntryAiFill, EntryEdit } from "@/data/entries"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { entryFillFrom, knownFromEntry, promptFrom } from "@/lib/macro-fill"
@@ -52,14 +53,18 @@ export function EntryList({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="rounded-2xl border border-dashed border-[#cbbfa4] px-4 py-8 text-center dark:border-[#4a3e2e]"
           >
-            <div className="text-[15px] font-medium">
-              {t.entryList.emptyTitle}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {t.entryList.emptyBody}
-            </div>
+            <Squircle
+              radius="2xl"
+              className="border border-dashed border-[#cbbfa4] px-4 py-8 text-center dark:border-[#4a3e2e]"
+            >
+              <div className="text-[15px] font-medium">
+                {t.entryList.emptyTitle}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {t.entryList.emptyBody}
+              </div>
+            </Squircle>
           </motion.div>
         ) : (
           <ul className="flex flex-col gap-2.5">
@@ -77,32 +82,35 @@ export function EntryList({
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={SPRING}
                 >
-                  <FadeSwap
-                    swapKey={editing ? "editor" : "row"}
+                  {/* Chrome hangs on the squircle rather than on FadeSwap, so
+                    the clipped box persists while its contents swap. */}
+                  <Squircle
+                    radius="2xl"
                     className={
-                      "rounded-2xl " +
-                      (dashed
+                      dashed
                         ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-                        : "border bg-card")
+                        : "border bg-card"
                     }
                   >
-                    {editing ? (
-                      <EntryEditor
-                        entry={entry}
-                        uid={uid}
-                        onSave={(edit) => onSaveEdit(entry.id, edit)}
-                        onCancel={onCancelEdit}
-                        onDelete={() => onDelete(entry)}
-                      />
-                    ) : (
-                      <EntryRow
-                        entry={entry}
-                        uid={uid}
-                        onEdit={() => onStartEdit(entry.id)}
-                        onAiFill={(fill) => onAiFill(entry.id, fill)}
-                      />
-                    )}
-                  </FadeSwap>
+                    <FadeSwap swapKey={editing ? "editor" : "row"}>
+                      {editing ? (
+                        <EntryEditor
+                          entry={entry}
+                          uid={uid}
+                          onSave={(edit) => onSaveEdit(entry.id, edit)}
+                          onCancel={onCancelEdit}
+                          onDelete={() => onDelete(entry)}
+                        />
+                      ) : (
+                        <EntryRow
+                          entry={entry}
+                          uid={uid}
+                          onEdit={() => onStartEdit(entry.id)}
+                          onAiFill={(fill) => onAiFill(entry.id, fill)}
+                        />
+                      )}
+                    </FadeSwap>
+                  </Squircle>
                 </motion.li>
               )
             })}
@@ -113,7 +121,8 @@ export function EntryList({
   )
 }
 
-// Chrome-less (border and background live on the FadeSwap box around it).
+// Chrome-less (border and background live on the squircle around the
+// FadeSwap box).
 // A tap anywhere on the row opens the editor; a dashed 0-kcal row also
 // carries the ✨ left of its muted number (#53), whose fill answers inside
 // this same card through the response zone below — the add card's grammar.
@@ -152,9 +161,10 @@ function EntryRow({
     // ✨ and the zone's own controls opting out of the bubble — real nested
     // <button>s would be invalid HTML, so only the label block is one, and
     // its Enter-key click bubbles up here too.
-    <div
+    <Squircle
+      radius="2xl"
       onClick={onEdit}
-      className="w-full cursor-pointer rounded-2xl px-4 py-4"
+      className="w-full cursor-pointer px-4 py-4"
     >
       <div className="flex items-center justify-between gap-3">
         <button
@@ -222,6 +232,6 @@ function EntryRow({
           onDismiss={ai.clear}
         />
       </div>
-    </div>
+    </Squircle>
   )
 }

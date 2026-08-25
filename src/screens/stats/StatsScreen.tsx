@@ -2,6 +2,7 @@ import * as React from "react"
 import { ChevronRight } from "lucide-react"
 import { motion } from "motion/react"
 
+import { Squircle } from "@/components/ui/squircle"
 import type { Entry } from "@/data/entries"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import {
@@ -206,16 +207,18 @@ function Dashboard({
 
         {/* The Glossary's second doorway (issue #40's note): the dashboard is
             where the derived numbers meet the foods behind them. */}
-        <button
-          type="button"
-          onClick={onOpenGlossary}
-          className="flex items-center justify-between rounded-3xl border bg-card p-4 text-left"
-        >
-          <span className="text-[13px] font-semibold">
-            {t.settings.foodGlossary}
-          </span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </button>
+        <Squircle asChild radius="3xl">
+          <button
+            type="button"
+            onClick={onOpenGlossary}
+            className="flex items-center justify-between border bg-card p-4 text-left"
+          >
+            <span className="text-[13px] font-semibold">
+              {t.settings.foodGlossary}
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </Squircle>
       </div>
     </ScreenChrome>
   )
@@ -248,14 +251,18 @@ function Section({
     </>
   )
   return onOpen ? (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="rounded-3xl border bg-card p-4 text-left"
-    >
-      {body}
-    </button>
+    <Squircle asChild radius="3xl">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="border bg-card p-4 text-left"
+      >
+        {body}
+      </button>
+    </Squircle>
   ) : (
-    <section className="rounded-3xl border bg-card p-4">{body}</section>
+    <Squircle asChild radius="3xl">
+      <section className="border bg-card p-4">{body}</section>
+    </Squircle>
   )
 }
