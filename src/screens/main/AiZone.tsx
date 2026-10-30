@@ -3,6 +3,7 @@ import { X } from "lucide-react"
 import { motion } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
+import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { bindAttributionToTheme } from "@/lib/macro-fill"
 import { FadeSwap } from "./FadeSwap"
@@ -108,7 +109,7 @@ function ZoneContent({
         // pt-2 padding, never margin: FadeSwap measures its children's box,
         // and a margin would collapse out of it and clip the zone.
         <div className="pt-2">
-          <div className="rounded-2xl bg-input px-4 py-3">
+          <Squircle radius="2xl" className="bg-input px-4 py-3">
             <div className="flex items-start justify-between gap-2">
               <span className="text-sm">{state.question}</span>
               <DismissButton
@@ -131,16 +132,19 @@ function ZoneContent({
                 ))}
               </div>
             )}
-          </div>
+          </Squircle>
         </div>
       )
     case "hint":
       return (
         <div className="pt-2">
-          <div className="flex items-start justify-between gap-2 rounded-2xl bg-input px-4 py-3">
+          <Squircle
+            radius="2xl"
+            className="flex items-start justify-between gap-2 bg-input px-4 py-3"
+          >
             <span className="text-sm text-muted-foreground">{state.hint}</span>
             <DismissButton label={t.aiZone.dismissHint} onDismiss={onDismiss} />
-          </div>
+          </Squircle>
         </div>
       )
   }

@@ -9,6 +9,7 @@ import {
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet"
 import { Button } from "@/components/ui/button"
+import { Squircle } from "@/components/ui/squircle"
 import {
   exportBackup,
   importBackup,
@@ -51,7 +52,10 @@ export function ExportImport() {
     if (!uid) return
     try {
       const file = await exportBackup(db, uid, Date.now())
-      downloadJson(serializeBackup(file), `yaffle-backup-${localDay(new Date())}.json`)
+      downloadJson(
+        serializeBackup(file),
+        `yaffle-backup-${localDay(new Date())}.json`
+      )
     } catch (err) {
       console.error("Export failed", err)
     }
@@ -71,7 +75,11 @@ export function ExportImport() {
       }
       throw err
     }
-    setState({ phase: "preview", file, preview: await previewImport(db, uid, file) })
+    setState({
+      phase: "preview",
+      file,
+      preview: await previewImport(db, uid, file),
+    })
   }
 
   const onConfirm = async () => {
@@ -134,16 +142,18 @@ function Row({
   disabled: boolean
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-muted disabled:opacity-45"
-    >
-      <span className="text-muted-foreground">{icon}</span>
-      <span className="flex-1 text-[15px] font-medium">{label}</span>
-      <span className="text-[13px] text-muted-foreground">{hint}</span>
-    </button>
+    <Squircle asChild radius="2xl">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted disabled:opacity-45"
+      >
+        <span className="text-muted-foreground">{icon}</span>
+        <span className="flex-1 text-[15px] font-medium">{label}</span>
+        <span className="text-[13px] text-muted-foreground">{hint}</span>
+      </button>
+    </Squircle>
   )
 }
 
@@ -168,7 +178,9 @@ function ImportSheet({
       <BottomSheetContent className="gap-5">
         <div className="flex items-start justify-between gap-3">
           <BottomSheetTitle className="text-lg font-semibold">
-            {state.phase === "done" ? t.backup.doneTitle : t.backup.previewTitle}
+            {state.phase === "done"
+              ? t.backup.doneTitle
+              : t.backup.previewTitle}
           </BottomSheetTitle>
           <BottomSheetClose />
         </div>
@@ -190,7 +202,9 @@ function ImportSheet({
               </span>
               {state.preview.duplicateEntries > 0 && (
                 <span className="text-muted-foreground">
-                  {t.backup.duplicatesSkipped(n(state.preview.duplicateEntries))}
+                  {t.backup.duplicatesSkipped(
+                    n(state.preview.duplicateEntries)
+                  )}
                 </span>
               )}
             </div>

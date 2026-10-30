@@ -2,6 +2,7 @@ import * as React from "react"
 import { ArrowLeft, Search } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
+import { Squircle } from "@/components/ui/squircle"
 import { useIdentity, useProductIndex } from "@/data/hooks"
 import { useProductCuration } from "@/data/useProductCuration"
 import { useI18n } from "@/lib/i18n/useI18n"
@@ -123,43 +124,42 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={SPRING}
                   >
-                    <FadeSwap
-                      swapKey={expanded ? "detail" : "row"}
-                      className="rounded-2xl border bg-card"
-                    >
-                      {expanded ? (
-                        <ProductDetail
-                          product={product}
-                          mergeCandidates={sameKindOthers(
-                            index.products,
-                            product
-                          )}
-                          onClose={() => setExpandedKey(null)}
-                          onEditReading={(reading, value) =>
-                            curation.editReading(product, reading, value)
-                          }
-                          onAddReading={(value) =>
-                            curation.addReading(product, value)
-                          }
-                          onDeleteReading={(reading) =>
-                            curation.deleteReading(product, reading)
-                          }
-                          onTogglePin={(reading) =>
-                            curation.togglePin(product, reading)
-                          }
-                          onMerge={(absorbed) => merge(product, absorbed)}
-                          onUnmerge={(alias) =>
-                            curation.unmerge(product.key, alias)
-                          }
-                          onDeleteProduct={() => removeProduct(product)}
-                        />
-                      ) : (
-                        <GlossaryRow
-                          product={product}
-                          onOpen={() => setExpandedKey(product.key)}
-                        />
-                      )}
-                    </FadeSwap>
+                    <Squircle radius="2xl" className="border bg-card">
+                      <FadeSwap swapKey={expanded ? "detail" : "row"}>
+                        {expanded ? (
+                          <ProductDetail
+                            product={product}
+                            mergeCandidates={sameKindOthers(
+                              index.products,
+                              product
+                            )}
+                            onClose={() => setExpandedKey(null)}
+                            onEditReading={(reading, value) =>
+                              curation.editReading(product, reading, value)
+                            }
+                            onAddReading={(value) =>
+                              curation.addReading(product, value)
+                            }
+                            onDeleteReading={(reading) =>
+                              curation.deleteReading(product, reading)
+                            }
+                            onTogglePin={(reading) =>
+                              curation.togglePin(product, reading)
+                            }
+                            onMerge={(absorbed) => merge(product, absorbed)}
+                            onUnmerge={(alias) =>
+                              curation.unmerge(product.key, alias)
+                            }
+                            onDeleteProduct={() => removeProduct(product)}
+                          />
+                        ) : (
+                          <GlossaryRow
+                            product={product}
+                            onOpen={() => setExpandedKey(product.key)}
+                          />
+                        )}
+                      </FadeSwap>
+                    </Squircle>
                   </motion.li>
                 )
               })}
@@ -215,35 +215,40 @@ function GlossaryRow({
 }) {
   const { t, n } = useI18n()
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label={t.glossary.curate(product.label)}
-      className="w-full rounded-2xl px-4 py-3 text-left"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="truncate text-[15px] font-medium">
-            {product.label}
+    <Squircle asChild radius="2xl">
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={t.glossary.curate(product.label)}
+        className="w-full px-4 py-3 text-left"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="truncate text-[15px] font-medium">
+              {product.label}
+            </div>
+            <div className="mt-0.5 text-xs text-muted-foreground">
+              {productRateLine(product, t, n)}
+            </div>
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {productRateLine(product, t, n)}
+          <div className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
+            ×{n(product.useCount)}
           </div>
         </div>
-        <div className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
-          ×{n(product.useCount)}
-        </div>
-      </div>
-    </button>
+      </button>
+    </Squircle>
   )
 }
 
 function Empty({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[#cbbfa4] px-4 py-8 text-center dark:border-[#4a3e2e]">
+    <Squircle
+      radius="2xl"
+      className="border border-dashed border-[#cbbfa4] px-4 py-8 text-center dark:border-[#4a3e2e]"
+    >
       <div className="text-[15px] font-medium">{title}</div>
       <div className="mt-1 text-xs text-muted-foreground">{body}</div>
-    </div>
+    </Squircle>
   )
 }
 

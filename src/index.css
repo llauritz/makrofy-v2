@@ -95,6 +95,9 @@
     --color-macro-p-text: var(--macro-p-text);
     --color-macro-f-text: var(--macro-f-text);
     --color-macro-c-text: var(--macro-c-text);
+    /* Squircled surfaces take these same steps as a `radius` token rather
+       than a `rounded-*` class — components/ui/squircle.tsx mirrors the
+       scale in px. Keep the two in step. */
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);

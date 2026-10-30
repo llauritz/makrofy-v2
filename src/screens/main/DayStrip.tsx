@@ -8,6 +8,7 @@ import {
   useTransform,
 } from "motion/react"
 
+import { SquircleOutline, squirclePath } from "@/components/ui/squircle"
 import { isOffStrip, shortDayLabel, stripWindow, type DayCell } from "@/lib/day"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { FADE_IN, FADE_OUT, SPRING } from "./anim"
@@ -59,6 +60,20 @@ export function DayStrip({
     width: number
     height: number
   } | null>(null)
+
+  // The travelling selection is a stadium, and a stadium's radius already
+  // spends the whole smoothing budget — so it takes `pill`, which preserves
+  // the strength instead of falling back to semicircular ends. Its box is
+  // measured right here, so the path is built straight from those numbers
+  // rather than through a second observer. It carries no `rounded-*`: a
+  // border-radius would clip the smoothed bulge back off (squircle.tsx).
+  const pillClip = React.useMemo(
+    () =>
+      pill === null
+        ? undefined
+        : squirclePath({ width: pill.width, height: pill.height, pill: true }),
+    [pill]
+  )
 
   // Slide the pill onto the selected chip. Chips are uniform, so the selected
   // button's box is the pill's box; only x differs per selection. Travel is
@@ -191,13 +206,14 @@ export function DayStrip({
         <div ref={rowRef} className="relative flex gap-1">
           {/* Mask layer — the ink pill, clipping an inverted copy of the
               chip row. Only the chip under the pill is ever visible here.
-              Declared before the chips but painted above them (positioned +
-              transformed), so the frontier chip stays the row's last child
-              for the auto-scroll. */}
+              Declared before the chips so the frontier chip stays the row's
+              last child for the auto-scroll, and lifted over them with z-10:
+              the chips carry `relative` for their drawn outlines, so they are
+              positioned too and would otherwise win on DOM order. */}
           {pill && (
             <motion.div
               aria-hidden
-              className="pointer-events-none absolute left-0 overflow-hidden rounded-full bg-foreground"
+              className="pointer-events-none absolute left-0 z-10 overflow-hidden bg-foreground"
               // The pill mounts fresh whenever it re-appears (first paint, or
               // returning from off-strip): appearing content fades in place.
               initial={{ opacity: 0 }}
@@ -208,6 +224,7 @@ export function DayStrip({
                 width: pill.width,
                 height: pill.height,
                 x: pillX,
+                clipPath: pillClip,
               }}
             >
               <motion.div
@@ -240,15 +257,22 @@ export function DayStrip({
               aria-current={cell.isSelected ? "date" : undefined}
               onClick={() => onSelect(cell.day)}
               className={
-                "flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-full py-2 " +
-                (cell.isFrontier
-                  ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-                  : cell.isToday && !cell.isSelected
-                    ? "ring-1 ring-[#cbbfa4] ring-inset dark:ring-[#4a3e2e]"
-                    : "") +
-                (cell.isFuture && !cell.isSelected ? " opacity-60" : "")
+                "relative flex w-11 shrink-0 flex-col items-center gap-0.5 py-2 " +
+                (cell.isFuture && !cell.isSelected ? "opacity-60" : "")
               }
             >
+              {/* The frontier's dash and today's ring are drawn, not bordered:
+                  they have to trace the same smoothed stadium the selection
+                  pill does, and a border only ever follows border-radius.
+                  Drawing them also keeps every chip's box identical, which is
+                  what makes the pill's travel legal (ADR 0007). */}
+              {(cell.isFrontier || (cell.isToday && !cell.isSelected)) && (
+                <SquircleOutline
+                  pill
+                  dashed={cell.isFrontier}
+                  className="text-[#cbbfa4] dark:text-[#4a3e2e]"
+                />
+              )}
               <ChipFace
                 cell={cell}
                 logged={loggedDays.has(cell.day)}

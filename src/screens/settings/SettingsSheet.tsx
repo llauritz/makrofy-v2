@@ -9,6 +9,7 @@ import {
   BottomSheetContent,
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet"
+import { Squircle } from "@/components/ui/squircle"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useGoal, useIdentity } from "@/data/hooks"
 import { db } from "@/lib/firebase"
@@ -80,15 +81,17 @@ function NavRow({
   onClick: () => void
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors hover:bg-muted"
-    >
-      <span className="text-muted-foreground">{icon}</span>
-      <span className="flex-1 text-[15px] font-medium">{label}</span>
-      <ChevronRight className="h-[18px] w-[18px] text-muted-foreground" />
-    </button>
+    <Squircle asChild radius="2xl">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
+      >
+        <span className="text-muted-foreground">{icon}</span>
+        <span className="flex-1 text-[15px] font-medium">{label}</span>
+        <ChevronRight className="h-[18px] w-[18px] text-muted-foreground" />
+      </button>
+    </Squircle>
   )
 }
 
@@ -160,7 +163,10 @@ function GoalInput({
   }
 
   return (
-    <div className="flex items-baseline gap-2 rounded-2xl bg-input px-4 py-3">
+    <Squircle
+      radius="2xl"
+      className="flex items-baseline gap-2 bg-input px-4 py-3"
+    >
       <input
         id="settings-goal"
         value={value}
@@ -179,7 +185,7 @@ function GoalInput({
       <span className="text-sm font-medium text-muted-foreground">
         {t.units.kcal}
       </span>
-    </div>
+    </Squircle>
   )
 }
 

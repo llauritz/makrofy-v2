@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
+import { Squircle } from "@/components/ui/squircle"
 import {
   displayRate,
   productRate,
@@ -88,27 +89,29 @@ export function ProductDetail({
         // its first, a fresh ×1 Reading (spec § Reading curation). Products that
         // already have Readings are curated by editing/pinning/deleting them,
         // never by adding curation-time votes.
-        <FadeSwap swapKey={adding ? "editor" : "empty"} className="rounded-2xl">
-          {adding ? (
-            <ReadingEditor
-              kind={product.kind}
-              onSave={(value) => {
-                onAddReading(value)
-                setAdding(false)
-              }}
-              onCancel={() => setAdding(false)}
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAdding(true)}
-              className="flex items-center gap-1.5 px-1 py-1 text-[13px] font-medium text-muted-foreground hover:text-foreground"
-            >
-              <Plus className="h-4 w-4" />
-              {t.productDetail.noCalories}
-            </button>
-          )}
-        </FadeSwap>
+        <Squircle radius="2xl">
+          <FadeSwap swapKey={adding ? "editor" : "empty"}>
+            {adding ? (
+              <ReadingEditor
+                kind={product.kind}
+                onSave={(value) => {
+                  onAddReading(value)
+                  setAdding(false)
+                }}
+                onCancel={() => setAdding(false)}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAdding(true)}
+                className="flex items-center gap-1.5 px-1 py-1 text-[13px] font-medium text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" />
+                {t.productDetail.noCalories}
+              </button>
+            )}
+          </FadeSwap>
+        </Squircle>
       ) : (
         <ul className="flex flex-col gap-1.5">
           {product.readings.map((reading, i) => (
@@ -130,18 +133,17 @@ export function ProductDetail({
           <SectionLabel>{t.productDetail.alsoKnownAs}</SectionLabel>
           <ul className="flex flex-col gap-1.5">
             {product.aliases.map((alias) => (
-              <li
-                key={alias.key}
-                className="flex items-center justify-between gap-3 rounded-2xl bg-input px-3 py-2"
-              >
-                <span className="truncate text-sm">{alias.label}</span>
-                <IconButton
-                  onClick={() => onUnmerge(alias)}
-                  label={t.productDetail.unmerge(alias.label)}
-                >
-                  <X className="h-4 w-4" />
-                </IconButton>
-              </li>
+              <Squircle asChild radius="2xl" key={alias.key}>
+                <li className="flex items-center justify-between gap-3 bg-input px-3 py-2">
+                  <span className="truncate text-sm">{alias.label}</span>
+                  <IconButton
+                    onClick={() => onUnmerge(alias)}
+                    label={t.productDetail.unmerge(alias.label)}
+                  >
+                    <X className="h-4 w-4" />
+                  </IconButton>
+                </li>
+              </Squircle>
             ))}
           </ul>
         </>
@@ -189,21 +191,23 @@ export function ProductDetail({
             <ul className="mt-1.5 flex flex-col gap-1.5">
               {mergeCandidates.map((candidate) => (
                 <li key={candidate.key}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMerging(false)
-                      onMerge(candidate)
-                    }}
-                    className="flex w-full items-center justify-between gap-3 rounded-2xl bg-input px-3 py-2 text-left hover:bg-muted"
-                  >
-                    <span className="truncate text-sm font-medium">
-                      {candidate.label}
-                    </span>
-                    <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-                      ×{n(candidate.useCount)}
-                    </span>
-                  </button>
+                  <Squircle asChild radius="2xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMerging(false)
+                        onMerge(candidate)
+                      }}
+                      className="flex w-full items-center justify-between gap-3 bg-input px-3 py-2 text-left hover:bg-muted"
+                    >
+                      <span className="truncate text-sm font-medium">
+                        {candidate.label}
+                      </span>
+                      <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                        ×{n(candidate.useCount)}
+                      </span>
+                    </button>
+                  </Squircle>
                 </li>
               ))}
             </ul>
@@ -235,66 +239,72 @@ function ReadingRow({
   const shown = displayRate(kind, reading.rate)
 
   return (
-    <FadeSwap
-      swapKey={editing ? "editor" : "row"}
-      className="rounded-2xl bg-input"
-    >
-      {editing ? (
-        <ReadingEditor
-          kind={kind}
-          initial={shown}
-          onSave={(value) => {
-            onEdit(value)
-            setEditing(false)
-          }}
-          onCancel={() => setEditing(false)}
-        />
-      ) : (
-        <div className="flex items-center gap-2 px-3 py-2">
-          <button
-            type="button"
-            onClick={onTogglePin}
-            aria-label={reading.pinned ? t.productDetail.unpin : t.productDetail.pinAsRate}
-            aria-pressed={reading.pinned}
-            className={
-              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full " +
-              (reading.pinned
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground")
-            }
-          >
-            {reading.pinned ? (
-              <Pin className="h-4 w-4" />
-            ) : (
-              <PinOff className="h-4 w-4" />
-            )}
-          </button>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-semibold tabular-nums">
-                {n(shown.kcal)}
-              </span>
-              <span className="text-[11px] text-muted-foreground">
-                {t.glossary.kcalBasis(kind)}
-              </span>
-              <span className="text-[11px] text-muted-foreground tabular-nums">
-                ×{n(reading.votes)}
-              </span>
+    <Squircle radius="2xl" className="bg-input">
+      <FadeSwap swapKey={editing ? "editor" : "row"}>
+        {editing ? (
+          <ReadingEditor
+            kind={kind}
+            initial={shown}
+            onSave={(value) => {
+              onEdit(value)
+              setEditing(false)
+            }}
+            onCancel={() => setEditing(false)}
+          />
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-2">
+            <button
+              type="button"
+              onClick={onTogglePin}
+              aria-label={
+                reading.pinned
+                  ? t.productDetail.unpin
+                  : t.productDetail.pinAsRate
+              }
+              aria-pressed={reading.pinned}
+              className={
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-full " +
+                (reading.pinned
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              {reading.pinned ? (
+                <Pin className="h-4 w-4" />
+              ) : (
+                <PinOff className="h-4 w-4" />
+              )}
+            </button>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-semibold tabular-nums">
+                  {n(shown.kcal)}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {t.glossary.kcalBasis(kind)}
+                </span>
+                <span className="text-[11px] text-muted-foreground tabular-nums">
+                  ×{n(reading.votes)}
+                </span>
+              </div>
+              <BasisMacroChips value={shown} />
             </div>
-            <BasisMacroChips value={shown} />
+            <IconButton
+              onClick={() => setEditing(true)}
+              label={t.productDetail.editReading}
+            >
+              <Pencil className="h-4 w-4" />
+            </IconButton>
+            <IconButton
+              onClick={onDelete}
+              label={t.productDetail.deleteReading}
+            >
+              <Trash2 className="h-4 w-4" />
+            </IconButton>
           </div>
-          <IconButton
-            onClick={() => setEditing(true)}
-            label={t.productDetail.editReading}
-          >
-            <Pencil className="h-4 w-4" />
-          </IconButton>
-          <IconButton onClick={onDelete} label={t.productDetail.deleteReading}>
-            <Trash2 className="h-4 w-4" />
-          </IconButton>
-        </div>
-      )}
-    </FadeSwap>
+        )}
+      </FadeSwap>
+    </Squircle>
   )
 }
 
