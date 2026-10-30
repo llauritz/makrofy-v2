@@ -142,6 +142,18 @@ describe("AddCard long-press curation (#73)", () => {
     expect(screen.queryByText("Readings")).toBeNull()
   })
 
+  it("a scaled tap completes the label, the Quantity kept where it was typed", () => {
+    renderCard()
+    fireEvent.change(screen.getByLabelText("Food"), {
+      target: { value: "2 bana" },
+    })
+    fireEvent.click(screen.getAllByLabelText("Use 2 banana")[0])
+    expect((screen.getByLabelText("Food") as HTMLInputElement).value).toBe(
+      "2 banana"
+    )
+    expect(kcalField().value).toBe("100")
+  })
+
   it("writes a Reading edit to the overlay — the form stays untouched", async () => {
     const { index } = renderCard()
     longPress(screen.getAllByLabelText("Use banana")[0])
