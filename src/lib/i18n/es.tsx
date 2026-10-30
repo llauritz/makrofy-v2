@@ -47,7 +47,6 @@ export const es: Dictionary = {
 
   entryList: {
     emptyTitle: "Nada registrado aún",
-    emptyBody: "Lo que registres para este día aparece aquí.",
     edit: (label) => `Editar ${label}`,
     aiAssisted: "Con ayuda de IA",
   },

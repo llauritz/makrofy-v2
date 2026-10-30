@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react"
+import { Sparkles, Utensils } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
 import { Squircle } from "@/components/ui/squircle"
@@ -60,11 +60,12 @@ export function EntryList({
               outlineClassName="text-[#cbbfa4] dark:text-[#4a3e2e]"
               className="px-4 py-8 text-center"
             >
-              <div className="text-[15px] font-medium">
+              <Utensils
+                aria-hidden
+                className="mx-auto h-5 w-5 text-muted-foreground opacity-50"
+              />
+              <div className="mt-2 text-xs text-muted-foreground">
                 {t.entryList.emptyTitle}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {t.entryList.emptyBody}
               </div>
             </Squircle>
           </motion.div>

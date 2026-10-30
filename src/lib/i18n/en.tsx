@@ -61,7 +61,6 @@ export const en = {
 
   entryList: {
     emptyTitle: "Nothing logged yet",
-    emptyBody: "What you log for this day shows up here.",
     edit: (label: string) => `Edit ${label}`,
     aiAssisted: "AI-assisted",
   },
