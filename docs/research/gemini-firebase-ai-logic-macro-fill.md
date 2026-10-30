@@ -1,6 +1,6 @@
 # Gemini + Firebase AI Logic for AI Macro-Fill — Research Note
 
-_Scope: feeds a design decision for Makrofy V2's "AI macro-fill" (short free-text food description → calories/macros, four-tier confidence contract), using the client-side Firebase AI Logic Web/JS SDK with Google Search grounding. Researched 2026-07-10 against Firebase / Gemini API primary docs. All dates/prices/model names verified against current docs on that date and may drift._
+_Scope: feeds a design decision for Yaffle V2's "AI macro-fill" (short free-text food description → calories/macros, four-tier confidence contract), using the client-side Firebase AI Logic Web/JS SDK with Google Search grounding. Researched 2026-07-10 against Firebase / Gemini API primary docs. All dates/prices/model names verified against current docs on that date and may drift._
 
 ---
 

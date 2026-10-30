@@ -326,8 +326,8 @@ describe("advanceSuggestions — competing Reading rows (#37)", () => {
     const s = advanceSuggestions(EMPTY_SUGGESTIONS, "banana", index)
     expect(s.rows.map((r) => r.kcal)).toEqual([50, 200])
     expect(s.rows.map((r) => r.useCount)).toEqual([1, 1])
-    // No Quantity typed — the #18 baseline: a tap fills label and numbers.
-    expect(s.rows[0].fillLabel).toBe("banana")
+    // No Quantity typed — the #18 baseline: a tap fills the historical label.
+    expect(s.rows[0].label).toBe("banana")
     expect(s.rows[0].hint).toBeUndefined()
     expect(s.rows[0].key).not.toBe(s.rows[1].key)
   })
@@ -364,16 +364,27 @@ describe("advanceSuggestions — scaled rows (#37)", () => {
       protein: 1.5, // 1.1 × 40/30 = 1.4667 → one decimal
       hint: "30g · 90",
     })
-    // Quantity typed — the typed label is the truth: a tap fills numbers only.
-    expect(s.rows[0].fillLabel).toBeUndefined()
     // Blanks stay blank: the base never logged fat or carbs.
     expect(s.rows[0].fat).toBeUndefined()
     expect(s.rows[0].carbs).toBeUndefined()
   })
 
-  it("accepts the Quantity at either end", () => {
+  it("accepts the Quantity at either end, and keeps it where it was typed", () => {
     const s = advanceSuggestions(EMPTY_SUGGESTIONS, "40g Banana", index)
-    expect(s.rows[0]).toMatchObject({ label: "Banana 40g", kcal: 120 })
+    expect(s.rows[0]).toMatchObject({ label: "40g Banana", kcal: 120 })
+  })
+
+  it("completes a half-typed label to the Product's — 'chick' → 'Chicken breast'", () => {
+    // A tap fills the row's label: the Product's full name beside the typed
+    // Quantity, on whichever side the Quantity was typed.
+    const chicken = buildProductIndex(
+      [entry("Chicken breast 100g", { kcal: 165, ageDays: 1 })],
+      NOW,
+    )
+    let s = advanceSuggestions(EMPTY_SUGGESTIONS, "150g chick", chicken)
+    expect(s.rows[0]).toMatchObject({ label: "150g Chicken breast", kcal: 248 })
+    s = advanceSuggestions(EMPTY_SUGGESTIONS, "chick 150g", chicken)
+    expect(s.rows[0]).toMatchObject({ label: "Chicken breast 150g", kcal: 248 })
   })
 
   it("matches even when the typed label keeps its comma — 'Banana, 40g'", () => {
@@ -438,10 +449,12 @@ describe("advanceSuggestions — scaled rows (#37)", () => {
       [entry("tea"), entry("tea", { ageDays: 1 })],
       NOW,
     )
-    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "tea 200ml", blank)
+    const s = advanceSuggestions(EMPTY_SUGGESTIONS, "200ml te", blank)
     expect(s.rows[0].kcal).toBe(0)
     expect(s.rows[0].useCount).toBe(2)
     expect(s.rows[0].hint).toBeUndefined()
+    // The typed Quantity still rides along with the completed label.
+    expect(s.rows[0].label).toBe("200ml tea")
   })
 })
 
