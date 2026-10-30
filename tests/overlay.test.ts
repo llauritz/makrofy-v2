@@ -267,8 +267,8 @@ describe("buildProductIndex — Alias / merge (#40)", () => {
       })
     )
     const s = advanceSuggestions(EMPTY_SUGGESTIONS, "banangs", index)
-    expect(s.rows.every((r) => !/banang/i.test(r.fillLabel ?? ""))).toBe(true)
-    expect(s.rows.some((r) => r.fillLabel === "Banana")).toBe(true)
+    expect(s.rows.every((r) => !/banang/i.test(r.label))).toBe(true)
+    expect(s.rows.some((r) => r.label === "Banana")).toBe(true)
   })
 
   it("unmerges when the Alias is removed — the two Products come back", () => {

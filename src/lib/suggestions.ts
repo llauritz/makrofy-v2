@@ -6,7 +6,12 @@
 // the sticky-search edges stay independent of Firestore and React (tested in
 // tests/suggestions.test.ts).
 
-import { parseLabel, type Quantity, type QuantityKind } from "./quantity"
+import {
+  parseLabel,
+  type ParsedLabel,
+  type Quantity,
+  type QuantityKind,
+} from "./quantity"
 
 // Tunables, all in one place (spec § Add flow): a word searches once it reaches
 // MIN_WORD_CHARS, at most MAX_ROWS Suggestions show, and frecency decays with a
@@ -507,10 +512,11 @@ function labelHasPrefix(label: string, word: string): boolean {
 
 /**
  * One Suggestion on screen — a Reading offered against the typed input (#37).
- * Competing Readings of one Product appear as adjacent rows. `fillLabel`
- * present = the #18 baseline (no Quantity typed): a tap fills that historical
- * label with its unscaled numbers. Absent = the typed label is the truth: a
- * tap fills numbers only, and `hint` names the portion they scaled from.
+ * Competing Readings of one Product appear as adjacent rows. A tap fills the
+ * row's `label` and numbers. With no Quantity typed (the #18 baseline) that is
+ * the historical label, unscaled; with one typed it is the Product's label
+ * beside the typed Quantity — on the side it was typed — and `hint` names the
+ * portion the numbers scaled from.
  */
 export interface SuggestionRow extends Nutrients {
   key: string
@@ -521,7 +527,6 @@ export interface SuggestionRow extends Nutrients {
   useCount: number
   /** The scaled row's base portion, "30g · 90". */
   hint?: string
-  fillLabel?: string
 }
 
 /** The rows on screen and the search word they answer to. */
@@ -548,14 +553,15 @@ export function advanceSuggestions(
   index: ProductIndex
 ): SuggestState {
   if (input.trim() === "") return EMPTY_SUGGESTIONS
-  const { label, quantity } = parseLabel(input)
+  const typed = parseLabel(input)
+  const { label, quantity } = typed
   // The stripped label's last word is the one being typed — so "Banana 4"
   // keeps searching "Banana" while the Quantity grows. A trailing space still
   // means the next word hasn't started (nothing searches; rows stick).
   const word = /\s$/.test(input) ? "" : currentSearchWord(label)
   const products = rankForQuantity(matchProducts(index, word), quantity)
   const rows = products
-    .flatMap((p) => productRows(p, quantity))
+    .flatMap((p) => productRows(p, typed))
     .slice(0, MAX_ROWS)
   return rows.length > 0 ? { word, rows } : prev
 }
@@ -575,10 +581,13 @@ export function refreshSuggestions(
 ): SuggestState {
   if (prev.rows.length === 0) return prev
   if (input.trim() === "") return EMPTY_SUGGESTIONS
-  const { quantity } = parseLabel(input)
-  const products = rankForQuantity(matchProducts(index, prev.word), quantity)
+  const typed = parseLabel(input)
+  const products = rankForQuantity(
+    matchProducts(index, prev.word),
+    typed.quantity
+  )
   const rows = products
-    .flatMap((p) => productRows(p, quantity))
+    .flatMap((p) => productRows(p, typed))
     .slice(0, MAX_ROWS)
   return { word: prev.word, rows }
 }
@@ -602,24 +611,30 @@ function rankForQuantity(
 // the Reading's rate (kcal to the nearest integer, macros to one decimal) and
 // blanks stay blank; the typed number reads in the Product's own unit when
 // the kinds differ (matching is unit-blind). A Reading-less Product has no
-// Rate to scale by, so its row is always the unscaled freshest Entry.
+// Rate to scale by, so its numbers are always the unscaled freshest Entry's.
+// Either way a typed Quantity rides along with the Product's label, on the
+// side it was typed — "150g chick" completes to "150g Chicken breast".
 function productRows(
   product: Product,
-  typed: Quantity | null
+  { quantity: typed, leading }: ParsedLabel
 ): SuggestionRow[] {
+  const typedLabel =
+    typed &&
+    (leading
+      ? `${typed.raw} ${product.label}`
+      : `${product.label} ${typed.raw}`)
   if (product.readings.length === 0) {
     const e = product.freshest
     return [
       {
         key: product.key,
         productKey: product.key,
-        label: e.label,
+        label: typedLabel ?? e.label,
         useCount: product.useCount,
         kcal: e.kcal,
         protein: e.protein,
         fat: e.fat,
         carbs: e.carbs,
-        fillLabel: typed ? undefined : e.label,
       },
     ]
   }
@@ -635,7 +650,6 @@ function productRows(
         protein: r.base.protein,
         fat: r.base.fat,
         carbs: r.base.carbs,
-        fillLabel: r.base.label,
       }
     }
     const v = typed.kind === product.kind ? typed.value : typed.numeral
@@ -644,7 +658,7 @@ function productRows(
     return {
       key,
       productKey: product.key,
-      label: `${product.label} ${typed.raw}`,
+      label: typedLabel ?? product.label,
       useCount: r.votes,
       kcal: Math.round(r.rate.kcal * v),
       protein: scale(r.rate.protein),

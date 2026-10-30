@@ -25,6 +25,9 @@ export interface ParsedLabel {
   /** The label with the Quantity token removed (whitespace collapsed). */
   label: string
   quantity: Quantity | null
+  /** Whether the Quantity led the label ("30g Banana"); false when it
+   * trailed or there was none. */
+  leading: boolean
 }
 
 // The tunable units table (spec § Add flow): token suffix → kind and the
@@ -78,8 +81,8 @@ export function parseLabel(raw: string): ParsedLabel {
     const winner = leadingWins ? leading : trailing
     if (winner) {
       const rest = leadingWins ? tokens.slice(1) : tokens.slice(0, -1)
-      return { label: rest.join(" "), quantity: winner }
+      return { label: rest.join(" "), quantity: winner, leading: !!leadingWins }
     }
   }
-  return { label: tokens.join(" "), quantity: null }
+  return { label: tokens.join(" "), quantity: null, leading: false }
 }

@@ -12,14 +12,20 @@ describe("parseLabel", () => {
     expect(parseLabel("Banana 30g")).toEqual({
       label: "Banana",
       quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
+      leading: false,
     })
   })
 
   it("leaves a quantityless label whole", () => {
-    expect(parseLabel("Banana")).toEqual({ label: "Banana", quantity: null })
+    expect(parseLabel("Banana")).toEqual({
+      label: "Banana",
+      quantity: null,
+      leading: false,
+    })
     expect(parseLabel("peanut butter")).toEqual({
       label: "peanut butter",
       quantity: null,
+      leading: false,
     })
   })
 
@@ -27,6 +33,7 @@ describe("parseLabel", () => {
     expect(parseLabel("30g Banana")).toEqual({
       label: "Banana",
       quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
+      leading: true,
     })
   })
 
@@ -72,6 +79,7 @@ describe("parseLabel", () => {
     expect(parseLabel("Banana, 30g")).toEqual({
       label: "Banana,",
       quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
+      leading: false,
     })
   })
 
@@ -80,10 +88,12 @@ describe("parseLabel", () => {
     expect(parseLabel("2 Banana 30g")).toEqual({
       label: "2 Banana",
       quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
+      leading: false,
     })
     expect(parseLabel("30g Banana 2")).toEqual({
       label: "Banana 2",
       quantity: { kind: "mass", value: 30, numeral: 30, raw: "30g" },
+      leading: true,
     })
     // …and trailing beats leading when neither (or both) carry a unit.
     expect(parseLabel("2 Banana 3").quantity).toEqual({
@@ -110,8 +120,16 @@ describe("parseLabel", () => {
   })
 
   it("keeps a lone Quantity token as the label — an amount of nothing", () => {
-    expect(parseLabel("30g")).toEqual({ label: "30g", quantity: null })
-    expect(parseLabel("200")).toEqual({ label: "200", quantity: null })
+    expect(parseLabel("30g")).toEqual({
+      label: "30g",
+      quantity: null,
+      leading: false,
+    })
+    expect(parseLabel("200")).toEqual({
+      label: "200",
+      quantity: null,
+      leading: false,
+    })
   })
 
   it("rejects a zero Quantity and unknown units", () => {

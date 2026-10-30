@@ -164,12 +164,11 @@ export function AddCard({
     }
   }
 
-  // A tap fills the row's numbers, marks the draft 'history', and collapses
-  // the zone — it commits nothing. A baseline row (no Quantity typed) fills
-  // its historical label too; a scaled row leaves the typed label alone — it
-  // is the truth the numbers were scaled to (#37).
+  // A tap fills the row's label and numbers, marks the draft 'history', and
+  // collapses the zone — it commits nothing. A scaled row's label is the
+  // Product's beside the typed Quantity, kept on the side it was typed (#37).
   const pick = (row: SuggestionRow) => {
-    if (row.fillLabel !== undefined) setLabel(row.fillLabel)
+    setLabel(row.label)
     setKcal(String(row.kcal))
     setMacros(macroInputsFrom(row))
     setSource("history")
