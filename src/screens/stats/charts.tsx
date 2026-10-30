@@ -758,11 +758,12 @@ export function StatTile({
   return (
     <Squircle
       radius="2xl"
+      outline={dashed ? "dashed" : "solid"}
+      outlineClassName={
+        dashed ? "text-[#cbbfa4] dark:text-[#4a3e2e]" : undefined
+      }
       className={
-        "flex min-w-0 flex-1 flex-col px-3.5 py-3 " +
-        (dashed
-          ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-          : "border bg-card")
+        "flex min-w-0 flex-1 flex-col px-3.5 py-3" + (dashed ? "" : " bg-card")
       }
     >
       <div className="text-[11px] text-muted-foreground">{label}</div>

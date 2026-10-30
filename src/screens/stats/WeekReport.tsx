@@ -60,31 +60,33 @@ export function WeekReport({
 
   return (
     <ScreenChrome title={t.stats.weekReport} onBack={onBack}>
-      <div className="mb-4 flex items-center justify-between rounded-full border bg-card px-1 py-1">
-        <button
-          type="button"
-          aria-label={t.stats.olderWeek}
-          onClick={older}
-          disabled={offset >= maxOffset}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground disabled:opacity-30"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <span className="text-[13px] font-semibold" aria-live="polite">
-          {offset === 0
-            ? t.stats.thisWeek
-            : weekRangeLabel(win.start, win.end, language)}
-        </span>
-        <button
-          type="button"
-          aria-label={t.stats.newerWeek}
-          onClick={newer}
-          disabled={offset === 0}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground disabled:opacity-30"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
+      <Squircle asChild pill outline="solid">
+        <div className="mb-4 flex items-center justify-between rounded-full bg-card px-1 py-1">
+          <button
+            type="button"
+            aria-label={t.stats.olderWeek}
+            onClick={older}
+            disabled={offset >= maxOffset}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground disabled:opacity-30"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="text-[13px] font-semibold" aria-live="polite">
+            {offset === 0
+              ? t.stats.thisWeek
+              : weekRangeLabel(win.start, win.end, language)}
+          </span>
+          <button
+            type="button"
+            aria-label={t.stats.newerWeek}
+            onClick={newer}
+            disabled={offset === 0}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground disabled:opacity-30"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </Squircle>
 
       <div {...swipe} className="touch-pan-y px-1">
         <FadeSwap swapKey={String(offset)}>
@@ -121,7 +123,8 @@ export function WeekReport({
             {range.enough ? (
               <Squircle
                 radius="3xl"
-                className="mt-6 flex items-center justify-between gap-3 border bg-card px-4 py-3.5"
+                outline="solid"
+                className="mt-6 flex items-center justify-between gap-3 bg-card px-4 py-3.5"
               >
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold">
@@ -136,7 +139,9 @@ export function WeekReport({
             ) : (
               <Squircle
                 radius="3xl"
-                className="mt-6 border border-dashed border-[#cbbfa4] px-4 py-3.5 dark:border-[#4a3e2e]"
+                outline="dashed"
+                outlineClassName="text-[#cbbfa4] dark:text-[#4a3e2e]"
+                className="mt-6 px-4 py-3.5"
               >
                 <div className="text-[13px] font-semibold text-muted-foreground">
                   {t.stats.inRange}

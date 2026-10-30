@@ -240,31 +240,44 @@ function Segmented<T extends string>({
   ariaLabel: string
 }) {
   return (
-    <div
-      role="radiogroup"
-      aria-label={ariaLabel}
-      className="flex gap-1 rounded-full bg-input p-1"
-    >
-      {options.map((option) => {
-        const active = option.value === value
-        return (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => onChange(option.value)}
-            className={cn(
-              "flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
-              active
-                ? "bg-card text-foreground shadow-[0_1px_2px_rgba(43,32,21,0.12)]"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {option.label}
-          </button>
-        )
-      })}
-    </div>
+    <Squircle asChild pill>
+      <div
+        role="radiogroup"
+        aria-label={ariaLabel}
+        className="flex gap-1 rounded-full bg-input p-1"
+      >
+        {options.map((option) => {
+          const active = option.value === value
+          // The squircle's clip would erase the active segment's box-shadow,
+          // so it hangs on a wrapper as a drop-shadow instead.
+          return (
+            <div
+              key={option.value}
+              className={cn(
+                "flex flex-1",
+                active && "drop-shadow-[0_1px_1px_rgba(43,32,21,0.12)]"
+              )}
+            >
+              <Squircle asChild pill>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => onChange(option.value)}
+                  className={cn(
+                    "flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
+                    active
+                      ? "bg-card text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {option.label}
+                </button>
+              </Squircle>
+            </div>
+          )
+        })}
+      </div>
+    </Squircle>
   )
 }

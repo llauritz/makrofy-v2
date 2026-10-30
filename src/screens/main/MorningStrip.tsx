@@ -89,7 +89,11 @@ export function MorningStrip({
             the shadow sits on this wrapper as a drop-shadow and traces the
             clipped silhouette instead. */}
           <div className="mb-2 drop-shadow-[0_8px_30px_rgba(43,32,21,0.12)] dark:drop-shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
-            <Squircle radius="3xl" className="border bg-card px-4 py-3">
+            <Squircle
+              radius="3xl"
+              outline="solid"
+              className="bg-card px-4 py-3"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
                   {t.stats.last7Days}
@@ -155,21 +159,28 @@ export function MorningStrip({
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {COVERAGE_LEVELS.map((chip) => (
-                      <motion.button
-                        key={chip}
-                        type="button"
-                        aria-pressed={nudgeLevel === chip}
-                        onClick={() => labelNudgeDay(chip)}
-                        whileTap={{ scale: 0.95 }}
-                        className={
-                          "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150 " +
-                          (nudgeLevel === chip
-                            ? "border-foreground"
-                            : "text-muted-foreground")
+                      <Squircle
+                        asChild
+                        pill
+                        outline="solid"
+                        outlineClassName={
+                          nudgeLevel === chip ? "text-foreground" : undefined
                         }
+                        key={chip}
                       >
-                        {t.coverage[chip]}
-                      </motion.button>
+                        <motion.button
+                          type="button"
+                          aria-pressed={nudgeLevel === chip}
+                          onClick={() => labelNudgeDay(chip)}
+                          whileTap={{ scale: 0.95 }}
+                          className={
+                            "rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 " +
+                            (nudgeLevel === chip ? "" : "text-muted-foreground")
+                          }
+                        >
+                          {t.coverage[chip]}
+                        </motion.button>
+                      </Squircle>
                     ))}
                   </div>
                 </div>

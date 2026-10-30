@@ -11,7 +11,13 @@ import type { CoverageLevel } from "@/data/days"
 import { CoverageControl } from "@/screens/main/CoverageControl"
 
 beforeAll(() => {
-  // jsdom lacks matchMedia; motion's reduced-motion probe degrades gracefully.
+  // jsdom lacks these; the chips' squircle measuring and motion's
+  // reduced-motion probe both degrade gracefully with inert stand-ins.
+  window.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
   window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,

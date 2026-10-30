@@ -9,6 +9,7 @@ import {
   nextCoverageGateChange,
   showCoverageControl,
 } from "./coverage"
+import { Squircle } from "@/components/ui/squircle"
 
 // The Coverage control (issue #42): the Some / Most / Everything chips at the
 // bottom of a Day's Entry list — today's from the evening hour, any past
@@ -62,21 +63,28 @@ export function CoverageControl({
           </div>
           <div className="mt-2 flex flex-wrap justify-center gap-1.5 px-1">
             {COVERAGE_LEVELS.map((chip) => (
-              <motion.button
-                key={chip}
-                type="button"
-                aria-pressed={level === chip}
-                onClick={() => onSelect(chip)}
-                whileTap={{ scale: 0.95 }}
-                className={
-                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150 " +
-                  (level === chip
-                    ? "border-foreground"
-                    : "text-muted-foreground")
+              <Squircle
+                asChild
+                pill
+                outline="solid"
+                outlineClassName={
+                  level === chip ? "text-foreground" : undefined
                 }
+                key={chip}
               >
-                {t.coverage[chip]}
-              </motion.button>
+                <motion.button
+                  type="button"
+                  aria-pressed={level === chip}
+                  onClick={() => onSelect(chip)}
+                  whileTap={{ scale: 0.95 }}
+                  className={
+                    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 " +
+                    (level === chip ? "" : "text-muted-foreground")
+                  }
+                >
+                  {t.coverage[chip]}
+                </motion.button>
+              </Squircle>
             ))}
           </div>
         </motion.div>

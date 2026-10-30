@@ -120,15 +120,16 @@ function ZoneContent({
             {state.chips.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {state.chips.map((chip) => (
-                  <motion.button
-                    key={chip}
-                    type="button"
-                    onClick={() => onAnswer(chip)}
-                    whileTap={{ scale: 0.95 }}
-                    className="rounded-full border bg-card px-3 py-1.5 text-xs font-medium"
-                  >
-                    {chip}
-                  </motion.button>
+                  <Squircle asChild pill outline="solid" key={chip}>
+                    <motion.button
+                      type="button"
+                      onClick={() => onAnswer(chip)}
+                      whileTap={{ scale: 0.95 }}
+                      className="rounded-full bg-card px-3 py-1.5 text-xs font-medium"
+                    >
+                      {chip}
+                    </motion.button>
+                  </Squircle>
                 ))}
               </div>
             )}

@@ -360,48 +360,51 @@ function ReadingEditor({
   return (
     <div className="p-2.5">
       <div className="flex items-center gap-2">
-        <input
-          autoFocus
-          value={kcal}
-          onChange={(e) => setKcal(e.target.value)}
-          onKeyDown={onKeyDown}
-          onFocus={(e) => e.target.select()}
-          inputMode="decimal"
-          aria-label={t.productDetail.caloriesPer(basis)}
-          className="w-20 rounded-full bg-card px-3 py-2 text-center text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
-          placeholder={t.units.kcal}
-        />
+        <Squircle asChild pill>
+          <input
+            autoFocus
+            value={kcal}
+            onChange={(e) => setKcal(e.target.value)}
+            onKeyDown={onKeyDown}
+            onFocus={(e) => e.target.select()}
+            inputMode="decimal"
+            aria-label={t.productDetail.caloriesPer(basis)}
+            className="w-20 rounded-full bg-card px-3 py-2 text-center text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
+            placeholder={t.units.kcal}
+          />
+        </Squircle>
         <span className="text-[11px] text-muted-foreground">
           {t.glossary.kcalBasis(kind)}
         </span>
       </div>
       <div className="mt-2 flex items-center gap-2">
         {MACROS.map((m) => (
-          <label
-            key={m.key}
-            className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-2.5 py-1.5"
-            style={{ backgroundColor: macroTint(m.mark, 11) }}
-          >
-            <span
-              className="h-1.5 w-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: m.mark }}
-            />
-            <span className="text-xs font-medium text-muted-foreground">
-              {m.letter}
-            </span>
-            <input
-              value={macros[m.key]}
-              onChange={(e) =>
-                setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
-              }
-              onKeyDown={onKeyDown}
-              placeholder="0"
-              inputMode="decimal"
-              aria-label={t.productDetail.gramsPer(t.macros[m.field], basis)}
-              className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
-            />
-            <span className="text-xs text-[#a5988a]">{t.units.g}</span>
-          </label>
+          <Squircle asChild pill key={m.key}>
+            <label
+              className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-2.5 py-1.5"
+              style={{ backgroundColor: macroTint(m.mark, 11) }}
+            >
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: m.mark }}
+              />
+              <span className="text-xs font-medium text-muted-foreground">
+                {m.letter}
+              </span>
+              <input
+                value={macros[m.key]}
+                onChange={(e) =>
+                  setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+                }
+                onKeyDown={onKeyDown}
+                placeholder="0"
+                inputMode="decimal"
+                aria-label={t.productDetail.gramsPer(t.macros[m.field], basis)}
+                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
+              />
+              <span className="text-xs text-[#a5988a]">{t.units.g}</span>
+            </label>
+          </Squircle>
         ))}
         <IconButton onClick={onCancel} label={t.common.cancel}>
           <X className="h-4 w-4" />
@@ -430,18 +433,19 @@ function BasisMacroChips({ value }: { value: GlossaryRate }) {
   return (
     <div className="mt-1 flex gap-1.5">
       {chips.map((m) => (
-        <span
-          key={m.key}
-          className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
-          style={{ backgroundColor: macroTint(m.mark, 13) }}
-        >
+        <Squircle asChild pill key={m.key}>
           <span
-            className="h-1 w-1 rounded-full"
-            style={{ backgroundColor: m.mark }}
-          />
-          {m.letter} {n(value[m.field] ?? 0)}
-          {t.units.g}
-        </span>
+            className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
+            style={{ backgroundColor: macroTint(m.mark, 13) }}
+          >
+            <span
+              className="h-1 w-1 rounded-full"
+              style={{ backgroundColor: m.mark }}
+            />
+            {m.letter} {n(value[m.field] ?? 0)}
+            {t.units.g}
+          </span>
+        </Squircle>
       ))}
     </div>
   )
