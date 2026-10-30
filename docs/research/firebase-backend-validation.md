@@ -1,4 +1,4 @@
-# Firebase Backend Validation — Makrofy V2
+# Firebase Backend Validation — Yaffle V2
 
 _Research date: 2026-07-10. Validating Firebase (Firestore + Google OAuth auth + Firebase Hosting) as the sync backend for a mobile-first, single-user-per-account calorie/macro tracker rebuilt as a Vite SPA + PWA. All claims below are from primary sources (official Firebase / Google Cloud docs, the Firebase JS SDK docs, vite-plugin-pwa docs, and MDN/web-platform specs), cited inline._
 
