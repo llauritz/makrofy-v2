@@ -55,11 +55,14 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
   )
 }
 
-// Floating summary card: ring, Remaining/Over + % of goal, solid macro
-// pills, stats button (opens the dashboard, #22). The ring and the
-// Remaining/Over readout open Settings (where the goal they measure against is
-// edited); the stats button and macro pills keep their own roles. The sticky
-// footer and undo snackbar around it are the MainScreen's.
+// Floating summary card: ring, Remaining/Over + % of goal, the day's macro
+// totals, stats button (opens the dashboard, #22). The totals share one
+// neutral capsule — dot + grams per macro, hairline dividers between — so they
+// read as a single day figure, apart from the food rows' tinted per-item
+// chips. The ring and the Remaining/Over readout open Settings (where the goal
+// they measure against is edited); the stats button and macro totals keep
+// their own roles. The sticky footer and undo snackbar around it are the
+// MainScreen's.
 export function SummaryCard({
   summary,
   onOpenSettings,
@@ -112,17 +115,25 @@ export function SummaryCard({
               <BarChart3 className="h-4 w-4" />
             </button>
           </div>
-          <div className="mt-2.5 flex items-center gap-1.5 border-t pt-2.5">
-            {MACROS.map((m) => (
-              <span
-                key={m.key}
-                className="rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-white tabular-nums"
-                style={{ backgroundColor: m.mark }}
-              >
-                {m.letter} {n(Math.round(summary.totals[m.field]))}
-                {t.units.g}
-              </span>
-            ))}
+          <div className="mt-2.5 border-t pt-2.5">
+            <div className="inline-flex items-center rounded-full bg-input p-1 text-xs tabular-nums">
+              {MACROS.map((m, i) => (
+                <span key={m.key} className="flex items-center">
+                  {i > 0 && <span className="h-3 w-px bg-border" />}
+                  <span className="flex items-center gap-1.5 px-2.5">
+                    <span
+                      className="h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: m.mark }}
+                    />
+                    <span className="sr-only">{t.macros[m.field]}</span>
+                    <span className="font-medium">
+                      {n(Math.round(summary.totals[m.field]))}
+                      {t.units.g}
+                    </span>
+                  </span>
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </Squircle>
