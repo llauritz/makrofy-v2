@@ -207,11 +207,11 @@ function Dashboard({
 
         {/* The Glossary's second doorway (issue #40's note): the dashboard is
             where the derived numbers meet the foods behind them. */}
-        <Squircle asChild radius="3xl">
+        <Squircle asChild radius="3xl" outline="solid">
           <button
             type="button"
             onClick={onOpenGlossary}
-            className="flex items-center justify-between border bg-card p-4 text-left"
+            className="flex items-center justify-between bg-card p-4 text-left"
           >
             <span className="text-[13px] font-semibold">
               {t.settings.foodGlossary}
@@ -251,18 +251,14 @@ function Section({
     </>
   )
   return onOpen ? (
-    <Squircle asChild radius="3xl">
-      <button
-        type="button"
-        onClick={onOpen}
-        className="border bg-card p-4 text-left"
-      >
+    <Squircle asChild radius="3xl" outline="solid">
+      <button type="button" onClick={onOpen} className="bg-card p-4 text-left">
         {body}
       </button>
     </Squircle>
   ) : (
-    <Squircle asChild radius="3xl">
-      <section className="border bg-card p-4">{body}</section>
+    <Squircle asChild radius="3xl" outline="solid">
+      <section className="bg-card p-4">{body}</section>
     </Squircle>
   )
 }

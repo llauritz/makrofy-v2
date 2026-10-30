@@ -4,6 +4,7 @@ import { motion } from "motion/react"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { parseGoalKcal } from "@/lib/goal-input"
+import { Squircle } from "@/components/ui/squircle"
 
 // PARKED — not currently mounted. This first-run screen shipped in #17 but is
 // being reworked in issue #35; App sends every profile straight to the main
@@ -68,14 +69,16 @@ export function OnboardingScreen({
           </div>
         </div>
 
-        <motion.button
-          type="button"
-          onClick={submit}
-          whileTap={{ scale: 0.98 }}
-          className="mt-10 w-full rounded-full bg-primary py-3.5 text-[15px] font-semibold text-primary-foreground"
-        >
-          {t.onboarding.getStarted}
-        </motion.button>
+        <Squircle asChild pill>
+          <motion.button
+            type="button"
+            onClick={submit}
+            whileTap={{ scale: 0.98 }}
+            className="mt-10 w-full rounded-full bg-primary py-3.5 text-[15px] font-semibold text-primary-foreground"
+          >
+            {t.onboarding.getStarted}
+          </motion.button>
+        </Squircle>
       </motion.div>
     </div>
   )

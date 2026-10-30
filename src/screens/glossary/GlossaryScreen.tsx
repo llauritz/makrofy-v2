@@ -89,17 +89,19 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
       </header>
 
       <div className="px-4 pb-2">
-        <div className="flex items-center gap-2 rounded-full bg-input px-4 py-2.5">
-          <Search className="h-4 w-4 shrink-0 text-[#a5988a]" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t.glossary.search}
-            aria-label={t.glossary.search}
-            autoComplete="off"
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#a5988a]"
-          />
-        </div>
+        <Squircle asChild pill>
+          <div className="flex items-center gap-2 rounded-full bg-input px-4 py-2.5">
+            <Search className="h-4 w-4 shrink-0 text-[#a5988a]" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.glossary.search}
+              aria-label={t.glossary.search}
+              autoComplete="off"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#a5988a]"
+            />
+          </div>
+        </Squircle>
       </div>
 
       <main className="flex flex-1 flex-col px-4 pb-3">
@@ -124,7 +126,7 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={SPRING}
                   >
-                    <Squircle radius="2xl" className="border bg-card">
+                    <Squircle radius="2xl" outline="solid" className="bg-card">
                       <FadeSwap swapKey={expanded ? "detail" : "row"}>
                         {expanded ? (
                           <ProductDetail
@@ -178,24 +180,34 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 16 }}
               transition={SPRING}
-              className="flex items-center justify-between gap-3 rounded-full bg-foreground py-2.5 pr-2.5 pl-4 text-background shadow-[0_8px_30px_rgba(43,32,21,0.2)]"
+              // The squircle's clip would erase a box-shadow, so the bar's
+              // shadow hangs here as a drop-shadow, tracing the clipped
+              // silhouette.
+              className="drop-shadow-[0_8px_30px_rgba(43,32,21,0.2)]"
             >
-              <span className="truncate text-sm font-medium">
-                {t.glossary.mergedInto(
-                  survivorLabel(
-                    index.products,
-                    pendingMerge.survivorKey,
-                    t.glossary.fallbackFood
-                  )
-                )}
-              </span>
-              <button
-                type="button"
-                onClick={undoMerge}
-                className="shrink-0 rounded-full bg-background/15 px-3 py-1 text-sm font-semibold"
+              <Squircle
+                pill
+                className="flex items-center justify-between gap-3 rounded-full bg-foreground py-2.5 pr-2.5 pl-4 text-background"
               >
-                {t.common.undo}
-              </button>
+                <span className="truncate text-sm font-medium">
+                  {t.glossary.mergedInto(
+                    survivorLabel(
+                      index.products,
+                      pendingMerge.survivorKey,
+                      t.glossary.fallbackFood
+                    )
+                  )}
+                </span>
+                <Squircle asChild pill>
+                  <button
+                    type="button"
+                    onClick={undoMerge}
+                    className="shrink-0 rounded-full bg-background/15 px-3 py-1 text-sm font-semibold"
+                  >
+                    {t.common.undo}
+                  </button>
+                </Squircle>
+              </Squircle>
             </motion.div>
           )}
         </AnimatePresence>
@@ -244,7 +256,9 @@ function Empty({ title, body }: { title: string; body: string }) {
   return (
     <Squircle
       radius="2xl"
-      className="border border-dashed border-[#cbbfa4] px-4 py-8 text-center dark:border-[#4a3e2e]"
+      outline="dashed"
+      outlineClassName="text-[#cbbfa4] dark:text-[#4a3e2e]"
+      className="px-4 py-8 text-center"
     >
       <div className="text-[15px] font-medium">{title}</div>
       <div className="mt-1 text-xs text-muted-foreground">{body}</div>

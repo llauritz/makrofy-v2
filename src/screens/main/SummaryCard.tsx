@@ -83,7 +83,8 @@ export function SummaryCard({
     <div className="drop-shadow-[0_8px_30px_rgba(43,32,21,0.12)] dark:drop-shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
       <Squircle
         radius={28}
-        className="flex items-center gap-4 border bg-card p-4"
+        outline="solid"
+        className="flex items-center gap-4 bg-card p-4"
       >
         <button
           type="button"
@@ -116,24 +117,26 @@ export function SummaryCard({
             </button>
           </div>
           <div className="mt-2.5 border-t pt-2.5">
-            <div className="inline-flex items-center rounded-full bg-input p-1 text-xs tabular-nums">
-              {MACROS.map((m, i) => (
-                <span key={m.key} className="flex items-center">
-                  {i > 0 && <span className="h-3 w-px bg-border" />}
-                  <span className="flex items-center gap-1.5 px-2.5">
-                    <span
-                      className="h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: m.mark }}
-                    />
-                    <span className="sr-only">{t.macros[m.field]}</span>
-                    <span className="font-medium">
-                      {n(Math.round(summary.totals[m.field]))}
-                      {t.units.g}
+            <Squircle asChild pill>
+              <div className="inline-flex items-center rounded-full bg-input p-1 text-xs tabular-nums">
+                {MACROS.map((m, i) => (
+                  <span key={m.key} className="flex items-center">
+                    {i > 0 && <span className="h-3 w-px bg-border" />}
+                    <span className="flex items-center gap-1.5 px-2.5">
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: m.mark }}
+                      />
+                      <span className="sr-only">{t.macros[m.field]}</span>
+                      <span className="font-medium">
+                        {n(Math.round(summary.totals[m.field]))}
+                        {t.units.g}
+                      </span>
                     </span>
                   </span>
-                </span>
-              ))}
-            </div>
+                ))}
+              </div>
+            </Squircle>
           </div>
         </div>
       </Squircle>

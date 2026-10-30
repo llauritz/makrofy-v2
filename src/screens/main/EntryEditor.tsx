@@ -26,6 +26,7 @@ import {
   useAiFill,
   useFormFlags,
 } from "./useAiFill"
+import { Squircle } from "@/components/ui/squircle"
 
 // The inline editor an Entry row fade-throughs to on tap. Chrome-less: the
 // border and background live on EntryList's FadeSwap box, which makes the
@@ -148,14 +149,16 @@ export function EntryEditor({
     <div className="p-3">
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
-          <input
-            autoFocus
-            value={label}
-            onChange={(e) => onLabelChange(e.target.value)}
-            onKeyDown={onKeyDown}
-            aria-label={t.addCard.food}
-            className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
-          />
+          <Squircle asChild pill>
+            <input
+              autoFocus
+              value={label}
+              onChange={(e) => onLabelChange(e.target.value)}
+              onKeyDown={onKeyDown}
+              aria-label={t.addCard.food}
+              className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
+            />
+          </Squircle>
           <div className="absolute inset-y-0 right-1.5 flex items-center">
             <motion.button
               type="button"
@@ -178,55 +181,58 @@ export function EntryEditor({
             </motion.button>
           </div>
         </div>
-        <input
-          value={kcal}
-          onChange={(e) => setKcal(e.target.value)}
-          onKeyDown={onKeyDown}
-          onFocus={acceptFlag("kcal")}
-          placeholder={t.units.kcal}
-          inputMode="decimal"
-          aria-label={t.addCard.calories}
-          className={
-            "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
-            // outline-none (focus reset) and the dashed flag outline are
-            // mutually exclusive — both set outline-style.
-            (flags.has("kcal") ? FLAGGED_OUTLINE : "outline-none") +
-            (ai.thinking && fillable.has("kcal") ? " animate-pulse" : "")
-          }
-        />
+        <Squircle asChild pill>
+          <input
+            value={kcal}
+            onChange={(e) => setKcal(e.target.value)}
+            onKeyDown={onKeyDown}
+            onFocus={acceptFlag("kcal")}
+            placeholder={t.units.kcal}
+            inputMode="decimal"
+            aria-label={t.addCard.calories}
+            className={
+              "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
+              // outline-none (focus reset) and the dashed flag outline are
+              // mutually exclusive — both set outline-style.
+              (flags.has("kcal") ? FLAGGED_OUTLINE : "outline-none") +
+              (ai.thinking && fillable.has("kcal") ? " animate-pulse" : "")
+            }
+          />
+        </Squircle>
       </div>
       <div className="mt-2.5 flex items-center gap-2">
         {MACROS.map((m) => (
-          <label
-            key={m.key}
-            className={
-              "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2.5" +
-              (flags.has(m.key) ? " " + FLAGGED_OUTLINE : "") +
-              (ai.thinking && fillable.has(m.key) ? " animate-pulse" : "")
-            }
-            style={{ backgroundColor: macroTint(m.mark, 11) }}
-          >
-            <span
-              className="h-1.5 w-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: m.mark }}
-            />
-            <span className="text-xs font-medium text-muted-foreground">
-              {m.letter}
-            </span>
-            <input
-              value={macros[m.key]}
-              onChange={(e) =>
-                setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+          <Squircle asChild pill key={m.key}>
+            <label
+              className={
+                "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2.5" +
+                (flags.has(m.key) ? " " + FLAGGED_OUTLINE : "") +
+                (ai.thinking && fillable.has(m.key) ? " animate-pulse" : "")
               }
-              onKeyDown={onKeyDown}
-              onFocus={acceptFlag(m.key)}
-              placeholder="0"
-              inputMode="decimal"
-              aria-label={t.macros.grams(t.macros[m.field])}
-              className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
-            />
-            <span className="text-xs text-[#a5988a]">{t.units.g}</span>
-          </label>
+              style={{ backgroundColor: macroTint(m.mark, 11) }}
+            >
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: m.mark }}
+              />
+              <span className="text-xs font-medium text-muted-foreground">
+                {m.letter}
+              </span>
+              <input
+                value={macros[m.key]}
+                onChange={(e) =>
+                  setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+                }
+                onKeyDown={onKeyDown}
+                onFocus={acceptFlag(m.key)}
+                placeholder="0"
+                inputMode="decimal"
+                aria-label={t.macros.grams(t.macros[m.field])}
+                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
+              />
+              <span className="text-xs text-[#a5988a]">{t.units.g}</span>
+            </label>
+          </Squircle>
         ))}
       </div>
       <AiZone
@@ -256,17 +262,19 @@ export function EntryEditor({
           >
             <X className="h-4 w-4" />
           </motion.button>
-          <motion.button
-            type="button"
-            onClick={save}
-            disabled={!canSave}
-            whileTap={{ scale: 0.9 }}
-            aria-label={t.entryEditor.saveChanges}
-            className="flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
-          >
-            <Check className="h-4 w-4" strokeWidth={2.5} />
-            {t.common.save}
-          </motion.button>
+          <Squircle asChild pill>
+            <motion.button
+              type="button"
+              onClick={save}
+              disabled={!canSave}
+              whileTap={{ scale: 0.9 }}
+              aria-label={t.entryEditor.saveChanges}
+              className="flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
+            >
+              <Check className="h-4 w-4" strokeWidth={2.5} />
+              {t.common.save}
+            </motion.button>
+          </Squircle>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import type { Entry } from "@/data/entries"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { MACROS, macroTint } from "./macros"
+import { Squircle } from "@/components/ui/squircle"
 
 // The tinted P/F/C gram chips shown under a food's label — shared by the entry
 // list rows and the history Suggestion rows (and the Glossary browser to come,
@@ -28,18 +29,19 @@ export function MacroChips({
   return (
     <div className={`flex gap-1.5 ${s.row}`}>
       {chips.map((m) => (
-        <span
-          key={m.key}
-          className={`flex items-center gap-1 rounded-full font-medium tabular-nums ${s.chip}`}
-          style={{ backgroundColor: macroTint(m.mark, 13) }}
-        >
+        <Squircle asChild pill key={m.key}>
           <span
-            className={`rounded-full ${s.dot}`}
-            style={{ backgroundColor: m.mark }}
-          />
-          {m.letter} {n(nutrients[m.field] ?? 0)}
-          {t.units.g}
-        </span>
+            className={`flex items-center gap-1 rounded-full font-medium tabular-nums ${s.chip}`}
+            style={{ backgroundColor: macroTint(m.mark, 13) }}
+          >
+            <span
+              className={`rounded-full ${s.dot}`}
+              style={{ backgroundColor: m.mark }}
+            />
+            {m.letter} {n(nutrients[m.field] ?? 0)}
+            {t.units.g}
+          </span>
+        </Squircle>
       ))}
     </div>
   )

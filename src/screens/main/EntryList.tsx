@@ -56,7 +56,9 @@ export function EntryList({
           >
             <Squircle
               radius="2xl"
-              className="border border-dashed border-[#cbbfa4] px-4 py-8 text-center dark:border-[#4a3e2e]"
+              outline="dashed"
+              outlineClassName="text-[#cbbfa4] dark:text-[#4a3e2e]"
+              className="px-4 py-8 text-center"
             >
               <div className="text-[15px] font-medium">
                 {t.entryList.emptyTitle}
@@ -86,11 +88,11 @@ export function EntryList({
                     the clipped box persists while its contents swap. */}
                   <Squircle
                     radius="2xl"
-                    className={
-                      dashed
-                        ? "border border-dashed border-[#cbbfa4] dark:border-[#4a3e2e]"
-                        : "border bg-card"
+                    outline={dashed ? "dashed" : "solid"}
+                    outlineClassName={
+                      dashed ? "text-[#cbbfa4] dark:text-[#4a3e2e]" : undefined
                     }
+                    className={dashed ? undefined : "bg-card"}
                   >
                     <FadeSwap swapKey={editing ? "editor" : "row"}>
                       {editing ? (

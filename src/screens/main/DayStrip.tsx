@@ -8,7 +8,11 @@ import {
   useTransform,
 } from "motion/react"
 
-import { SquircleOutline, squirclePath } from "@/components/ui/squircle"
+import {
+  Squircle,
+  SquircleOutline,
+  squirclePath,
+} from "@/components/ui/squircle"
 import { isOffStrip, shortDayLabel, stripWindow, type DayCell } from "@/lib/day"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { FADE_IN, FADE_OUT, SPRING } from "./anim"
@@ -61,12 +65,10 @@ export function DayStrip({
     height: number
   } | null>(null)
 
-  // The travelling selection is a stadium, and a stadium's radius already
-  // spends the whole smoothing budget — so it takes `pill`, which preserves
-  // the strength instead of falling back to semicircular ends. Its box is
-  // measured right here, so the path is built straight from those numbers
-  // rather than through a second observer. It carries no `rounded-*`: a
-  // border-radius would clip the smoothed bulge back off (squircle.tsx).
+  // The travelling selection is a stadium (`pill`): its ends stay round and
+  // its straight sides ease into them. Its box is measured right here, so the
+  // path is built straight from those numbers rather than through a second
+  // observer.
   const pillClip = React.useMemo(
     () =>
       pill === null
@@ -161,43 +163,45 @@ export function DayStrip({
             springing its real width — the label slot animates 0 ↔ auto while
             the padding stays constant — and the date plus the ink fill fade
             in place. */}
-        <button
-          type="button"
-          aria-label={
-            offStrip
-              ? t.calendar.openCalendarOn(
-                  shortDayLabel(selectedDay, new Date(), language)
-                )
-              : t.calendar.openCalendar
-          }
-          onClick={onOpenCalendar}
-          className={
-            "flex h-9 shrink-0 items-center self-center rounded-full px-[9px] transition-colors duration-150 " +
-            (offStrip
-              ? "bg-foreground text-background"
-              : "text-muted-foreground")
-          }
-        >
-          <CalendarDays className="h-[18px] w-[18px] shrink-0" />
-          <motion.span
-            aria-hidden={!offStrip}
-            className="overflow-hidden"
-            initial={false}
-            animate={{
-              width: offStrip ? "auto" : 0,
-              opacity: offStrip ? 1 : 0,
-            }}
-            transition={
-              shouldReduce
-                ? { duration: 0 }
-                : { width: SPRING, opacity: offStrip ? FADE_IN : FADE_OUT }
+        <Squircle asChild pill>
+          <button
+            type="button"
+            aria-label={
+              offStrip
+                ? t.calendar.openCalendarOn(
+                    shortDayLabel(selectedDay, new Date(), language)
+                  )
+                : t.calendar.openCalendar
+            }
+            onClick={onOpenCalendar}
+            className={
+              "flex h-9 shrink-0 items-center self-center rounded-full px-[9px] transition-colors duration-150 " +
+              (offStrip
+                ? "bg-foreground text-background"
+                : "text-muted-foreground")
             }
           >
-            <span className="block pl-1.5 text-sm font-semibold whitespace-nowrap">
-              {shortDayLabel(selectedDay, new Date(), language)}
-            </span>
-          </motion.span>
-        </button>
+            <CalendarDays className="h-[18px] w-[18px] shrink-0" />
+            <motion.span
+              aria-hidden={!offStrip}
+              className="overflow-hidden"
+              initial={false}
+              animate={{
+                width: offStrip ? "auto" : 0,
+                opacity: offStrip ? 1 : 0,
+              }}
+              transition={
+                shouldReduce
+                  ? { duration: 0 }
+                  : { width: SPRING, opacity: offStrip ? FADE_IN : FADE_OUT }
+              }
+            >
+              <span className="block pl-1.5 text-sm font-semibold whitespace-nowrap">
+                {shortDayLabel(selectedDay, new Date(), language)}
+              </span>
+            </motion.span>
+          </button>
+        </Squircle>
 
         {/* The chips get their own positioning context so the pill's
             coordinates never include the calendar button: while the button

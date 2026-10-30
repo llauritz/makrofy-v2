@@ -237,18 +237,20 @@ export function AddCard({
     // shadow moves to the wrapper as a drop-shadow, which traces the clipped
     // silhouette.
     <div className="mx-4 mt-1 drop-shadow-[0_1px_2px_rgba(43,32,21,0.05)]">
-      <Squircle radius="3xl" className="border bg-card p-3">
+      <Squircle radius="3xl" outline="solid" className="bg-card p-3">
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
-            <input
-              ref={labelRef}
-              value={label}
-              onChange={(e) => onLabelChange(e.target.value)}
-              onKeyDown={onKeyDown}
-              placeholder={t.addCard.placeholder}
-              aria-label={t.addCard.food}
-              className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
-            />
+            <Squircle asChild pill>
+              <input
+                ref={labelRef}
+                value={label}
+                onChange={(e) => onLabelChange(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder={t.addCard.placeholder}
+                aria-label={t.addCard.food}
+                className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
+              />
+            </Squircle>
             <div className="absolute inset-y-0 right-1.5 flex items-center">
               <motion.button
                 type="button"
@@ -269,55 +271,58 @@ export function AddCard({
               </motion.button>
             </div>
           </div>
-          <input
-            value={kcal}
-            onChange={(e) => setKcal(e.target.value)}
-            onKeyDown={onKeyDown}
-            onFocus={acceptFlag("kcal")}
-            placeholder={t.units.kcal}
-            inputMode="decimal"
-            aria-label={t.addCard.calories}
-            className={
-              "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
-              // outline-none (focus reset) and the dashed flag outline are
-              // mutually exclusive — both set outline-style.
-              (flags.has("kcal") ? FLAGGED_OUTLINE : "outline-none") +
-              (thinking ? " animate-pulse" : "")
-            }
-          />
+          <Squircle asChild pill>
+            <input
+              value={kcal}
+              onChange={(e) => setKcal(e.target.value)}
+              onKeyDown={onKeyDown}
+              onFocus={acceptFlag("kcal")}
+              placeholder={t.units.kcal}
+              inputMode="decimal"
+              aria-label={t.addCard.calories}
+              className={
+                "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
+                // outline-none (focus reset) and the dashed flag outline are
+                // mutually exclusive — both set outline-style.
+                (flags.has("kcal") ? FLAGGED_OUTLINE : "outline-none") +
+                (thinking ? " animate-pulse" : "")
+              }
+            />
+          </Squircle>
         </div>
         <div className="mt-2.5 flex items-center gap-2">
           {MACROS.map((m) => (
-            <label
-              key={m.key}
-              className={
-                "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2.5" +
-                (flags.has(m.key) ? " " + FLAGGED_OUTLINE : "") +
-                (thinking ? " animate-pulse" : "")
-              }
-              style={{ backgroundColor: macroTint(m.mark, 11) }}
-            >
-              <span
-                className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: m.mark }}
-              />
-              <span className="text-xs font-medium text-muted-foreground">
-                {m.letter}
-              </span>
-              <input
-                value={macros[m.key]}
-                onChange={(e) =>
-                  setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+            <Squircle asChild pill key={m.key}>
+              <label
+                className={
+                  "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2.5" +
+                  (flags.has(m.key) ? " " + FLAGGED_OUTLINE : "") +
+                  (thinking ? " animate-pulse" : "")
                 }
-                onKeyDown={onKeyDown}
-                onFocus={acceptFlag(m.key)}
-                placeholder="0"
-                inputMode="decimal"
-                aria-label={t.macros.grams(t.macros[m.field])}
-                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
-              />
-              <span className="text-xs text-[#a5988a]">{t.units.g}</span>
-            </label>
+                style={{ backgroundColor: macroTint(m.mark, 11) }}
+              >
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: m.mark }}
+                />
+                <span className="text-xs font-medium text-muted-foreground">
+                  {m.letter}
+                </span>
+                <input
+                  value={macros[m.key]}
+                  onChange={(e) =>
+                    setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+                  }
+                  onKeyDown={onKeyDown}
+                  onFocus={acceptFlag(m.key)}
+                  placeholder="0"
+                  inputMode="decimal"
+                  aria-label={t.macros.grams(t.macros[m.field])}
+                  className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
+                />
+                <span className="text-xs text-[#a5988a]">{t.units.g}</span>
+              </label>
+            </Squircle>
           ))}
           <motion.button
             type="button"
@@ -417,7 +422,8 @@ function Suggestions({
                     the clipped box persists while its contents swap. */}
                   <Squircle
                     radius="2xl"
-                    className={hosts ? "border bg-card" : "bg-input"}
+                    outline={hosts ? "solid" : undefined}
+                    className={hosts ? "bg-card" : "bg-input"}
                   >
                     <FadeSwap swapKey={hosts ? "detail" : "row"}>
                       {hosts ? (
