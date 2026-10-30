@@ -2,7 +2,7 @@ import { BarChart3 } from "lucide-react"
 import { motion } from "motion/react"
 
 import { useI18n } from "@/lib/i18n/useI18n"
-import { MACROS, macroTint } from "./macros"
+import { MACROS } from "./macros"
 import type { DaySummary } from "./summary"
 
 // Single-hue ink meter — consumed kcal in the center. Hero number, so
@@ -54,7 +54,7 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
   )
 }
 
-// Floating summary card: ring, Remaining/Over + % of goal, outlined macro
+// Floating summary card: ring, Remaining/Over + % of goal, solid macro
 // pills, stats button (opens the dashboard, #22). The ring and the
 // Remaining/Over readout open Settings (where the goal they measure against is
 // edited); the stats button and macro pills keep their own roles. The sticky
@@ -104,16 +104,12 @@ export function SummaryCard({
             <BarChart3 className="h-4 w-4" />
           </button>
         </div>
-        <div className="mt-2.5 flex items-center justify-between gap-1.5 border-t pt-2.5">
+        <div className="mt-2.5 flex items-center gap-1.5 border-t pt-2.5">
           {MACROS.map((m) => (
             <span
               key={m.key}
-              className="rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap tabular-nums"
-              style={{
-                borderColor: m.mark,
-                backgroundColor: macroTint(m.mark, 8),
-                color: m.text,
-              }}
+              className="rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-white tabular-nums"
+              style={{ backgroundColor: m.mark }}
             >
               {m.letter} {n(Math.round(summary.totals[m.field]))}
               {t.units.g}
