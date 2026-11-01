@@ -76,27 +76,31 @@ export function InstallCard() {
               <Squircle
                 radius="3xl"
                 outline="solid"
-                className="flex items-center gap-2.5 bg-card py-3 pr-2 pl-3"
+                className="flex items-center gap-2 bg-card py-3 pr-2 pl-4"
               >
-                <Squircle
-                  radius={9}
-                  outline="solid"
-                  className="h-9 w-9 shrink-0 overflow-hidden"
-                >
-                  <img
-                    src="/icons/apple-touch-icon.png"
-                    alt=""
-                    className="h-full w-full"
-                    draggable={false}
+                {/* The app icon as it sits on a home screen: a hairline edge
+                    and a soft shadow. The image is the squircle's own
+                    background, not an <img> inside it — a replaced element
+                    is snapped to device pixels while the clip is not, which
+                    left slivers in the corners. The shadow hangs on the
+                    wrapper as a drop-shadow, since the clip would erase a
+                    box-shadow. */}
+                <div className="mr-1 shrink-0 drop-shadow-[0_1px_2px_rgba(43,32,21,0.18)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                  <Squircle
+                    radius={9}
+                    outline="solid"
+                    outlineClassName="text-black/10 dark:text-white/15"
+                    aria-hidden
+                    className="h-9 w-9 bg-[url(/icons/icon-192.png)] bg-cover bg-center bg-origin-border"
                   />
-                </Squircle>
+                </div>
                 <div className="min-w-0 flex-1">
                   {/* One line each, always: a long translation is cut with
                       an ellipsis rather than growing the card. */}
-                  <div className="truncate text-[14px] leading-tight font-semibold">
+                  <div className="truncate text-[14px] leading-[18px] font-semibold">
                     {t.install.cardTitle}
                   </div>
-                  <div className="mt-0.5 truncate text-[12px] leading-snug text-muted-foreground">
+                  <div className="truncate text-[12px] leading-[15px] text-muted-foreground">
                     {t.install.cardBody}
                   </div>
                 </div>
@@ -117,7 +121,7 @@ export function InstallCard() {
                   aria-label={t.install.cardDismiss}
                   onClick={dismiss}
                   whileTap={{ scale: 0.9 }}
-                  className="-ml-0.5 flex h-7 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground"
+                  className="-ml-1 flex h-7 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground"
                 >
                   <X className="h-3.5 w-3.5" />
                 </motion.button>
