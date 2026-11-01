@@ -11,10 +11,11 @@ import {
   startBootMirror,
   type MirrorStore,
 } from "@/data/boot-mirror"
+import { setCoverage } from "@/data/days"
 import { addEntry } from "@/data/entries"
 import { setGoal } from "@/data/goal"
 import { ensureIdentity, signOutToGuest } from "@/data/identity"
-import { localDay } from "@/lib/day"
+import { localDay, stepDay } from "@/lib/day"
 import {
   clearFirestoreData,
   createEmulatorApp,
@@ -120,5 +121,79 @@ describe("startBootMirror", () => {
     const mirror = readBootMirror(store)
     expect(mirror?.goal).toBeNull()
     expect(mirror?.entries).toEqual([])
+  })
+
+  it("mirrors the logged-day dots and today's Coverage label", async () => {
+    ctx = createEmulatorApp()
+    const store = fakeStore()
+    stop = startBootMirror(ctx.auth, ctx.db, store)
+    const user = await ensureIdentity(ctx.auth)
+    const today = localDay(new Date())
+    const earlier = stepDay(today, -3)
+
+    for (const date of [earlier, today]) {
+      addEntry(ctx.db, user.uid, { date, label: "tea", kcal: 5, source: "manual" })
+    }
+    setCoverage(ctx.db, user.uid, today, "most")
+    const mirror = await waitFor(() => {
+      const m = readBootMirror(store)
+      return m?.loggedDays?.length === 2 && m.coverage === "most" ? m : undefined
+    })
+    expect(mirror.loggedDays).toEqual([earlier, today])
+  })
+
+  it("adopts the stored mirror for the same uid instead of resetting it", async () => {
+    ctx = createEmulatorApp()
+    const user = await ensureIdentity(ctx.auth)
+    setGoal(ctx.db, user.uid, { kcal: 1900 })
+    // A previous launch's mirror for this very uid.
+    const store = fakeStore({
+      "yaffle:boot-mirror:v1": JSON.stringify({
+        uid: user.uid,
+        goal: { kcal: 1900 },
+        day: localDay(new Date()),
+        entries: [],
+      }),
+    })
+    const writes: string[] = []
+    stop = startBootMirror(ctx.auth, ctx.db, {
+      getItem: (k) => store.getItem(k),
+      setItem: (k, v) => {
+        writes.push(v)
+        store.setItem(k, v)
+      },
+    })
+    await waitFor(() =>
+      readBootMirror(store)?.loggedDays !== undefined ? true : undefined,
+    )
+    // Resetting would have written goal: null first — a hook mounting later in
+    // the launch would then have seeded an unset Goal.
+    expect(writes.length).toBeGreaterThan(0)
+    for (const w of writes) expect(JSON.parse(w).goal).toEqual({ kcal: 1900 })
+  })
+
+  it("follows today across midnight", async () => {
+    ctx = createEmulatorApp()
+    const store = fakeStore()
+    const user = await ensureIdentity(ctx.auth)
+    // A clock parked 2 s before midnight: the mirror starts on that Day and
+    // must move itself onto the next one when it arrives.
+    const base = new Date()
+    const offset =
+      new Date(base.getFullYear(), base.getMonth(), base.getDate() + 1).getTime() -
+      2_000 -
+      base.getTime()
+    const clock = () => new Date(Date.now() + offset)
+    const first = localDay(clock())
+    const next = stepDay(first, 1)
+    stop = startBootMirror(ctx.auth, ctx.db, store, clock)
+    await waitFor(() => (readBootMirror(store)?.day === first ? true : undefined))
+
+    addEntry(ctx.db, user.uid, { date: next, label: "late snack", kcal: 90, source: "manual" })
+    const mirror = await waitFor(() => {
+      const m = readBootMirror(store)
+      return m?.day === next && m.entries.length === 1 ? m : undefined
+    }, 8_000)
+    expect(mirror.entries[0].label).toBe("late snack")
   })
 })

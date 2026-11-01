@@ -44,6 +44,7 @@ vi.mock("@/data/hooks", () => ({
   useLoggedDays: () => new Set<string>(),
   useProductIndex: () => ({ products: new Map(), totalEntries: 0 }),
   useSyncStatus: () => "synced",
+  useDaySyncing: () => false,
   // The morning strip's feeds (#22): an empty history keeps it hidden, so day
   // navigation is exercised without the strip in the tree.
   useAllEntries: () => [],

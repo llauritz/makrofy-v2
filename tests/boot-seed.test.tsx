@@ -34,8 +34,13 @@ vi.mock("firebase/auth", () => ({
 }))
 vi.mock("@/data/entries", () => ({
   listenToDay: () => () => {},
+  listenToDayFreshness: () => () => {},
   listenToAllEntries: () => () => {},
   listenToSyncMetadata: () => () => {},
+}))
+vi.mock("@/data/days", () => ({
+  listenToCoverage: () => () => {},
+  listenToCoverageInRange: () => () => {},
 }))
 vi.mock("@/data/goal", () => ({
   listenToGoal: () => () => {},
@@ -44,7 +49,14 @@ vi.mock("@/data/products", () => ({
   listenToOverlays: () => () => {},
 }))
 
-import { useDay, useGoal, useGoalStatus, useIdentity } from "@/data/hooks"
+import {
+  useCoverage,
+  useDay,
+  useGoal,
+  useGoalStatus,
+  useIdentity,
+  useLoggedDays,
+} from "@/data/hooks"
 
 function entry(label: string): Entry {
   return {
@@ -147,5 +159,45 @@ describe("useDay", () => {
     state.mirror = mirror()
     const { result } = renderHook(() => useDay("other-uid", "2026-07-17"))
     expect(result.current).toEqual([])
+  })
+})
+
+describe("useLoggedDays", () => {
+  it("seeds the mirrored dots for the mirrored uid", () => {
+    state.mirror = mirror({ loggedDays: ["2026-07-15", "2026-07-17"] })
+    const { result } = renderHook(() => useLoggedDays("mirror-uid"))
+    expect([...result.current]).toEqual(["2026-07-15", "2026-07-17"])
+  })
+
+  it("seeds nothing from a mirror written before dots were mirrored", () => {
+    state.mirror = mirror()
+    const { result } = renderHook(() => useLoggedDays("mirror-uid"))
+    expect(result.current.size).toBe(0)
+  })
+
+  it("seeds nothing for a uid the mirror does not cover", () => {
+    state.mirror = mirror({ loggedDays: ["2026-07-17"] })
+    const { result } = renderHook(() => useLoggedDays("other-uid"))
+    expect(result.current.size).toBe(0)
+  })
+})
+
+describe("useCoverage", () => {
+  it("seeds the mirrored label for the mirrored Day", () => {
+    state.mirror = mirror({ coverage: "most" })
+    const { result } = renderHook(() => useCoverage("mirror-uid", "2026-07-17"))
+    expect(result.current).toBe("most")
+  })
+
+  it("seeds nothing for a different Day", () => {
+    state.mirror = mirror({ coverage: "most" })
+    const { result } = renderHook(() => useCoverage("mirror-uid", "2026-07-18"))
+    expect(result.current).toBeNull()
+  })
+
+  it("seeds nothing for a uid the mirror does not cover", () => {
+    state.mirror = mirror({ coverage: "most" })
+    const { result } = renderHook(() => useCoverage("other-uid", "2026-07-17"))
+    expect(result.current).toBeNull()
   })
 })
