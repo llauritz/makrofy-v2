@@ -13,7 +13,18 @@ import {
 // auto-enforced product). Everything is loaded lazily on the first ✨ tap —
 // most sessions never pay for the AI SDK or the reCAPTCHA script.
 
-const MODEL_ID = "gemini-3.1-flash-lite"
+// 3.5 Flash-Lite at LOW thinking: a food lookup needs no deep reasoning, and
+// thinking time sits directly in the user's wait (model swap 2026-11-01;
+// timed against 3.1 Flash-Lite with the dev bench at /ai-bench.html).
+export const MODEL_ID = "gemini-3.5-flash-lite"
+export const THINKING_LEVEL: AiModelConfig["thinkingLevel"] = "LOW"
+
+/** The knobs the dev bench varies; production uses the constants above. */
+export interface AiModelConfig {
+  model: string
+  /** null leaves the model's default dynamic thinking in place. */
+  thinkingLevel: "MINIMAL" | "LOW" | "MEDIUM" | "HIGH" | null
+}
 
 // The reCAPTCHA Enterprise site key for production App Check attestation —
 // public by design (it ships in the bundle, like firebaseConfig). Local dev
@@ -37,11 +48,25 @@ type Model = import("firebase/ai").GenerativeModel
 let modelPromise: Promise<Model> | null = null
 
 function ensureModel(): Promise<Model> {
-  modelPromise ??= createModel()
+  modelPromise ??= createModel({
+    model: MODEL_ID,
+    thinkingLevel: THINKING_LEVEL,
+  })
   return modelPromise
 }
 
-async function createModel(): Promise<Model> {
+let sdkPromise: Promise<{
+  ai: import("firebase/ai").AI
+  aiSdk: typeof import("firebase/ai")
+}> | null = null
+
+/** App Check + the AI Logic instance, initialised once per page. */
+function ensureSdk() {
+  sdkPromise ??= initSdk()
+  return sdkPromise
+}
+
+async function initSdk() {
   const [appCheck, aiSdk] = await Promise.all([
     import("firebase/app-check"),
     import("firebase/ai"),
@@ -64,13 +89,25 @@ async function createModel(): Promise<Model> {
   })
 
   const ai = aiSdk.getAI(app, { backend: new aiSdk.VertexAIBackend("global") })
+  return { ai, aiSdk }
+}
+
+/**
+ * The production request shape for a given model config. Exported for the
+ * dev bench (src/dev/ai-bench.ts) so it times exactly what users get.
+ */
+export async function createModel(config: AiModelConfig): Promise<Model> {
+  const { ai, aiSdk } = await ensureSdk()
   return aiSdk.getGenerativeModel(ai, {
-    model: MODEL_ID,
+    model: config.model,
     systemInstruction: SYSTEM_PROMPT,
     tools: [{ googleSearch: {} }],
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: buildResponseSchema(aiSdk.Schema),
+      ...(config.thinkingLevel && {
+        thinkingConfig: { thinkingLevel: config.thinkingLevel },
+      }),
     },
   })
 }

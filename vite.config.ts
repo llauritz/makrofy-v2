@@ -51,6 +51,19 @@ export default defineConfig({
       },
     }),
   ],
+  // AI_BENCH=1 builds also ship the AI bench page (/ai-bench.html) so it can
+  // run against real App Check: always on PR previews, and on live only while
+  // the merge workflow sets it (temporary, pre-launch).
+  build: process.env.AI_BENCH
+    ? {
+        rollupOptions: {
+          input: {
+            main: path.resolve(__dirname, "index.html"),
+            aiBench: path.resolve(__dirname, "ai-bench.html"),
+          },
+        },
+      }
+    : undefined,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
