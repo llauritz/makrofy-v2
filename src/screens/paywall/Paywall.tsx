@@ -142,7 +142,7 @@ function PaywallSheet({
       <BottomSheetContent className="max-h-[92svh] gap-5 overflow-y-auto">
         <div className="flex items-start justify-between gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary">
-            <AiSparkle className="h-5 w-5" />
+            <AiSparkle solid className="h-5 w-5" />
           </span>
           <BottomSheetClose />
         </div>
@@ -448,7 +448,7 @@ function PlansNotice({
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="gap-4">
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary">
-          <AiSparkle className="h-5 w-5" />
+          <AiSparkle solid className="h-5 w-5" />
         </span>
         <BottomSheetTitle className="text-[22px] leading-tight font-semibold">
           {t.paywall.noticeTitle}

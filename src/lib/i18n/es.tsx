@@ -152,7 +152,8 @@ export const es: Dictionary = {
     syncData: "Sincronizar",
     loginAgain: "Iniciar sesión",
     offAria: "Sincronización desactivada. Abrir ajustes",
-    offlineAria: "Sin conexión, los cambios se guardan en este dispositivo. Abrir ajustes",
+    offlineAria:
+      "Sin conexión, los cambios se guardan en este dispositivo. Abrir ajustes",
   },
 
   settings: {
@@ -284,13 +285,13 @@ export const es: Dictionary = {
     planUnlimited: "Ilimitado",
     titleExhaustedFree: "Ese fue tu último relleno con IA gratis",
     bodyExhaustedFree:
-      "El relleno con IA lee lo que comiste y completa los números por ti. Elige un plan para seguir usándolo. Todo lo demás en Yaffle sigue siendo gratis.",
+      "El relleno con IA busca lo que comiste con la Búsqueda de Google y completa los números. Pro e Ilimitado incluyen más rellenos.",
     titleExhaustedPro: "Usaste los rellenos de este ciclo",
     bodyExhaustedPro: (date) =>
-      `Pro se recarga el ${date}. ¿Necesitas más antes? Ilimitado no se detiene.`,
-    titleBrowseFree: "Sigue usando el relleno con IA",
+      `Pro se recarga el ${date}. Ilimitado incluye más rellenos.`,
+    titleBrowseFree: "Más rellenos con IA",
     bodyBrowseFree: (left, limit) =>
-      `Te quedan ${left} de ${limit} rellenos con IA gratis. Todo lo demás en Yaffle sigue siendo gratis.`,
+      `El relleno con IA busca lo que comiste con la Búsqueda de Google y completa los números. Te quedan ${left} de ${limit} rellenos gratis.`,
     titleBrowsePaid: "Tu plan",
     bodyBrowsePaid: (date) => `Tus rellenos con IA se recargan el ${date}.`,
     billing: "Facturación",
@@ -327,7 +328,7 @@ export const es: Dictionary = {
     manage: "Gestionar",
     noticeTitle: "El relleno con IA ahora tiene planes",
     noticeBody: (limit) =>
-      `Todos tienen ${limit} rellenos con IA gratis. Pro e Ilimitado lo mantienen y apoyan el desarrollo de Yaffle. Todo lo demás en Yaffle sigue siendo gratis, como siempre.`,
+      `Todos tienen ${limit} rellenos con IA gratis. Pro e Ilimitado incluyen más y apoyan el desarrollo de Yaffle. Todo lo demás en Yaffle sigue siendo gratis.`,
     noticeDismiss: "Entendido",
   },
 
