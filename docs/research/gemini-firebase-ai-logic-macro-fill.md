@@ -167,7 +167,7 @@ Re-checked the lineup ([Firebase AI Logic models](https://firebase.google.com/do
 
 ([pricing](https://ai.google.dev/gemini-api/docs/pricing)). At ~400 in / ~200 out tokens a fill costs ≈ $0.0006 in tokens on 3.5 Flash-Lite vs $0.0004 on 3.1, so the grounding fee still dominates. Google reports 3.5 Flash-Lite "significantly outperforms 3.1 Flash-Lite" and ~350 output tokens/s ([DeepMind](https://deepmind.google/models/gemini/flash-lite/)); vendor numbers, no head-to-head latency published. Structured output with tools is still a Gemini 3 preview feature ([structured output](https://ai.google.dev/gemini-api/docs/structured-output)).
 
-**Decision (owner, 2026-11-01):** switch to `gemini-3.5-flash-lite` with `thinkingLevel: LOW`. Skip 3.6/3.8 Flash (~3× token price, aimed at agents and coding). Timing: run the dev bench at `/ai-bench.html` (`pnpm dev`, App Check debug token in `.env.local`), which compares 3.1 Flash-Lite default, 3.5 Flash-Lite default and 3.5 Flash-Lite LOW on the production request.
+**Decision (owner, 2026-11-01):** switch to `gemini-3.5-flash-lite` with `thinkingLevel: LOW`. Skip 3.6/3.8 Flash (~3× token price, aimed at agents and coding). Timing: run the dev bench at `/ai-bench.html` (`pnpm dev`, App Check debug token in `.env.local`), which compares 3.1 Flash-Lite default, 3.5 Flash-Lite default and 3.5 Flash-Lite LOW on the production request. **Results (90 live calls):** [ai-bench/2026-11-01-flash-lite.md](ai-bench/2026-11-01-flash-lite.md). The three configs were equally fast and 3.5 was more consistent. The real costs are searches on staples and runaway multi-query searches.
 
 ---
 
