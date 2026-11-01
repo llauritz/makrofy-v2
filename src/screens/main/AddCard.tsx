@@ -32,6 +32,7 @@ import {
 } from "./fields"
 import { MacroChips } from "./MacroChips"
 import { MACROS, macroTint } from "./macros"
+import { MacroLetter } from "./MacroLetter"
 import {
   aiZoneStateOf,
   FLAGGED_OUTLINE,
@@ -301,13 +302,7 @@ export function AddCard({
                 }
                 style={{ backgroundColor: macroTint(m.mark, 11) }}
               >
-                <span
-                  className="h-1.5 w-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: m.mark }}
-                />
-                <span className="text-xs font-medium text-muted-foreground">
-                  {m.letter}
-                </span>
+                <MacroLetter macro={m} className="text-[15px]" />
                 <input
                   value={macros[m.key]}
                   onChange={(e) =>

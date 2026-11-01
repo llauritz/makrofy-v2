@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/public-sans";
 @import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/nunito";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -68,9 +69,11 @@
 }
 
 @theme inline {
-    /* Fraunces is the wordmark only; Public Sans everywhere else, numbers included. */
+    /* Fraunces is the wordmark only; Nunito is the P/F/C macro letters only;
+       Public Sans everywhere else, numbers included. */
     --font-sans: 'Public Sans Variable', sans-serif;
     --font-wordmark: 'Fraunces Variable', serif;
+    --font-macro: 'Nunito Variable', sans-serif;
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);

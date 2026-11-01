@@ -1,6 +1,7 @@
 import type { Entry } from "@/data/entries"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { MACROS, macroTint } from "./macros"
+import { MacroLetter } from "./MacroLetter"
 import { Squircle } from "@/components/ui/squircle"
 
 // The tinted P/F/C gram chips shown under a food's label — shared by the entry
@@ -10,9 +11,9 @@ import { Squircle } from "@/components/ui/squircle"
 // Suggestion row.
 type ChipSize = "sm" | "md"
 
-const SIZE: Record<ChipSize, { row: string; chip: string; dot: string }> = {
-  md: { row: "mt-1.5", chip: "px-2 py-0.5 text-[11px]", dot: "h-1.5 w-1.5" },
-  sm: { row: "mt-1", chip: "px-1.5 py-0.5 text-[10px]", dot: "h-1 w-1" },
+const SIZE: Record<ChipSize, { row: string; chip: string; letter: string }> = {
+  md: { row: "mt-1.5", chip: "px-2 py-0.5 text-[11px]", letter: "text-[14px]" },
+  sm: { row: "mt-1", chip: "px-1.5 py-0.5 text-[10px]", letter: "text-[13px]" },
 }
 
 export function MacroChips({
@@ -31,14 +32,11 @@ export function MacroChips({
       {chips.map((m) => (
         <Squircle asChild pill key={m.key}>
           <span
-            className={`flex items-center gap-1 rounded-full font-medium tabular-nums ${s.chip}`}
+            className={`flex items-baseline gap-1 rounded-full font-medium tabular-nums ${s.chip}`}
             style={{ backgroundColor: macroTint(m.mark, 13) }}
           >
-            <span
-              className={`rounded-full ${s.dot}`}
-              style={{ backgroundColor: m.mark }}
-            />
-            {m.letter} {n(nutrients[m.field] ?? 0)}
+            <MacroLetter macro={m} withGrams className={s.letter} />
+            {n(nutrients[m.field] ?? 0)}
             {t.units.g}
           </span>
         </Squircle>
