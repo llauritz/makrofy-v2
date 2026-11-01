@@ -35,7 +35,7 @@
        edge-to-edge: the page runs on under the gesture/navigation bar, and
        env(safe-area-inset-bottom) reports that bar's height. The installed
        app and iOS keep their current layout, so only the Android browser
-       tab lifts the bottom dock by the inset (--dock-inset, index.css). -->
+       tab sets the summary card on top of the bar (--dock-inset, index.css). -->
   <script>
     try {
       if (/Android/i.test(navigator.userAgent) && matchMedia("(display-mode: browser)").matches) {

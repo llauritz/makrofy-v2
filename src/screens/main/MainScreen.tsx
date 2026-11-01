@@ -196,8 +196,8 @@ export function MainScreen({
           {/* Logged rows slide behind the card, never out below it: a page-
               coloured backdrop sits under the card from just below its top
               edge down to the screen's bottom edge, side gutters included
-              (in an Android browser tab that is past the dock, under the
-              navigation bar: --dock-inset).
+              (in an Android browser tab that runs on under the navigation
+              bar, so the bar shows the page colour: --dock-inset).
               Its top fades in over 2rem, so rows passing the card's sides
               dissolve instead of meeting a hard line. It is a static layer
               (no animation, no scroll listener), so nothing can flicker. */}
