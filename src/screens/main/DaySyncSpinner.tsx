@@ -1,6 +1,7 @@
 import * as React from "react"
 import { AnimatePresence, motion } from "motion/react"
 
+import { Spinner } from "@/components/ui/spinner"
 import { SPRING } from "./anim"
 
 // Not-yet-confirmed waits shorter than this never show the spinner at all: on
@@ -68,27 +69,7 @@ export function DaySyncSpinner({ active }: { active: boolean }) {
           }}
           className="pointer-events-none flex items-start justify-center overflow-hidden text-muted-foreground"
         >
-          <svg
-            viewBox="0 0 16 16"
-            className="mt-1.5 h-[18px] w-[18px] opacity-70 motion-safe:animate-[spin_0.9s_linear_infinite]"
-          >
-            <circle
-              cx="8"
-              cy="8"
-              r="6.25"
-              fill="none"
-              stroke="currentColor"
-              strokeOpacity="0.2"
-              strokeWidth="1.75"
-            />
-            <path
-              d="M8 1.75a6.25 6.25 0 0 1 6.25 6.25"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-            />
-          </svg>
+          <Spinner className="mt-1.5" />
         </motion.div>
       )}
     </AnimatePresence>

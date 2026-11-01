@@ -236,7 +236,7 @@ export const es: Dictionary = {
       },
       {
         title: "La IA completa el resto",
-        body: "Las calorías o macros que falten se estiman.",
+        body: "Las calorías y macros que falten se estiman.",
       },
       {
         title: "Recuerda tus comidas",

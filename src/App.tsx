@@ -2,9 +2,11 @@ import * as React from "react"
 import { motion, MotionConfig } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
+import { Spinner } from "@/components/ui/spinner"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useEntriesStatus, useGoalStatus, useIdentity } from "@/data/hooks"
 import { db } from "@/lib/firebase"
+import { useAssetsReady, useFontReady, WORDMARK_FONT } from "@/lib/preload"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
@@ -38,6 +40,7 @@ export function App() {
   // Only asked while the Goal is unset: has this profile logged before?
   const entriesStatus = useEntriesStatus(goalStatus === "unset" ? uid : null)
   const view = resolveAppView(uid, goalStatus, entriesStatus)
+  const assetsReady = useAssetsReady()
 
   // A profile that logged while onboarding was parked but never set a Goal
   // gets the default written once — the figure its ring already shows — so
@@ -60,17 +63,29 @@ export function App() {
   }
 
   // Splash until identity and the first Goal snapshot settle, so the ring never
-  // flashes the fallback goal before the synced value arrives.
-  if (view === "loading") return <Splash />
+  // flashes the fallback goal before the synced value arrives. First run also
+  // holds it until the fonts and the wordmark animation have loaded
+  // (src/lib/preload.ts, capped), so the welcome screen appears in its final
+  // form: no font swap reflowing it, no static logo before the animation.
+  if (view === "loading" || (view === "onboarding" && !assetsReady)) {
+    return <Splash />
+  }
 
   // First run (#35): welcome, then goal. Writing the Goal flips the gate to
   // "main" through the Goal listener; nothing here switches by hand.
   if (view === "onboarding") {
     return (
       <MotionConfig reducedMotion="user">
-        <OnboardingScreen
-          onSubmit={(kcal) => uid && setGoal(db, uid, { kcal })}
-        />
+        <motion.div
+          key="onboarding"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={FADE_IN}
+        >
+          <OnboardingScreen
+            onSubmit={(kcal) => uid && setGoal(db, uid, { kcal })}
+          />
+        </motion.div>
       </MotionConfig>
     )
   }
@@ -128,17 +143,50 @@ export function App() {
   )
 }
 
+// A wait shorter than this never shows the spinner: on a good connection the
+// splash is gone before it would appear, and one that blinks on and off reads
+// as a glitch (as in DaySyncSpinner).
+const SPLASH_SPINNER_AFTER_MS = 600
+
 // A quiet launch screen in the app's own colours while identity and the first
 // Goal snapshot settle. It carries the resolved theme's background, so the
 // hand-off is continuous — the main screen takes over without a flash of
-// unstyled or wrong-theme content.
+// unstyled or wrong-theme content. The wordmark stays hidden until its own
+// font has loaded, then fades in, rather than painting in a fallback face and
+// jumping when Fraunces arrives. A wait that outlasts SPLASH_SPINNER_AFTER_MS
+// adds the log's spinner below it, placed from the screen's centre so neither
+// ever moves the other.
 function Splash() {
   const { t } = useI18n()
+  const fontReady = useFontReady(WORDMARK_FONT)
+  const [slow, setSlow] = React.useState(false)
+  React.useEffect(() => {
+    const id = setTimeout(() => setSlow(true), SPLASH_SPINNER_AFTER_MS)
+    return () => clearTimeout(id)
+  }, [])
   return (
-    <div className="flex min-h-svh items-center justify-center bg-background">
-      <div className="font-wordmark text-3xl font-semibold text-muted-foreground">
+    <div className="relative flex min-h-svh items-center justify-center bg-background text-muted-foreground">
+      <motion.div
+        initial={false}
+        animate={{ opacity: fontReady ? 1 : 0 }}
+        transition={FADE_IN}
+        style={{ visibility: fontReady ? "visible" : "hidden" }}
+        className="font-wordmark text-3xl font-semibold"
+      >
         {t.app.name}
-      </div>
+      </motion.div>
+      {/* 50% + half the wordmark's 36 px line + a 20 px gap. */}
+      {slow && (
+        <motion.div
+          aria-hidden
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="absolute inset-x-0 top-[calc(50%+38px)] flex justify-center"
+        >
+          <Spinner />
+        </motion.div>
+      )}
     </div>
   )
 }

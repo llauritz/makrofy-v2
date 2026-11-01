@@ -135,7 +135,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
           demo={{
             label: t.onboarding.exampleLabel,
             kcal: "120",
-            macros: { p: "5", f: "10", c: "4" },
+            macros: { p: "5", f: "10", c: "" },
           }}
         />
       </div>
