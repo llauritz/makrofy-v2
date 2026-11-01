@@ -4,6 +4,7 @@ import { motion } from "motion/react"
 import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { MACROS } from "./macros"
+import { MacroLetter } from "./MacroLetter"
 import type { DaySummary } from "./summary"
 
 // Single-hue ink meter — consumed kcal in the center. Hero number, so
@@ -57,8 +58,8 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
 
 // Floating summary card: ring, Remaining/Over + % of goal, the day's macro
 // totals, stats button (opens the dashboard, #22). The totals share one
-// neutral capsule — dot + grams per macro, hairline dividers between — so they
-// read as a single day figure, apart from the food rows' tinted per-item
+// neutral capsule — letter + grams per macro, hairline dividers between — so
+// they read as a single day figure, apart from the food rows' tinted per-item
 // chips. The ring and the Remaining/Over readout open Settings (where the goal
 // they measure against is edited); the stats button and macro totals keep
 // their own roles. The sticky footer and undo snackbar around it are the
@@ -122,11 +123,10 @@ export function SummaryCard({
                 {MACROS.map((m, i) => (
                   <span key={m.key} className="flex items-center">
                     {i > 0 && <span className="h-3 w-px bg-border" />}
-                    <span className="flex items-center gap-1.5 px-2.5">
-                      <span
-                        className="h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: m.mark }}
-                      />
+                    <span className="flex items-center gap-1 px-2.5">
+                      <span aria-hidden className="flex">
+                        <MacroLetter macro={m} className="text-[13px]" />
+                      </span>
                       <span className="sr-only">{t.macros[m.field]}</span>
                       <span className="font-medium">
                         {n(Math.round(summary.totals[m.field]))}
