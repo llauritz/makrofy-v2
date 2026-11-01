@@ -20,6 +20,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+        env:
+          # TEMPORARY (pre-launch, 2026-11-01): ship /ai-bench.html on live so
+          # the model comparison runs against real App Check. Remove once the
+          # Gemini 3.5 Flash-Lite timing is done.
+          AI_BENCH: "1"
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
