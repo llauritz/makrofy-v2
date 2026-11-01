@@ -36,6 +36,11 @@ const config: CapacitorConfig = {
       launchFadeOutDuration: 150,
       showSpinner: false,
     },
+    LocalNotifications: {
+      // Reminders (ADR 0013): the brand "Y" in the status bar, tinted ink.
+      smallIcon: "ic_stat_yaffle",
+      iconColor: "#2B2015",
+    },
     SocialLogin: {
       // Only Google is compiled in; Apple, Facebook and Twitter stay out of
       // the APK.

@@ -3,6 +3,9 @@
 buildscript {
     ext {
         kotlinVersion = '2.3.21'
+        // The same version under the name Capacitor's own Kotlin plugins
+        // (e.g. @capacitor/local-notifications) look up.
+        kotlin_version = kotlinVersion
     }
 
     repositories {

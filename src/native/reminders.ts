@@ -132,6 +132,7 @@ export function onReminderTap(onTap: () => void): () => void {
       if (cancelled) void h.remove()
       else handle = h
     })
+    .catch((err) => console.warn("Reminder tap listener failed", err))
   return () => {
     cancelled = true
     void handle?.remove()

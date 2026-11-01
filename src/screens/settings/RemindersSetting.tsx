@@ -38,9 +38,11 @@ export function RemindersSection() {
   React.useEffect(() => {
     if (!settings.enabled) return
     let live = true
-    void checkReminderPermission().then((p) => {
-      if (live) setDenied(p === "denied")
-    })
+    checkReminderPermission()
+      .then((p) => {
+        if (live) setDenied(p === "denied")
+      })
+      .catch(() => {})
     return () => {
       live = false
     }
@@ -54,7 +56,9 @@ export function RemindersSection() {
     }
     setAsking(true)
     try {
-      const permission = await requestReminderPermission()
+      const permission = await requestReminderPermission().catch(
+        () => "denied" as const,
+      )
       if (permission !== "granted") {
         setDenied(true)
         return
@@ -111,7 +115,7 @@ export function RemindersSection() {
                       if (!isReminderTime(value)) return
                       setTimes(settings.times.map((x) => (x === time ? value : x)))
                     }}
-                    className="min-w-0 flex-1 bg-transparent py-1.5 text-lg font-bold tabular-nums outline-none"
+                    className="min-w-0 flex-1 bg-transparent py-1.5 text-lg font-bold tabular-nums outline-none [&::-webkit-calendar-picker-indicator]:hidden"
                   />
                   <button
                     type="button"
