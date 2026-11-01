@@ -80,8 +80,8 @@ function MeterRow({
   const { t, n } = useI18n()
   const pct = Math.min(100, (used / limit) * 100)
   return (
-    <div className="flex items-center justify-between gap-3 pt-2 pl-1">
-      <div className="flex min-w-0 flex-col gap-1">
+    <div className="flex items-center justify-between gap-4 pt-2 pl-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="truncate text-[11px] text-muted-foreground tabular-nums">
           {t.paywall.usageMeter(n(used), n(limit))}
         </span>
