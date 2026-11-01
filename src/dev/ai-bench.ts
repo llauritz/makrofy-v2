@@ -1,6 +1,6 @@
-// Dev-only latency/quality bench for AI macro-fill (served by Vite at
-// /ai-bench.html; not part of the production build, which only bundles
-// index.html). It drives the exact production request via createModel, so
+// Latency/quality bench for AI macro-fill at /ai-bench.html: served by the
+// dev server and by PR preview builds (AI_BENCH=1), never by live builds,
+// which only bundle index.html. It drives the exact production request via createModel, so
 // the numbers reflect what users wait for.
 
 import { createModel, type AiModelConfig } from "@/lib/ai"
