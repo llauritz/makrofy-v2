@@ -26,7 +26,10 @@ import {
 import { localDay, stepDay } from "@/lib/day"
 import { db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
-import { SettingsSheet } from "@/screens/settings/SettingsSheet"
+import {
+  SettingsSheet,
+  type SettingsHighlight,
+} from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
 import { CalendarSheet } from "./CalendarSheet"
 import { CoverageControl } from "./CoverageControl"
@@ -61,6 +64,10 @@ export function MainScreen({
   )
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
+  // The row Settings blinks as it opens: the header's sign-in invitation
+  // opens it onto the sign-in row. Cleared on close, so the gear never blinks.
+  const [settingsHighlight, setSettingsHighlight] =
+    React.useState<SettingsHighlight>(null)
   const [calendarOpen, setCalendarOpen] = React.useState(false)
   // The Entry awaiting a deferred delete — hidden from the log while its undo
   // snackbar is up; the real delete fires only when the window lapses.
@@ -150,10 +157,22 @@ export function MainScreen({
   }
 
   const openSettings = () => setSettingsOpen(true)
+  const openSignInSettings = () => {
+    setSettingsHighlight("signIn")
+    setSettingsOpen(true)
+  }
+  const setSettings = (open: boolean) => {
+    setSettingsOpen(open)
+    if (!open) setSettingsHighlight(null)
+  }
 
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col">
-      <Header onOpenSettings={openSettings} syncStatus={syncStatus} />
+      <Header
+        onOpenSettings={openSettings}
+        onOpenSignIn={openSignInSettings}
+        syncStatus={syncStatus}
+      />
       <main className="flex flex-1 flex-col">
         <DayStrip
           selectedDay={selectedDay}
@@ -224,9 +243,10 @@ export function MainScreen({
       />
       <SettingsSheet
         open={settingsOpen}
-        onOpenChange={setSettingsOpen}
+        onOpenChange={setSettings}
+        highlight={settingsHighlight}
         onOpenGlossary={() => {
-          setSettingsOpen(false)
+          setSettings(false)
           onOpenGlossary()
         }}
       />

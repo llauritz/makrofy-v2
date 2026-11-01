@@ -20,7 +20,7 @@ export type DismissedPrompt = "sync" | "relogin" | null
 export type CloudButton =
   /** Nothing in the header: signed in and syncing as it should. */
   | { kind: "hidden" }
-  /** The faint outlined text button, the off cloud on its right; a tap signs in. */
+  /** The faint outlined text button, words only; a tap opens Settings onto sign-in. */
   | { kind: "prompt"; label: "syncData" | "loginAgain" }
   /** The off cloud alone on the background; a tap opens Settings. */
   | { kind: "icon"; reason: "signedOut" | "offline" }
@@ -28,10 +28,10 @@ export type CloudButton =
 /**
  * Which button the header shows.
  *
- * Not signed in, the cloud is off, and the text beside it invites a sign-in
- * ("Sync data", or "Log in again" once a Google session has lapsed) until the
- * user has either tapped it or opened Settings without signing in. After
- * that the cloud stands alone.
+ * Not signed in, a text button invites a sign-in ("Sync data", or "Log in
+ * again" once a Google session has lapsed) until the user has opened
+ * Settings, through it or the gear, without signing in. After that the off
+ * cloud stands alone.
  *
  * Signed in, the header stays clear: synced and uploading show nothing. Only
  * an offline stretch (after the sync settle) brings the off cloud back.
