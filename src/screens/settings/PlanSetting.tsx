@@ -22,15 +22,15 @@ export function PlanSetting({ onOpen }: { onOpen: () => void }) {
   const name =
     cycle.plan === "free"
       ? t.paywall.aiFill
-      : cycle.plan === "premium"
-        ? t.paywall.planPremium
-        : t.paywall.planPro
+      : cycle.plan === "pro"
+        ? t.paywall.planPro
+        : t.paywall.planUnlimited
   const status =
     cycle.plan === "free"
       ? t.paywall.freeStatus(n(cycle.remaining), n(cycle.limit))
-      : cycle.plan === "premium"
-        ? t.paywall.premiumStatus(n(cycle.remaining), n(cycle.limit), date)
-        : t.paywall.proStatus(n(cycle.used), date)
+      : cycle.plan === "pro"
+        ? t.paywall.proStatus(n(cycle.remaining), n(cycle.limit), date)
+        : t.paywall.unlimitedStatus(n(cycle.used), date)
 
   return (
     <Squircle radius="2xl" className="flex items-center gap-3 px-4 py-3">

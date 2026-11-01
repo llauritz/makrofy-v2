@@ -280,26 +280,27 @@ export const es: Dictionary = {
 
   paywall: {
     planFree: "Gratis",
-    planPremium: "Premium",
     planPro: "Pro",
-    titleExhaustedFree: "Ese fue tu último intento gratis",
+    planUnlimited: "Ilimitado",
+    titleExhaustedFree: "Ese fue tu último relleno con IA gratis",
     bodyExhaustedFree:
       "El relleno con IA lee lo que comiste y completa los números por ti. Elige un plan para seguir usándolo. Todo lo demás en Yaffle sigue siendo gratis.",
-    titleExhaustedPremium: "Usaste los rellenos de este ciclo",
-    bodyExhaustedPremium: (date) =>
-      `Premium se recarga el ${date}. ¿Necesitas más antes? Pro tiene mucho más margen.`,
+    titleExhaustedPro: "Usaste los rellenos de este ciclo",
+    bodyExhaustedPro: (date) =>
+      `Pro se recarga el ${date}. ¿Necesitas más antes? Ilimitado no se detiene.`,
     titleBrowseFree: "Sigue usando el relleno con IA",
     bodyBrowseFree: (left, limit) =>
-      `Te quedan ${left} de ${limit} intentos gratis. Todo lo demás en Yaffle sigue siendo gratis.`,
+      `Te quedan ${left} de ${limit} rellenos con IA gratis. Todo lo demás en Yaffle sigue siendo gratis.`,
     titleBrowsePaid: "Tu plan",
     bodyBrowsePaid: (date) => `Tus rellenos con IA se recargan el ${date}.`,
     billing: "Facturación",
     billingAnnual: "Anual",
     billingMonthly: "Mensual",
     save: (pct) => `Ahorra un ${pct}%`,
-    freeLine: (limit) => `Prueba el relleno con IA ${limit} veces`,
-    premiumLine: (limit) => `${limit} rellenos con IA cada 30 días`,
-    proLine: "Más rellenos con IA de los que nadie registra",
+    freeLine: (limit) => `${limit} rellenos con IA gratis`,
+    proLine: (limit) => `${limit} rellenos con IA cada 30 días`,
+    unlimitedLine: "Rellenos con IA ilimitados",
+    supportsDev: "Apoya el desarrollo",
     bestValue: "Mejor valor",
     currentPlan: "Tu plan",
     perMonth: (price) => `${price}/mes`,
@@ -311,25 +312,27 @@ export const es: Dictionary = {
       "Al iniciar sesión conservas todo lo que registraste. Solo se vincula a tu cuenta de Google.",
     checkoutStub: "El pago aún no está conectado. Esto es un prototipo.",
     footnote: (fairUse) =>
-      `Precios con impuestos incluidos. Cancela cuando quieras. Uso razonable: Pro incluye ${fairUse} rellenos con IA cada 30 días.`,
-    exhaustedFree: (limit) => `Usaste tus ${limit} intentos de relleno con IA.`,
-    exhaustedPremium: (limit, date) =>
-      `Usaste los ${limit} rellenos con IA de este ciclo. Más el ${date}.`,
+      `Precios con impuestos incluidos. Cancela cuando quieras. Uso razonable: Ilimitado incluye ${fairUse} rellenos con IA cada 30 días.`,
+    usageMeter: (used, limit) =>
+      `${used}/${limit} rellenos con IA gratis usados`,
+    exhaustedFree: (limit) => `Usaste los ${limit} rellenos con IA gratis.`,
     exhaustedPro: (limit, date) =>
+      `Usaste los ${limit} rellenos con IA de este ciclo. Más el ${date}.`,
+    exhaustedUnlimited: (limit, date) =>
       `Llegaste al límite de uso razonable de ${limit} rellenos con IA. Más el ${date}.`,
     seePlans: "Ver planes",
-    getPro: "Obtener Pro",
+    getUnlimited: "Obtener Ilimitado",
     aiFill: "Relleno con IA",
-    freeStatus: (left, limit) => `Te quedan ${left} de ${limit} intentos`,
-    premiumStatus: (left, limit, date) =>
+    freeStatus: (left, limit) => `Te quedan ${left} de ${limit} gratis`,
+    proStatus: (left, limit, date) =>
       `Te quedan ${left} de ${limit} · se recarga el ${date}`,
-    proStatus: (used, date) =>
+    unlimitedStatus: (used, date) =>
       `${used} rellenos este ciclo · se recarga el ${date}`,
     upgrade: "Mejorar",
     manage: "Gestionar",
     noticeTitle: "El relleno con IA ahora tiene planes",
     noticeBody: (limit) =>
-      `Todos tienen ${limit} intentos gratis de relleno con IA. Premium y Pro lo mantienen mientras sigas registrando. Todo lo demás en Yaffle sigue siendo gratis, como siempre.`,
+      `Todos tienen ${limit} rellenos con IA gratis. Pro e Ilimitado lo mantienen y apoyan el desarrollo de Yaffle. Todo lo demás en Yaffle sigue siendo gratis, como siempre.`,
     noticeDismiss: "Entendido",
   },
 

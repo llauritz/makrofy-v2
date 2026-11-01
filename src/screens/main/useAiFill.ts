@@ -98,7 +98,7 @@ export function useAiFill({
     setAttribution(null)
     // The paywall prototype's cycle gate (#64/#65): an exhausted cycle refuses
     // with a typed, per-plan line — read from the local counter, so it answers
-    // offline too. Free and Premium carry the way up; Pro's fair-use line
+    // offline too. Free and Pro carry the way up; Unlimited's fair-use line
     // doesn't sell anything. Without ?paywall this is skipped entirely.
     if (paywall !== null && paywall.cycle.remaining === 0) {
       const { plan, limit, resetsOn } = paywall.cycle
@@ -108,10 +108,10 @@ export function useAiFill({
         hint:
           plan === "free"
             ? t.paywall.exhaustedFree(n(limit))
-            : plan === "premium"
-              ? t.paywall.exhaustedPremium(n(limit), date)
-              : t.paywall.exhaustedPro(n(limit), date),
-        upgrade: plan !== "pro",
+            : plan === "pro"
+              ? t.paywall.exhaustedPro(n(limit), date)
+              : t.paywall.exhaustedUnlimited(n(limit), date),
+        upgrade: plan !== "unlimited",
       })
       return
     }
@@ -131,6 +131,7 @@ export function useAiFill({
         return
       }
       consumeAiUse(db, uid, day)
+      paywall?.consume()
       const reply = await fillMacros(prompt)
       if (runId !== run.current) return
       applyReply(reply, description, final)

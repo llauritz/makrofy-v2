@@ -7,14 +7,14 @@
 // queries-per-fill re-verify gate; USD only for now — the per-currency charm
 // table (GBP/EUR) lands with checkout (#66).
 
-export type Plan = "free" | "premium" | "pro"
+export type Plan = "free" | "pro" | "unlimited"
 export type Billing = "annual" | "monthly"
 
-/** ✨ fills per 30-day cycle. Pro's cap is disclosed only as a fair-use footnote. */
+/** ✨ fills per 30-day cycle. Unlimited's cap is disclosed only as a fair-use footnote. */
 export const CYCLE_LIMIT: Record<Plan, number> = {
   free: 10,
-  premium: 1_000,
-  pro: 10_000,
+  pro: 1_000,
+  unlimited: 10_000,
 }
 
 /** Length of an allowance cycle in days (#64: fixed cycle, not a calendar month). */
@@ -25,8 +25,8 @@ export const PRICE_USD: Record<
   Exclude<Plan, "free">,
   Record<Billing, number>
 > = {
-  premium: { monthly: 3.99, annual: 29.99 },
-  pro: { monthly: 9.99, annual: 79.99 },
+  pro: { monthly: 3.99, annual: 29.99 },
+  unlimited: { monthly: 9.99, annual: 79.99 },
 }
 
 /** An annual price expressed per month, rounded down to the cent ($29.99 → $2.49). */

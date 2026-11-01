@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { Check, LogIn, Sparkles } from "lucide-react"
+import { Check, Heart, LogIn, Sparkles } from "lucide-react"
 import { motion } from "motion/react"
 import * as React from "react"
 
@@ -15,6 +15,7 @@ import { Squircle, SquircleOutline } from "@/components/ui/squircle"
 import { useAuthUser } from "@/data/hooks"
 import { startGoogleSignIn } from "@/data/identity"
 import {
+  aiCycle,
   annualSavingPct,
   CYCLE_LIMIT,
   perMonth,
@@ -30,7 +31,7 @@ import { cn } from "@/lib/utils"
 import { readPaywallPreview } from "./preview"
 
 // The paywall prototype (#65): one bottom sheet presenting the three-plan
-// ladder from #59/#60 — Free / Premium / Pro, Premium centre-stage and marked
+// ladder from #59/#60 — Free / Pro / Unlimited, Pro centre-stage and marked
 // best value (compromise + centre-stage, pricing note §5), yearly first with
 // monthly one tap away. It opens from the ✨ refusal at cycle exhaustion (the
 // front door) and from the Settings plan row. Guests meet "Sign in with Google
@@ -48,6 +49,8 @@ export type PaywallReason = "exhausted" | "browse"
 type PaywallApi = {
   cycle: AiCycle
   open: (reason: PaywallReason) => void
+  /** Count one ✨ fill against the cycle — the prototype's stand-in for #64's counter. */
+  consume: () => void
 }
 
 const PaywallContext = React.createContext<PaywallApi | null>(null)
@@ -65,9 +68,17 @@ export function PaywallProvider({ children }: { children: React.ReactNode }) {
   const [noticeOpen, setNoticeOpen] = React.useState(
     preview?.showNotice ?? false
   )
+  // The prototype's counter lives in memory: each ✨ fill bumps it, so the
+  // add card's meter fills up and the 10th fill brings on the plans card.
+  const [used, setUsed] = React.useState(preview?.cycle.used ?? 0)
   const api = React.useMemo<PaywallApi | null>(
-    () => preview && { cycle: preview.cycle, open: setReason },
-    [preview]
+    () =>
+      preview && {
+        cycle: aiCycle(preview.cycle.plan, used, preview.cycle.resetsOn),
+        open: setReason,
+        consume: () => setUsed((u) => Math.min(u + 1, preview.cycle.limit)),
+      },
+    [preview, used]
   )
 
   if (api === null) return children
@@ -104,9 +115,9 @@ function PaywallSheet({
   const user = useAuthUser()
   const guest = user === null || user.isAnonymous
   const [billing, setBilling] = React.useState<Billing>("annual")
-  // A paid user is offered the plan above theirs; everyone else Premium.
+  // A paid user is offered the plan above theirs; everyone else Pro.
   const [chosen, setChosen] = React.useState<PaidPlan>(
-    cycle.plan === "free" ? "premium" : "pro"
+    cycle.plan === "free" ? "pro" : "unlimited"
   )
   const [stubbed, setStubbed] = React.useState(false)
 
@@ -114,8 +125,8 @@ function PaywallSheet({
   const { title, body } = heading(t, n, cycle, reason ?? "browse", date)
   const planName: Record<Plan, string> = {
     free: t.paywall.planFree,
-    premium: t.paywall.planPremium,
     pro: t.paywall.planPro,
+    unlimited: t.paywall.planUnlimited,
   }
   const canChoose = chosen !== cycle.plan
 
@@ -147,7 +158,7 @@ function PaywallSheet({
 
         <div role="radiogroup" className="flex flex-col gap-2.5">
           <FreeCard current={cycle.plan === "free"} name={planName.free} />
-          {(["premium", "pro"] as const).map((plan) => (
+          {(["pro", "unlimited"] as const).map((plan) => (
             <PaidCard
               key={plan}
               plan={plan}
@@ -196,7 +207,7 @@ function PaywallSheet({
         </div>
 
         <p className="px-1 text-center text-[11px] leading-relaxed text-muted-foreground">
-          {t.paywall.footnote(n(CYCLE_LIMIT.pro))}
+          {t.paywall.footnote(n(CYCLE_LIMIT.unlimited))}
         </p>
       </BottomSheetContent>
     </BottomSheet>
@@ -223,14 +234,14 @@ function heading(
   }
   return reason === "exhausted"
     ? {
-        title: t.paywall.titleExhaustedPremium,
-        body: t.paywall.bodyExhaustedPremium(date),
+        title: t.paywall.titleExhaustedPro,
+        body: t.paywall.bodyExhaustedPro(date),
       }
     : { title: t.paywall.titleBrowsePaid, body: t.paywall.bodyBrowsePaid(date) }
 }
 
 // Yearly | Monthly, yearly first (#60: annual-first display). The saving rides
-// on the yearly segment as a quiet tag, using Premium's figure — the plan the
+// on the yearly segment as a quiet tag, using Pro's figure — the plan the
 // ladder steers toward.
 function BillingToggle({
   value,
@@ -248,7 +259,7 @@ function BillingToggle({
     {
       value: "annual",
       label: t.paywall.billingAnnual,
-      tag: t.paywall.save(n(annualSavingPct("premium"))),
+      tag: t.paywall.save(n(annualSavingPct("pro"))),
     },
     { value: "monthly", label: t.paywall.billingMonthly },
   ]
@@ -344,9 +355,9 @@ function PaidCard({
       ? t.paywall.billedYearly(money(price.annual))
       : t.paywall.billedMonthly
   const line =
-    plan === "premium"
-      ? t.paywall.premiumLine(n(CYCLE_LIMIT.premium))
-      : t.paywall.proLine
+    plan === "pro"
+      ? t.paywall.proLine(n(CYCLE_LIMIT.pro))
+      : t.paywall.unlimitedLine
 
   return (
     <Squircle
@@ -382,7 +393,7 @@ function PaidCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-[15px] font-semibold">{name}</span>
-            {plan === "premium" && !current && (
+            {plan === "pro" && !current && (
               <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold">
                 {t.paywall.bestValue}
               </span>
@@ -390,6 +401,10 @@ function PaidCard({
             {current && <CurrentTag />}
           </div>
           <div className="text-[13px] text-muted-foreground">{line}</div>
+          <div className="mt-0.5 flex items-center gap-1 text-[12px] text-muted-foreground">
+            <Heart className="h-3 w-3 shrink-0" />
+            {t.paywall.supportsDev}
+          </div>
         </div>
         <div className="shrink-0 text-right">
           <div className="text-[15px] font-bold tabular-nums">

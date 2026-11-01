@@ -9,13 +9,13 @@ import { readPaywallPreview } from "@/screens/paywall/preview"
 
 describe("plan arithmetic", () => {
   it("shows annual prices per month rounded down to the cent", () => {
-    expect(perMonth(PRICE_USD.premium.annual)).toBe(2.49)
-    expect(perMonth(PRICE_USD.pro.annual)).toBe(6.66)
+    expect(perMonth(PRICE_USD.pro.annual)).toBe(2.49)
+    expect(perMonth(PRICE_USD.unlimited.annual)).toBe(6.66)
   })
 
   it("never overstates the annual saving", () => {
-    expect(annualSavingPct("premium")).toBe(37)
-    expect(annualSavingPct("pro")).toBe(33)
+    expect(annualSavingPct("pro")).toBe(37)
+    expect(annualSavingPct("unlimited")).toBe(33)
   })
 
   it("clamps what's left at zero", () => {
@@ -24,7 +24,7 @@ describe("plan arithmetic", () => {
       limit: 10,
       remaining: 0,
     })
-    expect(aiCycle("premium", 188, resetsOn).remaining).toBe(812)
+    expect(aiCycle("pro", 188, resetsOn).remaining).toBe(812)
   })
 })
 
@@ -49,8 +49,8 @@ describe("readPaywallPreview", () => {
 
   it("reads plan, usage and the notice switch", () => {
     expect(
-      readPaywallPreview("?paywall&plan=premium&used=all", today)?.cycle
-    ).toMatchObject({ plan: "premium", used: 1000, remaining: 0 })
+      readPaywallPreview("?paywall&plan=pro&used=all", today)?.cycle
+    ).toMatchObject({ plan: "pro", used: 1000, remaining: 0 })
     expect(readPaywallPreview("?paywall&used=99", today)?.cycle.used).toBe(10)
     expect(readPaywallPreview("?paywall=notice", today)?.showNotice).toBe(true)
   })

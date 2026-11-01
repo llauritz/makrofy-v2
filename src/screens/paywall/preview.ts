@@ -6,8 +6,8 @@ import { aiCycle, CYCLE_LIMIT, type AiCycle, type Plan } from "@/data/plans"
 // cycle read from the URL, and every paywall surface stays dark without it:
 //
 //   ?paywall                  free plan, 7 of 10 tries used
-//   ?paywall&plan=premium     Premium, 188 of 1,000 used
-//   ?paywall&plan=pro         Pro
+//   ?paywall&plan=pro     Pro, 188 of 1,000 used
+//   ?paywall&plan=unlimited         Unlimited
 //   ?paywall&used=all         any plan, exhausted (the next ✨ shows the refusal)
 //   ?paywall&used=3           any count, clamped to the plan's limit
 //   ?paywall=notice           also opens the one-time "plans are here" notice
@@ -15,7 +15,7 @@ import { aiCycle, CYCLE_LIMIT, type AiCycle, type Plan } from "@/data/plans"
 // When #63/#64 land, this module is replaced by the real `onSnapshot` cycle
 // and the surfaces keep their props.
 
-const DEFAULT_USED: Record<Plan, number> = { free: 7, premium: 188, pro: 230 }
+const DEFAULT_USED: Record<Plan, number> = { free: 7, pro: 188, unlimited: 230 }
 
 /** What the prototype URL asks for, or null when the paywall is switched off. */
 export type PaywallPreview = { cycle: AiCycle; showNotice: boolean }
@@ -29,7 +29,7 @@ export function readPaywallPreview(
 
   const planParam = params.get("plan")
   const plan: Plan =
-    planParam === "premium" || planParam === "pro" ? planParam : "free"
+    planParam === "pro" || planParam === "unlimited" ? planParam : "free"
   const usedParam = params.get("used")
   const asked = usedParam === "all" ? CYCLE_LIMIT[plan] : Number(usedParam)
   const used =

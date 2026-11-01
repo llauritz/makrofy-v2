@@ -20,6 +20,7 @@ import {
 import { useLongPress } from "@/lib/useLongPress"
 import { useOnline } from "@/lib/useOnline"
 import { ProductDetail } from "@/screens/glossary/ProductDetail"
+import { UsageLine, UsageNote } from "@/screens/paywall/UsageMeter"
 import { AiZone } from "./AiZone"
 import { FadeSwap } from "./FadeSwap"
 import { SPRING } from "./anim"
@@ -238,7 +239,7 @@ export function AddCard({
     // shadow moves to the wrapper as a drop-shadow, which traces the clipped
     // silhouette.
     <div className="mx-4 mt-1 drop-shadow-[0_1px_2px_rgba(43,32,21,0.05)]">
-      <Squircle radius="3xl" outline="solid" className="bg-card p-3">
+      <Squircle radius="3xl" outline="solid" className="relative bg-card p-3">
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <Squircle asChild pill>
@@ -346,6 +347,11 @@ export function AddCard({
           onAnswer={answerQuestion}
           onDismiss={clearAi}
         />
+        <UsageNote
+          zoneActive={zoneState.kind !== "empty"}
+          refusalShowing={zoneState.kind === "hint" && !!zoneState.upgrade}
+        />
+        <UsageLine />
       </Squircle>
     </div>
   )
