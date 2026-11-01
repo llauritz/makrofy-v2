@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 
 import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
+import { AppIcon } from "@/pwa/AppIcon"
 import { showInstallCard } from "@/pwa/install"
 import {
   readInstallCardDismissed,
@@ -78,22 +79,7 @@ export function InstallCard() {
                 outline="solid"
                 className="flex items-center gap-2 bg-card py-3 pr-2 pl-4"
               >
-                {/* The app icon as it sits on a home screen: a hairline edge
-                    and a soft shadow. The image is the squircle's own
-                    background, not an <img> inside it — a replaced element
-                    is snapped to device pixels while the clip is not, which
-                    left slivers in the corners. The shadow hangs on the
-                    wrapper as a drop-shadow, since the clip would erase a
-                    box-shadow. */}
-                <div className="mr-1 shrink-0 drop-shadow-[0_1px_2px_rgba(43,32,21,0.18)] dark:drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-                  <Squircle
-                    radius={9}
-                    outline="solid"
-                    outlineClassName="text-black/10 dark:text-white/15"
-                    aria-hidden
-                    className="h-9 w-9 bg-[url(/icons/icon-192.png)] bg-cover bg-center bg-origin-border"
-                  />
-                </div>
+                <AppIcon shadow className="mr-1" />
                 <div className="min-w-0 flex-1">
                   {/* One line each, always: a long translation is cut with
                       an ellipsis rather than growing the card. */}

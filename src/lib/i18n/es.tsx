@@ -182,9 +182,6 @@ export const es: Dictionary = {
   },
 
   install: {
-    installApp: "Instalar app",
-    howTo: "Cómo",
-    addToHomeScreen: "Añadir a inicio",
     iosTitle: "Instala Yaffle",
     iosBody:
       "Añade Yaffle a tu pantalla de inicio para una app a pantalla completa y lista sin conexión.",

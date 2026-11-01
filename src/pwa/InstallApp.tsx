@@ -1,4 +1,4 @@
-import { Check, Download, Share, SquarePlus } from "lucide-react"
+import { Check, Share, SquarePlus } from "lucide-react"
 import * as React from "react"
 
 import {
@@ -11,6 +11,7 @@ import {
 import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 
+import { AppIcon } from "./AppIcon"
 import { useInstallPrompt } from "./useInstallPrompt"
 
 // The quiet "Install app" entry in Settings (spec § PWA & offline). It only
@@ -34,23 +35,35 @@ export function InstallAppEntry() {
     }
   }
 
+  // Laid out like the main screen's install card: icon, title over a short
+  // explanation, and the action as an outlined pill. The whole row is the
+  // button, so the pill is drawn, not nested.
   return (
     <>
       <Squircle asChild radius="2xl">
         <button
           type="button"
           onClick={onClick}
-          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
+          className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted"
         >
-          <Download className="h-[18px] w-[18px] text-muted-foreground" />
-          <span className="flex-1 text-[15px] font-medium">
-            {t.install.installApp}
+          <AppIcon className="mr-1" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] leading-[18px] font-semibold">
+              {t.install.cardTitle}
+            </span>
+            <span className="block truncate text-[12px] leading-[15px] text-muted-foreground">
+              {t.install.cardBody}
+            </span>
           </span>
-          <span className="text-[13px] text-muted-foreground">
+          <Squircle
+            pill
+            outline="solid"
+            className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium"
+          >
             {affordance === "ios-guide"
-              ? t.install.howTo
-              : t.install.addToHomeScreen}
-          </span>
+              ? t.install.cardShowHow
+              : t.install.cardInstall}
+          </Squircle>
         </button>
       </Squircle>
 

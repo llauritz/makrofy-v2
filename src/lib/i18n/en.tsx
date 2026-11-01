@@ -210,9 +210,6 @@ export const en = {
   },
 
   install: {
-    installApp: "Install app",
-    howTo: "How to",
-    addToHomeScreen: "Add to home screen",
     iosTitle: "Install Yaffle",
     iosBody:
       "Add Yaffle to your home screen for a full-screen, offline-ready app.",

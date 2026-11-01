@@ -22,10 +22,12 @@ function detectTouch(): boolean {
   return window.matchMedia?.("(pointer: coarse)").matches ?? false
 }
 
-// Dev only: ?install=android|ios fakes the environment, so both cards can be
-// seen and screenshotted on a desktop browser.
+// ?install=android|ios fakes the environment, so both cards can be seen on a
+// desktop browser or an already-installed phone. Dev server and PR preview
+// channels only (goyaffle--pr110-….web.app), never on the live site.
 function devOverride(): "android" | "ios" | null {
-  if (!import.meta.env.DEV) return null
+  const preview = /--pr\d+-/.test(window.location.hostname)
+  if (!import.meta.env.DEV && !preview) return null
   const v = new URLSearchParams(window.location.search).get("install")
   return v === "android" || v === "ios" ? v : null
 }
