@@ -61,6 +61,15 @@ keytool -genkeypair -v -keystore upload.jks -alias upload \
 `versionCode` is the release workflow's run number, so each run can be
 uploaded to Play; `versionName` is `package.json`'s `version`.
 
+## Health Connect before a Play release
+
+Health Connect access is reviewed by Google. Before the first release that
+includes it (and whenever its data types change), fill in the Play Console
+health apps declaration, Data safety form and privacy policy link as listed in
+[ADR 0014's release checklist](adr/0014-health-connect-one-way-mirror.md#release-checklist-play-console).
+On a debug APK it works without any of that: switch the toggles on in
+Settings and allow access in Health Connect's own screen.
+
 ## Building locally (optional)
 
 With JDK 21 and the Android SDK installed (`ANDROID_HOME` set):

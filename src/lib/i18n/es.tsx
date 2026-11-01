@@ -21,6 +21,7 @@ export const es: Dictionary = {
   units: {
     kcal: "kcal",
     g: "g",
+    kg: "kg",
   },
 
   common: {
@@ -104,6 +105,10 @@ export const es: Dictionary = {
     chartValueToday: (kcal) => `${kcal} hasta ahora hoy`,
     macroShareRow: (p, f, c) =>
       `proteína ${p}%, grasa ${f}%, carbohidratos ${c}%`,
+    weight: "Peso",
+    weightChange: (kg) => `${kg} kg en 30 días`,
+    weightLatest: (day) => `último pesaje ${day}`,
+    weightEmpty: "aún no hay pesajes en Health Connect",
     dotIn: "en rango",
     dotOut: "fuera de rango",
   },
@@ -172,6 +177,19 @@ export const es: Dictionary = {
     terms: "Términos",
     privacy: "Privacidad",
     refunds: "Reembolsos",
+  },
+
+  healthConnect: {
+    title: "Health Connect",
+    sendFood: "Enviar comidas a Health Connect",
+    sendFoodSub: "Calorías y macros de las entradas nuevas",
+    showWeight: "Mostrar el peso de Health Connect",
+    showWeightSub: "Tus pesajes aparecen en Estadísticas",
+    manageAccess: "Gestionar acceso",
+    install: "Instalar Health Connect",
+    installSub: "Necesario para compartir comidas y peso con otras apps",
+    denied: "Permiso no concedido. Puedes permitirlo en Health Connect.",
+    revoked: "Se quitó el acceso en Health Connect, así que se desactivó.",
   },
 
   signIn: {

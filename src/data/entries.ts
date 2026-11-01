@@ -216,6 +216,25 @@ export function listenToAllEntries(
 }
 
 /**
+ * Observe the full Entry history along with whether the snapshot is
+ * server-confirmed — the Health Connect sync's feed (ADR 0014), which must
+ * never read an Entry missing from a cache-only snapshot as deleted.
+ * Metadata changes are included so the cache→server hop is seen even when no
+ * document changed on the way.
+ */
+export function listenToAllEntriesConfirmed(
+  db: Firestore,
+  uid: string,
+  onChange: (entries: Entry[], fromCache: boolean) => void,
+): Unsubscribe {
+  return onSnapshot(
+    entriesCollection(db, uid),
+    { includeMetadataChanges: true },
+    (snap) => onChange(toEntries(snap), snap.metadata.fromCache),
+  )
+}
+
+/**
  * Watch a profile's sync health, the header indicator's live feed (spec § PWA &
  * offline). The entries collection stands in for the whole connection:
  * `fromCache` flips true whenever the client can't reach the server, and

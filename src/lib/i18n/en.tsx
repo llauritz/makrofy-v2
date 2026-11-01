@@ -35,6 +35,7 @@ export const en = {
   units: {
     kcal: "kcal",
     g: "g",
+    kg: "kg",
   },
 
   common: {
@@ -128,6 +129,10 @@ export const en = {
     chartValueToday: (kcal: string) => `${kcal} so far today`,
     macroShareRow: (p: string, f: string, c: string) =>
       `protein ${p}%, fat ${f}%, carbs ${c}%`,
+    weight: "Weight",
+    weightChange: (kg: string) => `${kg} kg in 30 days`,
+    weightLatest: (day: string) => `last weigh-in ${day}`,
+    weightEmpty: "no weigh-ins in Health Connect yet",
     dotIn: "in range",
     dotOut: "out of range",
   },
@@ -201,6 +206,20 @@ export const en = {
     terms: "Terms",
     privacy: "Privacy",
     refunds: "Refunds",
+  },
+
+  healthConnect: {
+    // Brand name, a proper noun (not translated).
+    title: "Health Connect",
+    sendFood: "Send food to Health Connect",
+    sendFoodSub: "Calories and macros of new entries",
+    showWeight: "Show weight from Health Connect",
+    showWeightSub: "Your weigh-ins appear in Statistics",
+    manageAccess: "Manage access",
+    install: "Install Health Connect",
+    installSub: "Needed to share food and weight with other apps",
+    denied: "Permission not given. You can allow it in Health Connect.",
+    revoked: "Access was removed in Health Connect, so this was turned off.",
   },
 
   signIn: {

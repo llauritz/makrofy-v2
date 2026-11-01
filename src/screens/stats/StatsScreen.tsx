@@ -4,6 +4,7 @@ import { motion } from "motion/react"
 
 import { Squircle } from "@/components/ui/squircle"
 import type { Entry } from "@/data/entries"
+import { useHealthWeight } from "@/data/health-connect"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import {
   useAllEntries,
@@ -11,7 +12,7 @@ import {
   useGoal,
   useIdentity,
 } from "@/data/hooks"
-import { localDay, stepDay } from "@/lib/day"
+import { localDay, shortDayLabel, stepDay } from "@/lib/day"
 import { useI18n } from "@/lib/i18n/useI18n"
 import {
   rangeBounds,
@@ -20,6 +21,7 @@ import {
   weekMacroShare,
   weekSummary,
 } from "@/lib/stats"
+import { roundKg, weightSummary } from "@/lib/weight"
 import { FADE_IN } from "@/screens/main/anim"
 import { MACROS } from "@/screens/main/macros"
 import {
@@ -163,6 +165,8 @@ function Dashboard({
           )}
         </div>
 
+        <WeightTile today={today} />
+
         <Section title={t.stats.trend} sub={t.stats.last30Days}>
           <TrendLine
             days={days.slice(-TREND_DAYS)}
@@ -221,6 +225,46 @@ function Dashboard({
         </Squircle>
       </div>
     </ScreenChrome>
+  )
+}
+
+/**
+ * Weight from Health Connect (ADR 0014), Android only and only while "Show
+ * weight" is on in Settings — otherwise nothing renders. The latest weigh-in,
+ * its change over the last 30 days, and a daily sparkline of that window.
+ */
+function WeightTile({ today }: { today: string }) {
+  const { t, n, language } = useI18n()
+  const samples = useHealthWeight()
+  if (samples === null) return null
+
+  const summary = weightSummary(samples, today)
+  if (summary === null) {
+    return (
+      <StatTile
+        label={t.stats.weight}
+        value="—"
+        note={t.stats.weightEmpty}
+        dashed
+      />
+    )
+  }
+  const change = summary.change === null ? null : roundKg(summary.change)
+  const latestDay = localDay(new Date(summary.latest.timeMs))
+  return (
+    <StatTile
+      label={t.stats.weight}
+      value={n(roundKg(summary.latest.kg))}
+      unit={t.units.kg}
+      note={
+        change === null
+          ? t.stats.weightLatest(shortDayLabel(latestDay, new Date(), language))
+          : t.stats.weightChange((change > 0 ? "+" : "") + n(change))
+      }
+      // Weigh-ins are sparse (not every Day has one), so the line joins them
+      // in order rather than breaking at every gap the way calorie days do.
+      spark={<Sparkline values={summary.daily.filter((kg) => kg !== null)} />}
+    />
   )
 }
 
