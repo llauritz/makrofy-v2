@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, Sparkles, Trash2, X } from "lucide-react"
+import { Check, Trash2, X } from "lucide-react"
 import { motion } from "motion/react"
 
 import type { Entry, EntryEdit } from "@/data/entries"
@@ -27,6 +27,7 @@ import {
   useAiFill,
   useFormFlags,
 } from "./useAiFill"
+import { AiSparkle } from "@/components/AiSparkle"
 import { Squircle } from "@/components/ui/squircle"
 
 // The inline editor an Entry row fade-throughs to on tap. Chrome-less: the
@@ -169,15 +170,16 @@ export function EntryEditor({
               whileTap={{ scale: 0.9 }}
               aria-label={t.addCard.fillWithAi}
               className={
-                "flex h-7 w-7 items-center justify-center rounded-full transition-opacity disabled:opacity-40" +
+                "flex h-7 w-7 items-center justify-center rounded-full transition-opacity" +
+                // The spinning star is the wait itself, so it keeps full strength
+                // while the button is disabled for the round trip.
+                (ai.thinking ? "" : " disabled:opacity-40") +
                 // Offline the button dims in place but stays tappable — the
                 // tap answers with the quiet connection note in the zone.
                 (online ? "" : " opacity-40")
               }
             >
-              <Sparkles
-                className={"h-4 w-4" + (ai.thinking ? " animate-pulse" : "")}
-              />
+              <AiSparkle spinning={ai.thinking} className="h-[18px] w-[18px]" />
             </motion.button>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import * as React from "react"
-import { Plus, Sparkles } from "lucide-react"
+import { Plus } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
+import { AiSparkle } from "@/components/AiSparkle"
 import { Squircle } from "@/components/ui/squircle"
 import type { EntrySource } from "@/data/entries"
 import { useProductCuration } from "@/data/useProductCuration"
@@ -260,15 +261,16 @@ export function AddCard({
                 whileTap={{ scale: 0.9 }}
                 aria-label={t.addCard.fillWithAi}
                 className={
-                  "flex h-7 w-7 items-center justify-center rounded-full transition-opacity disabled:opacity-40" +
+                  "flex h-7 w-7 items-center justify-center rounded-full transition-opacity" +
+                  // The spinning star is the wait itself, so it keeps full strength
+                  // while the button is disabled for the round trip.
+                  (thinking ? "" : " disabled:opacity-40") +
                   // Offline the button dims in place but stays tappable — the
                   // tap answers with the quiet connection note in the zone.
                   (online ? "" : " opacity-40")
                 }
               >
-                <Sparkles
-                  className={"h-4 w-4" + (thinking ? " animate-pulse" : "")}
-                />
+                <AiSparkle spinning={thinking} className="h-[18px] w-[18px]" />
               </motion.button>
             </div>
           </div>

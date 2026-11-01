@@ -1,5 +1,4 @@
-import { Sparkles } from "lucide-react"
-
+import { AiSparkle } from "@/components/AiSparkle"
 import { Button } from "@/components/ui/button"
 import { Squircle } from "@/components/ui/squircle"
 import { formatShortDate } from "@/lib/i18n"
@@ -35,7 +34,7 @@ export function PlanSetting({ onOpen }: { onOpen: () => void }) {
   return (
     <Squircle radius="2xl" className="flex items-center gap-3 px-4 py-3">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
-        <Sparkles className="h-[18px] w-[18px]" />
+        <AiSparkle className="h-[18px] w-[18px]" />
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-medium">{name}</div>
