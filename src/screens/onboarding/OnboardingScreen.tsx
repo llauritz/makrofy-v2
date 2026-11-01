@@ -121,12 +121,14 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         {t.onboarding.headline}
       </h1>
 
-      {/* The real add card, filled and inert; -mx-4 cancels the card's own
-          mx-4 so its edges line up with the copy. */}
+      {/* The real add card, filled and inert. -mx-7 cancels the page's px-7,
+          so the card keeps its own mx-4 inset from the screen edge, as on
+          the main screen: its fields line up with the copy and its 12 px
+          padding hangs out past it. */}
       <div
         role="img"
         aria-label={t.onboarding.exampleAria}
-        className="-mx-4 mt-7"
+        className="-mx-7 mt-7"
       >
         <AddCard
           onAdd={() => {}}
