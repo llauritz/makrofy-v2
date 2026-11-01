@@ -188,21 +188,23 @@ export function MainScreen({
           />
           <div className="flex-1" />
         </div>
-        <div className="sticky bottom-0 px-3 pb-3">
+        <div className="sticky bottom-(--dock-inset) px-3 pb-3">
           <AnimatePresence initial={false}>
             {pending && <UndoSnackbar key="undo" onUndo={undo} />}
           </AnimatePresence>
           <MorningStrip uid={uid} goalKcal={goalKcal} />
           {/* Logged rows slide behind the card, never out below it: a page-
               coloured backdrop sits under the card from just below its top
-              edge down to the screen's bottom edge, side gutters included.
+              edge down to the screen's bottom edge, side gutters included
+              (in an Android browser tab that is past the dock, under the
+              navigation bar: --dock-inset).
               Its top fades in over 2rem, so rows passing the card's sides
               dissolve instead of meeting a hard line. It is a static layer
               (no animation, no scroll listener), so nothing can flicker. */}
           <div className="relative isolate">
             <div
               aria-hidden
-              className="pointer-events-none absolute -inset-x-3 top-4 -bottom-3 -z-10 bg-[linear-gradient(to_bottom,transparent,var(--background)_2rem)]"
+              className="pointer-events-none absolute -inset-x-3 top-4 -bottom-[calc(0.75rem+var(--dock-inset))] -z-10 bg-[linear-gradient(to_bottom,transparent,var(--background)_2rem)]"
             />
             <SummaryCard
               summary={summary}

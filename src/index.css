@@ -125,6 +125,20 @@
    its authored colors in both themes. lottie-web's SVG renderer writes
    solid fills as floored rgb() attributes — #3f0f02 comes out as
    rgb(63,14,1), which is what the selector must match. */
+/* How far the sticky bottom dock (summary card, undo bars) sits above the
+   screen's bottom edge, on top of its own 0.75rem gutter. Zero everywhere
+   except an Android browser tab, where Chrome draws the page under the
+   gesture/navigation bar and reports that bar as the safe-area inset (the
+   class is set before first paint in index.html). It feeds the sticky
+   `bottom` offset, not padding, so it moves the dock without a re-layout. */
+:root {
+    --dock-inset: 0px;
+}
+
+.android-browser {
+    --dock-inset: env(safe-area-inset-bottom, 0px);
+}
+
 .dark .wordmark-anim svg path[fill="rgb(63,14,1)"] {
     fill: var(--foreground);
 }

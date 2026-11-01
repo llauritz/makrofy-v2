@@ -31,6 +31,19 @@
     })()
   </script>
 
+  <!-- Since Chrome 135, Android's browser draws a viewport-fit=cover page
+       edge-to-edge: the page runs on under the gesture/navigation bar, and
+       env(safe-area-inset-bottom) reports that bar's height. The installed
+       app and iOS keep their current layout, so only the Android browser
+       tab lifts the bottom dock by the inset (--dock-inset, index.css). -->
+  <script>
+    try {
+      if (/Android/i.test(navigator.userAgent) && matchMedia("(display-mode: browser)").matches) {
+        document.documentElement.classList.add("android-browser")
+      }
+    } catch (e) {}
+  </script>
+
   <!-- Warm up DNS+TLS to Firebase while the JS parses: the launch paints from
        the boot mirror (#69), but auth's background accounts:lookup and the
        Firestore streams follow immediately — on mobile the handshakes are a
