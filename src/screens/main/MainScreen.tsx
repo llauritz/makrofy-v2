@@ -35,6 +35,7 @@ import { DaySyncSpinner } from "./DaySyncSpinner"
 import { EntryList } from "./EntryList"
 import type { EntryDraft } from "./fields"
 import { Header } from "./Header"
+import { InstallCard } from "./InstallCard"
 import { MorningStrip } from "./MorningStrip"
 import { SummaryCard } from "./SummaryCard"
 import { summarize } from "./summary"
@@ -192,6 +193,7 @@ export function MainScreen({
           <AnimatePresence initial={false}>
             {pending && <UndoSnackbar key="undo" onUndo={undo} />}
           </AnimatePresence>
+          <InstallCard />
           <MorningStrip uid={uid} goalKcal={goalKcal} />
           {/* Logged rows slide behind the card, never out below it: a page-
               coloured backdrop sits under the card from just below its top

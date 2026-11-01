@@ -190,20 +190,30 @@ export const es: Dictionary = {
       "Añade Yaffle a tu pantalla de inicio para una app a pantalla completa y lista sin conexión.",
     iosStep1: (
       <>
-        Toca el botón{" "}
-        <span className="font-medium text-foreground">Compartir</span> en la
-        barra de herramientas de Safari.
+        Toca <span className="font-medium text-foreground">Compartir</span> en
+        la barra del navegador. En Safari con iOS 26, abre primero el menú{" "}
+        <span className="font-medium text-foreground">&middot;&middot;&middot;</span>.
       </>
     ),
     iosStep2: (
       <>
-        Elige{" "}
+        Desliza hacia abajo y elige{" "}
         <span className="font-medium text-foreground">
           Añadir a pantalla de inicio
         </span>
         .
       </>
     ),
+    iosStep3: (
+      <>
+        Toca <span className="font-medium text-foreground">Añadir</span>.
+      </>
+    ),
+    cardTitle: "Añadir a pantalla de inicio",
+    cardBody: "Se abre a pantalla completa, como una app.",
+    cardInstall: "Instalar",
+    cardShowHow: "Ver cómo",
+    cardDismiss: "Descartar",
   },
 
   backup: {

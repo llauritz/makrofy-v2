@@ -1,4 +1,4 @@
-import { Download, Share, SquarePlus } from "lucide-react"
+import { Check, Download, Share, SquarePlus } from "lucide-react"
 import * as React from "react"
 
 import {
@@ -13,11 +13,10 @@ import { useI18n } from "@/lib/i18n/useI18n"
 
 import { useInstallPrompt } from "./useInstallPrompt"
 
-// The quiet "Install app" entry (spec § PWA & offline): no banners, no nudges.
-// It only renders where it can act — a captured native prompt on Chromium, or
-// the Add-to-Home-Screen guide on iOS — and disappears once installed.
-//
-// Belongs in Settings; #17 builds that surface and re-homes this component.
+// The quiet "Install app" entry in Settings (spec § PWA & offline). It only
+// renders where it can act — a captured native prompt on Chromium, or the
+// Add-to-Home-Screen guide on iOS — and disappears once installed. The main
+// screen's InstallCard offers the same once, on phones.
 export function InstallAppEntry() {
   const { t } = useI18n()
   const { affordance, promptInstall } = useInstallPrompt()
@@ -60,9 +59,9 @@ export function InstallAppEntry() {
   )
 }
 
-// A short instruction sheet for iOS Safari, which never fires
-// `beforeinstallprompt` — the user installs via the Share menu by hand.
-function IosInstallGuide({
+// A short instruction sheet for iOS, which never fires `beforeinstallprompt`:
+// the user installs via the Share menu by hand. Shared with InstallCard.
+export function IosInstallGuide({
   open,
   onOpenChange,
 }: {
@@ -91,6 +90,9 @@ function IosInstallGuide({
           <IosStep icon={<SquarePlus className="h-5 w-5" />} n={2}>
             {t.install.iosStep2}
           </IosStep>
+          <IosStep icon={<Check className="h-5 w-5" />} n={3}>
+            {t.install.iosStep3}
+          </IosStep>
         </ol>
       </BottomSheetContent>
     </BottomSheet>
@@ -108,9 +110,12 @@ function IosStep({
 }) {
   return (
     <li className="flex items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-foreground">
+      <Squircle
+        radius="lg"
+        className="flex h-10 w-10 shrink-0 items-center justify-center bg-secondary text-foreground"
+      >
         {icon}
-      </span>
+      </Squircle>
       <span className="text-[15px]">
         <span className="text-muted-foreground">{n}. </span>
         {children}

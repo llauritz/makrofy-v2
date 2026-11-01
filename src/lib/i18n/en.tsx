@@ -218,16 +218,28 @@ export const en = {
       "Add Yaffle to your home screen for a full-screen, offline-ready app.",
     iosStep1: (
       <>
-        Tap the <span className="font-medium text-foreground">Share</span>{" "}
-        button in Safari&rsquo;s toolbar.
+        Tap <span className="font-medium text-foreground">Share</span> in the
+        browser&rsquo;s toolbar. In Safari on iOS 26, open the{" "}
+        <span className="font-medium text-foreground">&middot;&middot;&middot;</span>{" "}
+        menu first.
       </>
     ),
     iosStep2: (
       <>
-        Choose{" "}
+        Scroll down and choose{" "}
         <span className="font-medium text-foreground">Add to Home Screen</span>.
       </>
     ),
+    iosStep3: (
+      <>
+        Tap <span className="font-medium text-foreground">Add</span>.
+      </>
+    ),
+    cardTitle: "Add to home screen",
+    cardBody: "It then opens full screen, like a regular app.",
+    cardInstall: "Install",
+    cardShowHow: "Show how",
+    cardDismiss: "Dismiss",
   },
 
   backup: {

@@ -105,7 +105,7 @@ Normative: [#7](https://github.com/llauritz/makrofy-v2/issues/7); screenshots `d
 
 Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10).
 
-- **Install**: quiet "Install app" settings entry (`beforeinstallprompt` native prompt on Chromium; iOS instruction sheet). No banners.
+- **Install**: quiet "Install app" settings entry (`beforeinstallprompt` native prompt on Chromium; iOS instruction sheet). On phones and tablets, a browser visit also shows one small dismissible card above the summary card ("Add Yaffle to your home screen"), never once installed; ✕ or an answer in the browser's install dialog hides it for good on that device.
 - **Icon**: Fraunces "M", ink on flour — standard, maskable, monochrome, apple-touch. Android splash from manifest `background_color: #f6f1e6`; per-mode `theme-color` `#f6f1e6`/`#17110c`; `display: standalone`.
 - **Cloud sync button** (header, left of the gear): signed out, a crossed-out cloud with a faint outlined "Sync data" text button on its left (or "Log in again" once a Google session lapsed without a sign-out); the text button goes straight to Google sign-in. Once the user has tapped it, or opened Settings, without signing in, the crossed-out cloud stands alone, bare on the background (no pill), and opens Settings. Signed in, the header shows nothing while synced or uploading; only a real offline stretch (after the sync settle) brings back the crossed-out cloud.
 - **Sync settle**: the cloud's sync state (fed by snapshot metadata) only counts once it lasts: offline-pending and auth trouble after ~1 s; pending while the browser reports a connection only after 10 s, so a slow launch or write ack never flashes anything.
