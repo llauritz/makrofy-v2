@@ -6,7 +6,7 @@
 // The plugin is imported lazily, so the web bundle's first paint never waits on
 // it and nothing native runs before the app has rendered (plan § instant launch).
 
-import { Capacitor, type PluginListenerHandle } from "@capacitor/core"
+import type { PluginListenerHandle } from "@capacitor/core"
 import type { LocalNotificationsPlugin } from "@capacitor/local-notifications"
 
 import type { MealType } from "@/data/entries"
@@ -16,13 +16,16 @@ import {
   type PlannedReminder,
 } from "@/lib/reminders"
 
+import { isNativeApp } from "./platform"
+
 /** Android notification channel the reminders post on. */
 const CHANNEL_ID = "reminders"
 /** Marks our notifications in `extra`, so a tap is recognised as a reminder. */
 const KIND = "yaffle-reminder"
 
+/** Reminders exist only inside the Android app (ADR 0012's shell). */
 export function remindersAvailable(): boolean {
-  return Capacitor.getPlatform() === "android"
+  return isNativeApp()
 }
 
 let plugin: Promise<LocalNotificationsPlugin> | null = null
