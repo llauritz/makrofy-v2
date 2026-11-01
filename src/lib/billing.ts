@@ -54,6 +54,10 @@ export interface CheckoutRequest {
   email: string | null
   language: string
   dark: boolean
+  /** Paddle's overlay has drawn and can take taps. */
+  onLoaded?: () => void
+  /** The overlay could not open (a bad price, Paddle down). */
+  onError?: () => void
   /** Paddle took the payment; the plan arrives on the listener shortly. */
   onCompleted?: () => void
 }
@@ -62,7 +66,9 @@ export interface CheckoutRequest {
 export async function openCheckout(req: CheckoutRequest): Promise<void> {
   const instance = await loadPaddle()
   onCheckoutEvent = (event) => {
-    if (event.name === "checkout.completed") req.onCompleted?.()
+    if (event.name === "checkout.loaded") req.onLoaded?.()
+    else if (event.name === "checkout.error") req.onError?.()
+    else if (event.name === "checkout.completed") req.onCompleted?.()
   }
   instance.Checkout.open({
     items: [{ priceId: PADDLE.prices[req.plan][req.billing], quantity: 1 }],

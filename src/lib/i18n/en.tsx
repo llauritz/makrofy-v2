@@ -385,13 +385,13 @@ export const en = {
     bestValue: "Best value",
     currentPlan: "Your plan",
     perMonth: (price: string) => `${price}/mo`,
-    billedYearly: (price: string) => `${price} billed yearly`,
+    perYear: (price: string) => `${price}/yr`,
     billedMonthly: "billed monthly",
     continueWith: (plan: string) => `Continue with ${plan}`,
     checkoutStub: "Checkout isn’t set up yet.",
     // Checkout, plan change or the Paddle portal didn't open.
     billingError: "That didn’t work. Check your connection and try again.",
-    footnote: "Cancel anytime",
+    footnote: "Includes tax · Cancel anytime",
     // The free counter under the add card's macros, after an AI use.
     usageMeter: (used: string, limit: string) =>
       `${used}/${limit} free AI fills used`,
