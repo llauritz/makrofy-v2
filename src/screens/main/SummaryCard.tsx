@@ -123,10 +123,13 @@ export function SummaryCard({
                 {MACROS.map((m, i) => (
                   <span key={m.key} className="flex items-center">
                     {i > 0 && <span className="h-3 w-px bg-border" />}
-                    <span className="flex items-center gap-1 px-2.5">
-                      <span aria-hidden className="flex">
-                        <MacroLetter macro={m} className="text-[13px]" />
-                      </span>
+                    <span className="flex items-baseline gap-1 px-2.5">
+                      <MacroLetter
+                        macro={m}
+                        withGrams
+                        className="text-[15px]"
+                        aria-hidden
+                      />
                       <span className="sr-only">{t.macros[m.field]}</span>
                       <span className="font-medium">
                         {n(Math.round(summary.totals[m.field]))}

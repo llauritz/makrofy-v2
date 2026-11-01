@@ -436,10 +436,10 @@ function BasisMacroChips({ value }: { value: GlossaryRate }) {
       {chips.map((m) => (
         <Squircle asChild pill key={m.key}>
           <span
-            className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
+            className="flex items-baseline gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
             style={{ backgroundColor: macroTint(m.mark, 13) }}
           >
-            <MacroLetter macro={m} className="text-[12px]" />
+            <MacroLetter macro={m} withGrams className="text-[13px]" />
             {n(value[m.field] ?? 0)}
             {t.units.g}
           </span>

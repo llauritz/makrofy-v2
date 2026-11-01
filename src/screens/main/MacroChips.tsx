@@ -12,8 +12,8 @@ import { Squircle } from "@/components/ui/squircle"
 type ChipSize = "sm" | "md"
 
 const SIZE: Record<ChipSize, { row: string; chip: string; letter: string }> = {
-  md: { row: "mt-1.5", chip: "px-2 py-0.5 text-[11px]", letter: "text-[13px]" },
-  sm: { row: "mt-1", chip: "px-1.5 py-0.5 text-[10px]", letter: "text-[12px]" },
+  md: { row: "mt-1.5", chip: "px-2 py-0.5 text-[11px]", letter: "text-[14px]" },
+  sm: { row: "mt-1", chip: "px-1.5 py-0.5 text-[10px]", letter: "text-[13px]" },
 }
 
 export function MacroChips({
@@ -32,10 +32,10 @@ export function MacroChips({
       {chips.map((m) => (
         <Squircle asChild pill key={m.key}>
           <span
-            className={`flex items-center gap-1 rounded-full font-medium tabular-nums ${s.chip}`}
+            className={`flex items-baseline gap-1 rounded-full font-medium tabular-nums ${s.chip}`}
             style={{ backgroundColor: macroTint(m.mark, 13) }}
           >
-            <MacroLetter macro={m} className={s.letter} />
+            <MacroLetter macro={m} withGrams className={s.letter} />
             {n(nutrients[m.field] ?? 0)}
             {t.units.g}
           </span>
