@@ -44,7 +44,10 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
           />
         </g>
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      {/* The box is centred to the pixel, but the bold number carries nearly
+          all the ink, so the pair reads high. Dropping it 3px splits the
+          difference between the box centre and the ink's centre of mass. */}
+      <div className="absolute inset-0 flex translate-y-[3px] flex-col items-center justify-center">
         <div className="text-xl leading-none font-bold">
           {n(summary.consumed)}
         </div>
