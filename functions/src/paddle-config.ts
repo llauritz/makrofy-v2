@@ -20,8 +20,14 @@ export const PADDLE = {
   clientToken: "",
   /** Catalog → Products → each price's `pri_…` ID. */
   prices: {
-    pro: { monthly: "", annual: "" },
-    unlimited: { monthly: "", annual: "" },
+    pro: {
+      monthly: "pri_01m6ceh25d7h9bp0jt8xcgpgps",
+      annual: "pri_01m6cejvkeejbjbk6gp2df7h5e",
+    },
+    unlimited: {
+      monthly: "pri_01m6cempnar24g4q89fn84d4yc",
+      annual: "pri_01m6cenng71r8m8ecshy3mwrce",
+    },
   } satisfies Record<PaidPlan, Record<Billing, string>>,
 }
 
@@ -29,7 +35,9 @@ export const PADDLE = {
 export function paddleConfigured(): boolean {
   return (
     PADDLE.clientToken !== "" &&
-    Object.values(PADDLE.prices).every((p) => p.monthly !== "" && p.annual !== "")
+    Object.values(PADDLE.prices).every(
+      (p) => p.monthly !== "" && p.annual !== ""
+    )
   )
 }
 
