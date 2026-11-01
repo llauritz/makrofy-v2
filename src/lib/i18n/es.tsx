@@ -233,7 +233,8 @@ export const es: Dictionary = {
     points: [
       {
         title: "Escribe lo que sabes",
-        body: "Alimento y cantidad, en cualquier unidad. Sin buscar en una base de datos.",
+        body:
+          "Alimento y cantidad, en cualquier unidad. Sin base de datos que consultar ni mantener.",
       },
       {
         title: "La IA completa el resto",

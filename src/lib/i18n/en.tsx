@@ -254,7 +254,7 @@ export const en = {
     points: [
       {
         title: "Type what you know",
-        body: "Food and amount, in any unit. No database to search.",
+        body: "Food and amount, in any unit. No database to search or maintain.",
       },
       {
         title: "AI fills in the rest",
