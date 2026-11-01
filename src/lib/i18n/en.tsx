@@ -254,11 +254,11 @@ export const en = {
     points: [
       {
         title: "Type what you know",
-        body: "Food and amount, in any unit. No database to search.",
+        body: "Food and amount, in any unit. No database to search or maintain.",
       },
       {
         title: "AI fills in the rest",
-        body: "Missing calories and macros get estimated.",
+        body: "Ask AI to look up or estimate calories and macros.",
       },
       {
         title: "Remembers your foods",

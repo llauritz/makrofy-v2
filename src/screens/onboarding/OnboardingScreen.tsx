@@ -7,9 +7,9 @@ import {
   Minus,
   PencilLine,
   Plus,
-  Sparkles,
 } from "lucide-react"
 
+import { AiSparkle } from "@/components/AiSparkle"
 import { Squircle } from "@/components/ui/squircle"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import { startGoogleSignIn } from "@/data/identity"
@@ -110,7 +110,14 @@ function PrimaryButton({
   )
 }
 
-const POINT_ICONS = [PencilLine, Sparkles, BookText] as const
+// The AI point wears the app's own AI mark, as the add card above it does:
+// solid, to match the strength of the line icons beside it, and a touch
+// smaller than them, since a filled star reads heavier than an outline.
+function AiPointIcon() {
+  return <AiSparkle solid className="h-4 w-4" />
+}
+
+const POINT_ICONS = [PencilLine, AiPointIcon, BookText] as const
 
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   const { t } = useI18n()
