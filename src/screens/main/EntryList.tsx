@@ -10,7 +10,7 @@ import { AiZone } from "./AiZone"
 import { SPRING } from "./anim"
 import { EntryEditor } from "./EntryEditor"
 import { FadeSwap } from "./FadeSwap"
-import { MacroChips } from "./MacroChips"
+import { MacroChips } from "./MacroPills"
 import { aiZoneStateOf, useAiFill } from "./useAiFill"
 
 // The day's Entries, newest first (the parent reverses log order) with the
