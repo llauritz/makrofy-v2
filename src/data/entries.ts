@@ -4,6 +4,7 @@ import {
   deleteField,
   doc,
   getDocs,
+  limit,
   onSnapshot,
   query,
   serverTimestamp,
@@ -232,6 +233,24 @@ export function listenToAllEntries(
   onChange: (entries: Entry[]) => void,
 ): Unsubscribe {
   return onSnapshot(entriesCollection(db, uid), (snap) => onChange(toEntries(snap)))
+}
+
+/** Whether a profile has logged anything, as the first-run gate sees it. */
+export type EntriesStatus = "loading" | "none" | "some"
+
+/**
+ * Observe whether the profile holds any Entry at all; one document answers it.
+ * The first-run gate (src/screens/onboarding/gate.ts) reads it so a profile
+ * that logged before onboarding existed (#35) is never sent through it.
+ */
+export function listenToHasEntries(
+  db: Firestore,
+  uid: string,
+  onChange: (hasEntries: boolean) => void,
+): Unsubscribe {
+  return onSnapshot(query(entriesCollection(db, uid), limit(1)), (snap) =>
+    onChange(!snap.empty),
+  )
 }
 
 /**

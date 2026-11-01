@@ -11,7 +11,7 @@ A one-person calorie/macro tracker. Screens:
 - **Main**: header (Fraunces wordmark, cloud sync button, settings) · Day strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
 - **Statistics dashboard** (from the stats button) with a **week report subpage**; a **morning glance strip** appears on the main screen once per morning.
 - **Food glossary** (from Settings): the browsable, alphabetical Product index and the home of all curation — correct/pin/delete Readings, merge/delete Products (#40).
-- **Onboarding**: one goal screen, prefilled, straight in.
+- **Onboarding**: a welcome screen, then a goal screen (prefilled, with an optional daily-need calculator).
 - **Settings**: goal, theme, language, sign-in, food glossary, install app, export/import.
 
 ## Stack
@@ -122,7 +122,7 @@ Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10) + `docs/resea
 
 ## Onboarding & settings
 
-One goal screen on first run, **prefilled 2000 kcal**, one tap into the app. Settings: goal edit · theme (system default, device-local) · language (device-local) · sign-in · food glossary (#40) · install app · export/import.
+First run ([#35](https://github.com/llauritz/makrofy-v2/issues/35)): a **welcome** screen (the animated wordmark, what the app does, the real add card as a read-only example, Google sign-in for returning users), then a **goal** screen **prefilled 2000 kcal** with ± steps and an optional daily-need calculator (Mifflin–St Jeor × activity, weekly paces; the inputs are never stored). Two taps into the app. The launch splash (the logo as inline SVG in index.html, so it paints before any script loads; hidden on returning launches, which paint from the boot mirror) holds until the fonts and the wordmark animation have loaded (capped at 6 s, spinner after 0.6 s), so the welcome screen appears in its final form: no font-swap reflow, no static logo before the animation. Profiles that logged Entries before onboarding existed skip it. Settings: goal edit · theme (system default, device-local) · language (device-local) · sign-in · food glossary (#40) · install app · export/import.
 
 ## Export / import
 

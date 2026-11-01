@@ -8,12 +8,15 @@ import { CloudSyncButton } from "./CloudSyncButton"
 
 // Animated wordmark (#79), the cloud sync button, settings gear. The cloud
 // invites a sign-in while signed out, then stands beside the gear as a quiet
-// status (CloudSyncButton); the gear opens Settings (owned by MainScreen).
+// status (CloudSyncButton); the gear opens Settings (owned by MainScreen),
+// and the cloud's invitation opens it onto the sign-in row.
 export function Header({
   onOpenSettings,
+  onOpenSignIn,
   syncStatus,
 }: {
   onOpenSettings: () => void
+  onOpenSignIn: () => void
   syncStatus: SyncStatus
 }) {
   const { t } = useI18n()
@@ -21,7 +24,11 @@ export function Header({
     <header className="flex items-center justify-between px-5 pt-7 pb-4">
       <AnimatedWordmark />
       <div className="flex items-center gap-1.5">
-        <CloudSyncButton status={syncStatus} onOpenSettings={onOpenSettings} />
+        <CloudSyncButton
+          status={syncStatus}
+          onOpenSettings={onOpenSettings}
+          onOpenSignIn={onOpenSignIn}
+        />
         <Squircle
           asChild
           pill

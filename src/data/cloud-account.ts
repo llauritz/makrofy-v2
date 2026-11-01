@@ -61,10 +61,10 @@ function subscribe(listener: () => void) {
 }
 
 /**
- * The user turned the current invitation down: they tapped it (and may come
- * back from Google without signing in), or opened Settings and left without
- * signing in. Called before either, so a return trip finds the cloud alone.
- * A no-op while signed in with Google.
+ * The user turned the current invitation down: they opened Settings (by the
+ * invitation itself or the gear), where sign-in lives. Called as it opens, so
+ * leaving it, or coming back from Google without signing in, finds the cloud
+ * alone. A no-op while signed in with Google.
  */
 export function dismissCloudPrompt() {
   const user = auth.currentUser

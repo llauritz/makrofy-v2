@@ -2,12 +2,19 @@ import * as React from "react"
 import { motion, MotionConfig } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
-import { useGoalStatus, useIdentity } from "@/data/hooks"
+import { Spinner } from "@/components/ui/spinner"
+import { YaffleLogo } from "@/components/ui/yaffle-logo"
+import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
+import { useEntriesStatus, useGoalStatus, useIdentity } from "@/data/hooks"
+import { db } from "@/lib/firebase"
+import { bootSplashShowing, dismissBootSplash } from "@/lib/boot-splash"
+import { useAssetsReady } from "@/lib/preload"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
 import { MainScreen } from "@/screens/main/MainScreen"
 import { resolveAppView } from "@/screens/onboarding/gate"
+import { OnboardingScreen } from "@/screens/onboarding/OnboardingScreen"
 import { PaywallProvider } from "@/screens/paywall/Paywall"
 import { StatsScreen } from "@/screens/stats/StatsScreen"
 
@@ -21,7 +28,7 @@ function useThemeParam() {
   }, [setTheme])
 }
 
-// The top-level screens the app switches between. Onboarding is parked (#35);
+// The top-level screens the app switches between once past onboarding (#35);
 // the Glossary (#40) is a full screen reached from Settings — and from the
 // stats dashboard (#22), which is itself the full screen behind the summary
 // card's stats button. Back returns to whichever screen opened the Glossary.
@@ -32,7 +39,20 @@ export function App() {
 
   const uid = useIdentity()
   const goalStatus = useGoalStatus(uid)
-  const view = resolveAppView(uid, goalStatus)
+  // Only asked while the Goal is unset: has this profile logged before?
+  const entriesStatus = useEntriesStatus(goalStatus === "unset" ? uid : null)
+  const view = resolveAppView(uid, goalStatus, entriesStatus)
+  const assetsReady = useAssetsReady()
+
+  // A profile that logged while onboarding was parked but never set a Goal
+  // gets the default written once — the figure its ring already shows — so
+  // later launches resolve from the Goal (and the boot mirror) at once
+  // instead of waiting on the Entries check.
+  const needsDefaultGoal =
+    uid !== null && goalStatus === "unset" && entriesStatus === "some"
+  React.useEffect(() => {
+    if (needsDefaultGoal && uid) setGoal(db, uid, { kcal: DEFAULT_GOAL_KCAL })
+  }, [needsDefaultGoal, uid])
   // App-level view state: which full screen is showing. The screens swap by a
   // plain conditional below — only one is mounted at a time. The Glossary
   // remembers its opener (Settings on Main, or the stats dashboard) so its
@@ -45,16 +65,38 @@ export function App() {
   }
 
   // Splash until identity and the first Goal snapshot settle, so the ring never
-  // flashes the fallback goal before the synced value arrives.
-  if (view === "loading") return <Splash />
+  // flashes the fallback goal before the synced value arrives. First run also
+  // holds it until the fonts and the wordmark animation have loaded
+  // (src/lib/preload.ts, capped), so the welcome screen appears in its final
+  // form: no font swap reflowing it, no static logo before the animation.
+  const showSplash =
+    view === "loading" || (view === "onboarding" && !assetsReady)
+  // index.html's static splash covers everything until the first real screen
+  // commits; a layout effect removes it in that same frame.
+  React.useLayoutEffect(() => {
+    if (!showSplash) dismissBootSplash()
+  }, [showSplash])
+  if (showSplash) return <Splash />
 
-  // First-run onboarding (src/screens/onboarding/OnboardingScreen.tsx) is PARKED
-  // pending a rework — see issue #35. Until then a fresh profile (view
-  // "onboarding") is treated like a returning one: straight to the main screen,
-  // where the goal is set in Settings and the ring falls back to
-  // DEFAULT_GOAL_KCAL meanwhile. Re-enable by rendering OnboardingScreen when
-  // `view === "onboarding"`.
-  //
+  // First run (#35): welcome, then goal. Writing the Goal flips the gate to
+  // "main" through the Goal listener; nothing here switches by hand.
+  if (view === "onboarding") {
+    return (
+      <MotionConfig reducedMotion="user">
+        <motion.div
+          key="onboarding"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={FADE_IN}
+        >
+          <OnboardingScreen
+            onSubmit={(kcal) => uid && setGoal(db, uid, { kcal })}
+          />
+        </motion.div>
+      </MotionConfig>
+    )
+  }
+
   // reducedMotion="user": with the OS reduce-motion setting on, movement
   // snaps and fades remain — the degraded mode of spec § Motion.
   //
@@ -108,16 +150,24 @@ export function App() {
   )
 }
 
-// A quiet launch screen in the app's own colours while identity and the first
-// Goal snapshot settle. It carries the resolved theme's background, so the
-// hand-off is continuous — the main screen takes over without a flash of
-// unstyled or wrong-theme content.
+// The launch splash: the logo, and the log's spinner below it once the wait
+// outlasts 0.6 s (both styled by .splash in src/index.css). It carries the
+// resolved theme's background, so the hand-off is continuous — the next screen
+// takes over without a flash of unstyled or wrong-theme content. On a first
+// run index.html's static copy is already showing this (painted before any
+// script ran), so while it is up this renders only the background beneath
+// it: a second copy would restart the fades and the spin. When the app has to
+// splash on its own (a returning launch whose mirror didn't apply, an account
+// switch), it draws the same thing itself.
 function Splash() {
   const { t } = useI18n()
+  const [covered] = React.useState(bootSplashShowing)
+  if (covered) return <div className="min-h-svh bg-background" />
   return (
-    <div className="flex min-h-svh items-center justify-center bg-background">
-      <div className="font-wordmark text-3xl font-semibold text-muted-foreground">
-        {t.app.name}
+    <div className="splash" role="img" aria-label={t.app.name}>
+      <YaffleLogo height={36} className="splash-logo" />
+      <div className="splash-spinner" aria-hidden>
+        <Spinner />
       </div>
     </div>
   )
