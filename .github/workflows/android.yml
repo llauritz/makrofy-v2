@@ -1,0 +1,50 @@
+# Builds the Android app (a Capacitor shell around the web build, ADR 0012) on
+# every PR and push to main, and uploads an installable debug APK as a run
+# artifact. No Android Studio anywhere: the runner's preinstalled Android SDK
+# plus the Gradle wrapper in android/. Install the APK with
+# `adb install -r yaffle-debug.apk` (docs/android.md).
+
+name: Android
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  debug-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec cap sync android
+      - name: Assemble debug APK
+        working-directory: android
+        env:
+          YAFFLE_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          export YAFFLE_VERSION_NAME="$(node -p "require('../package.json').version")-debug.${GITHUB_RUN_NUMBER}"
+          ./gradlew assembleDebug --no-daemon
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/debug/app-debug.apk yaffle-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yaffle-debug-apk
+          path: yaffle-debug.apk
+          retention-days: 30
