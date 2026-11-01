@@ -11,7 +11,10 @@ import type { Macro } from "./macros"
 // digits by 1px top and bottom, sharing their centre. A whole-pixel offset
 // keeps that exact after the browser rounds each baseline, which centring
 // the two boxes separately doesn't (they round apart by up to a pixel). The
-// row must be `items-baseline`. The caller sets the size.
+// row must be `items-baseline`. Layout snaps text to whole pixels, so the
+// final trim is a transform: 1/3px up (one device pixel on 3x phones) puts
+// the letter's ink back on the digits' optical centre — without it the
+// letters read a hair low. The caller sets the size.
 export function MacroLetter({
   macro,
   withGrams = false,
@@ -26,7 +29,7 @@ export function MacroLetter({
   return (
     <span
       aria-hidden={ariaHidden}
-      className={`font-macro leading-none font-black [text-box:trim-both_cap_alphabetic] ${withGrams ? "relative top-px" : ""} ${className}`}
+      className={`font-macro leading-none font-black [text-box:trim-both_cap_alphabetic] ${withGrams ? "relative top-px -translate-y-[0.33px]" : ""} ${className}`}
       style={{ color: macro.text }}
     >
       {macro.letter}
