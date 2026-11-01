@@ -38,15 +38,17 @@ functions after changing one.
      price overrides later.
 4. **Checkout → Checkout settings:** default payment link
    `https://goyaffle.web.app/`.
-5. **Developer tools → Authentication:**
+5. **Settings → Authentication** (API keys and client-side tokens):
    - a *client-side token* → `clientToken` in `paddle-config.ts`;
    - an *API key* with `subscription.read`, `subscription.write` and
      `customer_portal_session.write` → `PADDLE_API_KEY`.
-6. **Developer tools → Notifications → New destination:**
+6. **Events → Notifications → New destination** (usage type *Platform*):
    - URL `https://us-central1-goyaffle.cloudfunctions.net/paddleWebhook`
    - events: `subscription.created`, `.updated`, `.activated`, `.canceled`,
      `.past_due`, `.paused`, `.resumed`, `.trialing`
-   - its secret key → `PADDLE_WEBHOOK_SECRET`.
+   - its secret key → `PADDLE_WEBHOOK_SECRET`. Paddle shows it when the
+     destination is saved and may not show it again; if it's lost, delete the
+     destination and make a new one.
 7. **Deploy** the functions and the rules (CI deploys hosting only):
 
    ```sh
