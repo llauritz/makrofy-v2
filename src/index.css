@@ -129,6 +129,61 @@
     fill: var(--foreground);
 }
 
+/* The launch splash: the logo in the brand ink, then the log's spinner below
+   it once the wait outlasts 0.6 s. index.html carries a static copy
+   (#boot-splash) that paints before any script has loaded; App's Splash
+   renders the same classes when it has to splash on its own (no static copy
+   left). Plain CSS rather than utilities: the static copy is outside the
+   React tree. The spinner sits out of flow, so the logo never moves. */
+.splash {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+}
+.splash-logo {
+    color: #3f0f02;
+    animation: splash-in 0.25s ease-out both;
+}
+.dark .splash-logo {
+    color: var(--foreground);
+}
+/* 50% + half the 36 px logo + a 20 px gap. */
+.splash-spinner {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(50% + 38px);
+    display: flex;
+    justify-content: center;
+    color: var(--muted-foreground);
+    animation: splash-in 0.25s ease-out 0.6s both;
+}
+.splash-spinner svg {
+    opacity: 0.7;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .splash-spinner svg {
+        animation: splash-spin 0.9s linear infinite;
+    }
+}
+/* A returning launch never sees the static copy (index.html sets the class). */
+.boot-mirror #boot-splash {
+    display: none;
+}
+@keyframes splash-in {
+    from {
+        opacity: 0;
+    }
+}
+@keyframes splash-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

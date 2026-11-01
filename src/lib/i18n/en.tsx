@@ -250,11 +250,67 @@ export const en = {
   },
 
   onboarding: {
-    intro:
-      "Set a daily calorie goal to get started. You can change it any time in Settings.",
-    dailyGoal: "Daily goal",
-    dailyGoalAria: "Daily calorie goal",
+    headline: "Track calories the way you want",
+    points: [
+      {
+        title: "Type what you know",
+        body: "Food and amount, in any unit. No database to search.",
+      },
+      {
+        title: "AI fills in the rest",
+        body: "Missing calories and macros get estimated.",
+      },
+      {
+        title: "Remembers your foods",
+        body: "Type a new amount and it recalculates from what you logged before.",
+      },
+    ],
+    // The example add card: the real card, filled and read-only.
+    exampleLabel: "100g aldi greek yogurt",
+    exampleAria: "Example: 100 g greek yogurt, 120 kcal, filled in by Yaffle",
     getStarted: "Get started",
+
+    back: "Back",
+    goalTitle: "Daily goal",
+    goalSubtitle: "You can change it later in Settings.",
+    dailyGoalAria: "Daily calorie goal",
+    decrease: (step: number) => `Lower the goal by ${step} kcal`,
+    increase: (step: number) => `Raise the goal by ${step} kcal`,
+    calculate: "Calculate my daily need",
+    startTracking: "Start tracking",
+
+    needTitle: "Your daily need",
+    detailsNote: "Your details aren't saved.",
+    sex: "Sex",
+    female: "Female",
+    male: "Male",
+    otherSex: "Other",
+    age: "Age",
+    years: "years",
+    height: "Height",
+    weight: "Weight",
+    cm: "cm",
+    kg: "kg",
+    activity: "Activity",
+    activityLow: "Lightly active",
+    activityModerate: "Active",
+    activityHigh: "Very active",
+    activityHintLow: "Desk job and little exercise.",
+    activityHintModerate: "On your feet a lot, or exercise 2–3 times a week.",
+    activityHintHigh: "Physical job, or exercise most days.",
+    aim: "Goal",
+    lose: "Lose",
+    maintain: "Maintain",
+    gain: "Gain",
+    calculateButton: "Calculate",
+    maintenance: (kcal: string) =>
+      `About ${kcal} kcal a day keeps your weight steady.`,
+    howFast: "How fast?",
+    losePace: (kg: string) => `${kg} kg less a week`,
+    gainPace: (kg: string) => `${kg} kg more a week`,
+    useGoal: (kcal: string) => `Use ${kcal} kcal`,
+    changeDetails: "Change details",
+    estimateNote: "A rough estimate, not medical advice.",
   },
 
   glossary: {
