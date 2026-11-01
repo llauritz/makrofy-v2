@@ -23,6 +23,9 @@ import { ExportImport } from "@/screens/settings/ExportImport"
 import { PlanSetting } from "@/screens/settings/PlanSetting"
 import { SignInSetting } from "@/screens/settings/SignInSetting"
 
+/** A Settings row another surface can open the sheet onto, blinking. */
+export type SettingsHighlight = "signIn" | null
+
 // The real settings surface (#17): goal · glossary · theme · language, then the
 // slots that fill in as their tickets land — sign-in (#19), install (#23, live
 // now) and export/import (#24). Self-contained like a screen: it reads and writes the
@@ -34,10 +37,13 @@ export function SettingsSheet({
   open,
   onOpenChange,
   onOpenGlossary,
+  highlight = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onOpenGlossary: () => void
+  /** A row to blink on the way in, for whatever sent the user here. */
+  highlight?: SettingsHighlight
 }) {
   const { t } = useI18n()
   // Opening Settings without signing in turns the header's sign-in invitation
@@ -68,7 +74,7 @@ export function SettingsSheet({
 
         <div className="flex flex-col gap-1 border-t pt-4">
           <PlanSetting onOpen={() => onOpenChange(false)} />
-          <SignInSetting />
+          <SignInSetting highlight={open && highlight === "signIn"} />
           <InstallAppEntry />
           <ExportImport />
         </div>
