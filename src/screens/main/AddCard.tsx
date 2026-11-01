@@ -56,9 +56,13 @@ export function AddCard({
   onAdd,
   index = EMPTY_INDEX,
   uid = null,
+  focusRequest = 0,
 }: {
   onAdd: (draft: EntryDraft, source: EntrySource) => void
   index?: ProductIndex
+  /** Bumped to put the cursor in the label — a tapped reminder (ADR 0013)
+   * opens the app ready to add. 0 never focuses. */
+  focusRequest?: number
   /** The identity behind the card. The AI button requires one (Guests count,
    * spec § AI macro-fill); null disables the whole card, as before. */
   uid?: string | null
@@ -96,6 +100,10 @@ export function AddCard({
   })
   const online = useOnline()
   const labelRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    if (focusRequest > 0) labelRef.current?.focus()
+  }, [focusRequest])
 
   // A curation write from the long-press card (#73) — or a remote device —
   // re-derives the index while rows are on screen; refresh them in place so

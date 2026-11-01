@@ -203,6 +203,31 @@ export const en = {
     refunds: "Refunds",
   },
 
+  // Reminders (Android only, ADR 0013). Notification titles are keyed by the
+  // meal the reminder's time falls in — the same clock windows Entries use.
+  reminders: {
+    title: "Reminders",
+    toggle: "Remind me to log",
+    toggleHint: "A gentle nudge at the times you choose",
+    timeAria: (n: string) => `Reminder ${n} time`,
+    remove: "Remove reminder",
+    add: "Add reminder",
+    smartSkip: "Skip if already logged",
+    smartSkipHint: "No nudge when you’ve logged since the last one",
+    denied:
+      "Notifications are off for Yaffle. To get reminders, allow them in your phone’s Settings → Apps → Yaffle → Notifications.",
+    channelName: "Reminders",
+    channelDescription: "Reminders to log your food",
+    notificationTitle: {
+      breakfast: "Logged breakfast yet?",
+      lunch: "Logged lunch yet?",
+      dinner: "Logged dinner yet?",
+      snack: "Anything to log?",
+      unknown: "Anything to log?",
+    },
+    notificationBody: "Tap to add it to today.",
+  },
+
   signIn: {
     signedInFallback: "Signed in",
     signOut: "Sign out",

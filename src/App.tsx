@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n/useI18n"
 import { useBackHandler } from "@/native/back"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
+import { useReminderSync, useReminderTap } from "@/native/useReminders"
 import { MainScreen } from "@/screens/main/MainScreen"
 import { resolveAppView } from "@/screens/onboarding/gate"
 import { StatsScreen } from "@/screens/stats/StatsScreen"
@@ -52,6 +53,11 @@ export function App() {
         ? () => setScreen("main")
         : null
   )
+
+  // Reminders (Android only, ADR 0013): keep the OS schedule in step, and
+  // bring Main up for a tapped reminder — Main itself then opens the add card.
+  useReminderSync(uid)
+  useReminderTap(() => setScreen("main"))
 
   // Splash until identity and the first Goal snapshot settle, so the ring never
   // flashes the fallback goal before the synced value arrives.

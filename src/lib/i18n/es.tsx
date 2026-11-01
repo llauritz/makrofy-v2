@@ -174,6 +174,29 @@ export const es: Dictionary = {
     refunds: "Reembolsos",
   },
 
+  reminders: {
+    title: "Recordatorios",
+    toggle: "Recordarme registrar",
+    toggleHint: "Un aviso a las horas que elijas",
+    timeAria: (n: string) => `Hora del recordatorio ${n}`,
+    remove: "Quitar recordatorio",
+    add: "Añadir recordatorio",
+    smartSkip: "Omitir si ya registré",
+    smartSkipHint: "Sin aviso si registraste algo desde el anterior",
+    denied:
+      "Las notificaciones de Yaffle están desactivadas. Para recibir recordatorios, actívalas en Ajustes → Aplicaciones → Yaffle → Notificaciones.",
+    channelName: "Recordatorios",
+    channelDescription: "Recordatorios para registrar lo que comes",
+    notificationTitle: {
+      breakfast: "¿Ya registraste el desayuno?",
+      lunch: "¿Ya registraste el almuerzo?",
+      dinner: "¿Ya registraste la cena?",
+      snack: "¿Algo que registrar?",
+      unknown: "¿Algo que registrar?",
+    },
+    notificationBody: "Toca para añadirlo a hoy.",
+  },
+
   signIn: {
     signedInFallback: "Sesión iniciada",
     signOut: "Cerrar sesión",
