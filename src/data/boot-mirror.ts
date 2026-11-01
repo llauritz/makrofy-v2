@@ -19,7 +19,7 @@ import { localDay } from "@/lib/day"
 
 // Version the key: a schema change ships as v2 and old mirrors simply read as
 // absent (one splashed launch), never as a parse hazard.
-const KEY = "yaffle:boot-mirror:v1"
+export const BOOT_MIRROR_KEY = "yaffle:boot-mirror:v1"
 
 /** The subset of Storage the mirror touches — injectable for tests. */
 export type MirrorStore = Pick<Storage, "getItem" | "setItem">
@@ -70,7 +70,7 @@ export function readBootMirror(
 ): BootMirror | null {
   if (!store) return null
   try {
-    const raw = store.getItem(KEY)
+    const raw = store.getItem(BOOT_MIRROR_KEY)
     if (!raw) return null
     const stored = JSON.parse(raw) as StoredMirror
     if (typeof stored.uid !== "string" || typeof stored.day !== "string") {
@@ -107,7 +107,7 @@ function writeMirror(store: MirrorStore, mirror: BootMirror): void {
   // Quota or storage failure just means the next launch splashes; never throw
   // into the listener that delivered the data.
   try {
-    store.setItem(KEY, JSON.stringify(stored))
+    store.setItem(BOOT_MIRROR_KEY, JSON.stringify(stored))
   } catch {
     /* mirror stays stale */
   }

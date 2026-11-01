@@ -6,13 +6,22 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { waitForPendingWrites } from "firebase/firestore"
 
-import { AI_DAILY_LIMIT, consumeAiUse, readAiUsage } from "@/data/ai-quota"
+import {
+  AI_DAILY_LIMIT,
+  consumeAiUse,
+  cycleDocId,
+  listenToCycleUsage,
+  readAiUsage,
+  recordAiCall,
+  type CycleUsage,
+} from "@/data/ai-quota"
 import { ensureIdentity } from "@/data/identity"
 import {
   clearFirestoreData,
   createEmulatorApp,
   destroyEmulatorApp,
   type EmulatorApp,
+  waitFor,
 } from "./emulator"
 
 const DAY = "2026-07-16"
@@ -53,5 +62,53 @@ describe("ai quota", () => {
     // real bound (finite, positive) — the advisory brake of the safety rails.
     expect(AI_DAILY_LIMIT).toBeGreaterThanOrEqual(20)
     expect(Number.isFinite(AI_DAILY_LIMIT)).toBe(true)
+  })
+})
+
+// ADR 0013: the plan cycle counter — fills, calls and grounded in one write.
+describe("ai cycle counter", () => {
+  let ctx: EmulatorApp
+  let uid: string
+  const CYCLE = cycleDocId(new Date("2026-11-01T10:00:00Z"))
+
+  beforeEach(async () => {
+    ctx = createEmulatorApp()
+    uid = (await ensureIdentity(ctx.auth)).uid
+  })
+
+  afterEach(async () => {
+    await destroyEmulatorApp(ctx)
+    await clearFirestoreData()
+  })
+
+  it("counts a clarifying answer as a call but not a fill", async () => {
+    let usage: CycleUsage | undefined
+    const stop = listenToCycleUsage(ctx.db, uid, CYCLE, (u) => (usage = u))
+    await waitFor(() => usage)
+    expect(usage).toEqual({ fills: 0, calls: 0, grounded: 0 })
+
+    recordAiCall(ctx.db, uid, CYCLE, { fill: true, grounded: true })
+    recordAiCall(ctx.db, uid, CYCLE, { fill: false, grounded: false })
+    recordAiCall(ctx.db, uid, CYCLE, { fill: true, grounded: false })
+    await waitForPendingWrites(ctx.db)
+
+    await waitFor(() => (usage?.calls === 3 ? usage : undefined))
+    expect(usage).toEqual({ fills: 2, calls: 3, grounded: 1 })
+    stop()
+  })
+
+  it("keeps each cycle's counts apart", async () => {
+    recordAiCall(ctx.db, uid, CYCLE, { fill: true, grounded: false })
+    await waitForPendingWrites(ctx.db)
+    let next: CycleUsage | undefined
+    const stop = listenToCycleUsage(
+      ctx.db,
+      uid,
+      cycleDocId(new Date("2026-12-01T10:00:00Z")),
+      (u) => (next = u),
+    )
+    await waitFor(() => next)
+    expect(next?.fills).toBe(0)
+    stop()
   })
 })

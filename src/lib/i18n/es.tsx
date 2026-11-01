@@ -152,7 +152,8 @@ export const es: Dictionary = {
     syncData: "Sincronizar",
     loginAgain: "Iniciar sesión",
     offAria: "Sincronización desactivada. Abrir ajustes",
-    offlineAria: "Sin conexión, los cambios se guardan en este dispositivo. Abrir ajustes",
+    offlineAria:
+      "Sin conexión, los cambios se guardan en este dispositivo. Abrir ajustes",
   },
 
   settings: {
@@ -235,11 +236,66 @@ export const es: Dictionary = {
   },
 
   onboarding: {
-    intro:
-      "Fija un objetivo diario de calorías para empezar. Puedes cambiarlo cuando quieras en Ajustes.",
-    dailyGoal: "Objetivo diario",
-    dailyGoalAria: "Objetivo diario de calorías",
+    headline: "Cuenta calorías a tu manera",
+    points: [
+      {
+        title: "Escribe lo que sabes",
+        body: "Alimento y cantidad, en cualquier unidad. Sin buscar en una base de datos.",
+      },
+      {
+        title: "La IA completa el resto",
+        body: "Las calorías y macros que falten se estiman.",
+      },
+      {
+        title: "Recuerda tus comidas",
+        body: "Escribe otra cantidad y recalcula a partir de lo que ya apuntaste.",
+      },
+    ],
+    exampleLabel: "100g yogur griego aldi",
+    exampleAria: "Ejemplo: 100 g de yogur griego, 120 kcal, completado por Yaffle",
     getStarted: "Empezar",
+
+    back: "Atrás",
+    goalTitle: "Objetivo diario",
+    goalSubtitle: "Puedes cambiarlo luego en Ajustes.",
+    dailyGoalAria: "Objetivo diario de calorías",
+    decrease: (step: number) => `Bajar el objetivo ${step} kcal`,
+    increase: (step: number) => `Subir el objetivo ${step} kcal`,
+    calculate: "Calcular cuánto necesito",
+    startTracking: "Empezar a registrar",
+
+    needTitle: "Lo que necesitas al día",
+    detailsNote: "Tus datos no se guardan.",
+    sex: "Sexo",
+    female: "Mujer",
+    male: "Hombre",
+    otherSex: "Otro",
+    age: "Edad",
+    years: "años",
+    height: "Altura",
+    weight: "Peso",
+    cm: "cm",
+    kg: "kg",
+    activity: "Actividad",
+    activityLow: "Poco activa",
+    activityModerate: "Activa",
+    activityHigh: "Muy activa",
+    activityHintLow: "Trabajo sentado y poco ejercicio.",
+    activityHintModerate: "Mucho tiempo de pie, o ejercicio 2–3 veces por semana.",
+    activityHintHigh: "Trabajo físico, o ejercicio casi todos los días.",
+    aim: "Objetivo",
+    lose: "Bajar",
+    maintain: "Mantener",
+    gain: "Subir",
+    calculateButton: "Calcular",
+    maintenance: (kcal: string) =>
+      `Con unas ${kcal} kcal al día mantienes tu peso.`,
+    howFast: "¿A qué ritmo?",
+    losePace: (kg: string) => `${kg} kg menos por semana`,
+    gainPace: (kg: string) => `${kg} kg más por semana`,
+    useGoal: (kcal: string) => `Usar ${kcal} kcal`,
+    changeDetails: "Cambiar datos",
+    estimateNote: "Una estimación aproximada, no un consejo médico.",
   },
 
   glossary: {
@@ -291,13 +347,13 @@ export const es: Dictionary = {
     planUnlimited: "Ilimitado",
     titleExhaustedFree: "Ese fue tu último relleno con IA gratis",
     bodyExhaustedFree:
-      "El relleno con IA lee lo que comiste y completa los números por ti. Elige un plan para seguir usándolo. Todo lo demás en Yaffle sigue siendo gratis.",
+      "El relleno con IA busca lo que comiste con la Búsqueda de Google y completa los números. Pro e Ilimitado incluyen más rellenos.",
     titleExhaustedPro: "Usaste los rellenos de este ciclo",
     bodyExhaustedPro: (date) =>
-      `Pro se recarga el ${date}. ¿Necesitas más antes? Ilimitado no se detiene.`,
-    titleBrowseFree: "Sigue usando el relleno con IA",
+      `Pro se recarga el ${date}. Ilimitado incluye más rellenos.`,
+    titleBrowseFree: "Más rellenos con IA",
     bodyBrowseFree: (left, limit) =>
-      `Te quedan ${left} de ${limit} rellenos con IA gratis. Todo lo demás en Yaffle sigue siendo gratis.`,
+      `El relleno con IA busca lo que comiste con la Búsqueda de Google y completa los números. Te quedan ${left} de ${limit} rellenos gratis.`,
     titleBrowsePaid: "Tu plan",
     bodyBrowsePaid: (date) => `Tus rellenos con IA se recargan el ${date}.`,
     billing: "Facturación",
@@ -313,7 +369,8 @@ export const es: Dictionary = {
     billedYearly: (price) => `${price} al año`,
     billedMonthly: "facturado cada mes",
     continueWith: (plan) => `Continuar con ${plan}`,
-    checkoutStub: "El pago aún no está conectado. Esto es un prototipo.",
+    checkoutStub: "El pago aún no está configurado.",
+    billingError: "No funcionó. Revisa tu conexión y vuelve a intentarlo.",
     footnote: "Cancela cuando quieras",
     usageMeter: (used, limit) =>
       `${used}/${limit} rellenos con IA gratis usados`,
@@ -330,11 +387,13 @@ export const es: Dictionary = {
       `Te quedan ${left} de ${limit} · se recarga el ${date}`,
     unlimitedStatus: (used, date) =>
       `${used} rellenos este ciclo · se recarga el ${date}`,
+    pastDueStatus: "El pago falló. Actualiza la tarjeta en Gestionar.",
+    endingStatus: (left, date) => `Te quedan ${left} · termina el ${date}`,
     upgrade: "Mejorar",
     manage: "Gestionar",
     noticeTitle: "El relleno con IA ahora tiene planes",
     noticeBody: (limit) =>
-      `Todos tienen ${limit} rellenos con IA gratis. Pro e Ilimitado lo mantienen y apoyan el desarrollo de Yaffle. Todo lo demás en Yaffle sigue siendo gratis, como siempre.`,
+      `Todos tienen ${limit} rellenos con IA gratis. Pro e Ilimitado incluyen más y apoyan el desarrollo de Yaffle. Todo lo demás en Yaffle sigue siendo gratis.`,
     noticeDismiss: "Entendido",
   },
 

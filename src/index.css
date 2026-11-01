@@ -30,14 +30,22 @@
     --input: #f3ecdd;
     --ring: #7d7060;
     --radius: 0.875rem;
-    /* Macro coding, fixed order P/F/C = blue/yellow/red (CVD-validated).
-       Plain = mark color (chips, dots, fills); -text = ≥4.5:1 on the card. */
+    /* Macro coding, fixed order P/F/C = blue/yellow/red. Plain = mark
+       color (pill tints, dots, chart fills); -text = the P/F/C letters.
+       Fat is a clean sunny yellow: a yellow dark enough for 4.5:1 text turns
+       olive, so its letter is a brighter amber at ~3.3:1 on its pill (owner's
+       call, Nov 2026) and its mark sits under 3:1 on the card — fills always
+       sit beside the letter or a labelled legend. A pale yellow wash reads
+       weaker than the blue and red ones, so fat's pill tint is 1.25× theirs
+       (`--macro-*-wash`, MacroPills.tsx). In dark mode fat is a step
+       softer (#d5a140) so it sits level with the blue and red. */
     --macro-p: #2f6bc4;
-    --macro-f: #b8830a;
+    --macro-f: #f7ae14;
     --macro-c: #c03b2e;
     --macro-p-text: #2f6bc4;
-    --macro-f-text: #96690a;
+    --macro-f-text: #b67705;
     --macro-c-text: #c03b2e;
+    --macro-f-wash: 1.25;
 }
 
 .dark {
@@ -61,11 +69,12 @@
     --input: #211a12;
     --ring: #a5988a;
     --macro-p: #5b91e4;
-    --macro-f: #b98a20;
+    --macro-f: #d5a140;
     --macro-c: #cf6152;
     --macro-p-text: #5b91e4;
-    --macro-f-text: #b98a20;
+    --macro-f-text: #d5a140;
     --macro-c-text: #e07d6e;
+    --macro-f-wash: 1;
 }
 
 @theme inline {
@@ -110,6 +119,23 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Extra lift for the sticky bottom dock (summary card, undo bars), on top
+   of its own 0.75rem gutter. Zero everywhere except an Android browser tab
+   (class set before first paint in index.html). There, a non-zero
+   safe-area inset means Chrome is drawing the page under the gesture/
+   navigation bar, so the bar shows the page's own background (the card's
+   backdrop runs down under it) and the card sits directly on the bar's top
+   edge. A zero inset means the browser paints its own bar, so the card
+   keeps its 0.75rem gutter. It feeds the sticky `bottom` offset, not
+   padding, so it moves the dock without a re-layout. */
+:root {
+    --dock-inset: 0px;
+}
+
+.android-browser {
+    --dock-inset: max(0px, env(safe-area-inset-bottom, 0px) - 0.75rem);
+}
+
 /* The wordmark Lottie's letterforms are exported in the brand ink
    (#3f0f02); in dark theme that ink flips to the foreground token so the
    mark stays legible, tracking theme toggles live. The bird's plumage keeps
@@ -118,6 +144,61 @@
    rgb(63,14,1), which is what the selector must match. */
 .dark .wordmark-anim svg path[fill="rgb(63,14,1)"] {
     fill: var(--foreground);
+}
+
+/* The launch splash: the logo in the brand ink, then the log's spinner below
+   it once the wait outlasts 0.6 s. index.html carries a static copy
+   (#boot-splash) that paints before any script has loaded; App's Splash
+   renders the same classes when it has to splash on its own (no static copy
+   left). Plain CSS rather than utilities: the static copy is outside the
+   React tree. The spinner sits out of flow, so the logo never moves. */
+.splash {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+}
+.splash-logo {
+    color: #3f0f02;
+    animation: splash-in 0.25s ease-out both;
+}
+.dark .splash-logo {
+    color: var(--foreground);
+}
+/* 50% + half the 36 px logo + a 20 px gap. */
+.splash-spinner {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(50% + 38px);
+    display: flex;
+    justify-content: center;
+    color: var(--muted-foreground);
+    animation: splash-in 0.25s ease-out 0.6s both;
+}
+.splash-spinner svg {
+    opacity: 0.7;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .splash-spinner svg {
+        animation: splash-spin 0.9s linear infinite;
+    }
+}
+/* A returning launch never sees the static copy (index.html sets the class). */
+.boot-mirror #boot-splash {
+    display: none;
+}
+@keyframes splash-in {
+    from {
+        opacity: 0;
+    }
+}
+@keyframes splash-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @layer base {

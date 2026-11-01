@@ -171,7 +171,7 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
         <div className="flex-1" />
       </main>
 
-      <div className="sticky bottom-0 px-3 pb-3">
+      <div className="sticky bottom-(--dock-inset) px-3 pb-3">
         <AnimatePresence initial={false}>
           {pendingMerge && (
             <motion.div

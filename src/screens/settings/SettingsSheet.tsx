@@ -9,6 +9,7 @@ import {
   BottomSheetContent,
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet"
+import { Segmented } from "@/components/ui/segmented"
 import { Squircle } from "@/components/ui/squircle"
 import { dismissCloudPrompt } from "@/data/cloud-account"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
@@ -17,11 +18,13 @@ import { db } from "@/lib/firebase"
 import { parseGoalKcal } from "@/lib/goal-input"
 import { useI18n } from "@/lib/i18n/useI18n"
 import type { Language } from "@/lib/language"
-import { cn } from "@/lib/utils"
 import { InstallAppEntry } from "@/pwa/InstallApp"
 import { ExportImport } from "@/screens/settings/ExportImport"
 import { PlanSetting } from "@/screens/settings/PlanSetting"
 import { SignInSetting } from "@/screens/settings/SignInSetting"
+
+/** A Settings row another surface can open the sheet onto, blinking. */
+export type SettingsHighlight = "signIn" | null
 
 // The real settings surface (#17): goal · glossary · theme · language, then the
 // slots that fill in as their tickets land — sign-in (#19), install (#23, live
@@ -34,10 +37,13 @@ export function SettingsSheet({
   open,
   onOpenChange,
   onOpenGlossary,
+  highlight = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onOpenGlossary: () => void
+  /** A row to blink on the way in, for whatever sent the user here. */
+  highlight?: SettingsHighlight
 }) {
   const { t } = useI18n()
   // Opening Settings without signing in turns the header's sign-in invitation
@@ -72,7 +78,7 @@ export function SettingsSheet({
 
         <div className="flex flex-col gap-1 border-t pt-4">
           <PlanSetting onOpen={() => onOpenChange(false)} />
-          <SignInSetting />
+          <SignInSetting highlight={open && highlight === "signIn"} />
           <ExportImport />
         </div>
 
@@ -266,61 +272,5 @@ function LanguageSetting() {
         ]}
       />
     </Field>
-  )
-}
-
-// A pill segmented control (radiogroup). The active segment is marked by fill,
-// not motion — nothing moves, so there is no layout jump between choices.
-function Segmented<T extends string>({
-  value,
-  onChange,
-  options,
-  ariaLabel,
-}: {
-  value: T
-  onChange: (value: T) => void
-  options: ReadonlyArray<{ value: T; label: string }>
-  ariaLabel: string
-}) {
-  return (
-    <Squircle asChild pill>
-      <div
-        role="radiogroup"
-        aria-label={ariaLabel}
-        className="flex gap-1 rounded-full bg-input p-1"
-      >
-        {options.map((option) => {
-          const active = option.value === value
-          // The squircle's clip would erase the active segment's box-shadow,
-          // so it hangs on a wrapper as a drop-shadow instead.
-          return (
-            <div
-              key={option.value}
-              className={cn(
-                "flex flex-1",
-                active && "drop-shadow-[0_1px_1px_rgba(43,32,21,0.12)]"
-              )}
-            >
-              <Squircle asChild pill>
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => onChange(option.value)}
-                  className={cn(
-                    "flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors",
-                    active
-                      ? "bg-card text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {option.label}
-                </button>
-              </Squircle>
-            </div>
-          )
-        })}
-      </div>
-    </Squircle>
   )
 }

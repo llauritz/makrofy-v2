@@ -26,7 +26,10 @@ import {
 import { localDay, stepDay } from "@/lib/day"
 import { db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
-import { SettingsSheet } from "@/screens/settings/SettingsSheet"
+import {
+  SettingsSheet,
+  type SettingsHighlight,
+} from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
 import { CalendarSheet } from "./CalendarSheet"
 import { CoverageControl } from "./CoverageControl"
@@ -62,6 +65,10 @@ export function MainScreen({
   )
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
+  // The row Settings blinks as it opens: the header's sign-in invitation
+  // opens it onto the sign-in row. Cleared on close, so the gear never blinks.
+  const [settingsHighlight, setSettingsHighlight] =
+    React.useState<SettingsHighlight>(null)
   const [calendarOpen, setCalendarOpen] = React.useState(false)
   // The Entry awaiting a deferred delete — hidden from the log while its undo
   // snackbar is up; the real delete fires only when the window lapses.
@@ -151,10 +158,22 @@ export function MainScreen({
   }
 
   const openSettings = () => setSettingsOpen(true)
+  const openSignInSettings = () => {
+    setSettingsHighlight("signIn")
+    setSettingsOpen(true)
+  }
+  const setSettings = (open: boolean) => {
+    setSettingsOpen(open)
+    if (!open) setSettingsHighlight(null)
+  }
 
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col">
-      <Header onOpenSettings={openSettings} syncStatus={syncStatus} />
+      <Header
+        onOpenSettings={openSettings}
+        onOpenSignIn={openSignInSettings}
+        syncStatus={syncStatus}
+      />
       <main className="flex flex-1 flex-col">
         <DayStrip
           selectedDay={selectedDay}
@@ -189,7 +208,7 @@ export function MainScreen({
           />
           <div className="flex-1" />
         </div>
-        <div className="sticky bottom-0 px-3 pb-3">
+        <div className="sticky bottom-(--dock-inset) px-3 pb-3">
           <AnimatePresence initial={false}>
             {pending && <UndoSnackbar key="undo" onUndo={undo} />}
           </AnimatePresence>
@@ -197,14 +216,16 @@ export function MainScreen({
           <MorningStrip uid={uid} goalKcal={goalKcal} />
           {/* Logged rows slide behind the card, never out below it: a page-
               coloured backdrop sits under the card from just below its top
-              edge down to the screen's bottom edge, side gutters included.
+              edge down to the screen's bottom edge, side gutters included
+              (in an Android browser tab that runs on under the navigation
+              bar, so the bar shows the page colour: --dock-inset).
               Its top fades in over 2rem, so rows passing the card's sides
               dissolve instead of meeting a hard line. It is a static layer
               (no animation, no scroll listener), so nothing can flicker. */}
           <div className="relative isolate">
             <div
               aria-hidden
-              className="pointer-events-none absolute -inset-x-3 top-4 -bottom-3 -z-10 bg-[linear-gradient(to_bottom,transparent,var(--background)_2rem)]"
+              className="pointer-events-none absolute -inset-x-3 top-4 -bottom-[calc(0.75rem+var(--dock-inset))] -z-10 bg-[linear-gradient(to_bottom,transparent,var(--background)_2rem)]"
             />
             <SummaryCard
               summary={summary}
@@ -226,9 +247,10 @@ export function MainScreen({
       />
       <SettingsSheet
         open={settingsOpen}
-        onOpenChange={setSettingsOpen}
+        onOpenChange={setSettings}
+        highlight={settingsHighlight}
         onOpenGlossary={() => {
-          setSettingsOpen(false)
+          setSettings(false)
           onOpenGlossary()
         }}
       />

@@ -259,11 +259,67 @@ export const en = {
   },
 
   onboarding: {
-    intro:
-      "Set a daily calorie goal to get started. You can change it any time in Settings.",
-    dailyGoal: "Daily goal",
-    dailyGoalAria: "Daily calorie goal",
+    headline: "Track calories the way you want",
+    points: [
+      {
+        title: "Type what you know",
+        body: "Food and amount, in any unit. No database to search.",
+      },
+      {
+        title: "AI fills in the rest",
+        body: "Missing calories and macros get estimated.",
+      },
+      {
+        title: "Remembers your foods",
+        body: "Type a new amount and it recalculates from what you logged before.",
+      },
+    ],
+    // The example add card: the real card, filled and read-only.
+    exampleLabel: "100g aldi greek yogurt",
+    exampleAria: "Example: 100 g greek yogurt, 120 kcal, filled in by Yaffle",
     getStarted: "Get started",
+
+    back: "Back",
+    goalTitle: "Daily goal",
+    goalSubtitle: "You can change it later in Settings.",
+    dailyGoalAria: "Daily calorie goal",
+    decrease: (step: number) => `Lower the goal by ${step} kcal`,
+    increase: (step: number) => `Raise the goal by ${step} kcal`,
+    calculate: "Calculate my daily need",
+    startTracking: "Start tracking",
+
+    needTitle: "Your daily need",
+    detailsNote: "Your details aren't saved.",
+    sex: "Sex",
+    female: "Female",
+    male: "Male",
+    otherSex: "Other",
+    age: "Age",
+    years: "years",
+    height: "Height",
+    weight: "Weight",
+    cm: "cm",
+    kg: "kg",
+    activity: "Activity",
+    activityLow: "Lightly active",
+    activityModerate: "Active",
+    activityHigh: "Very active",
+    activityHintLow: "Desk job and little exercise.",
+    activityHintModerate: "On your feet a lot, or exercise 2–3 times a week.",
+    activityHintHigh: "Physical job, or exercise most days.",
+    aim: "Goal",
+    lose: "Lose",
+    maintain: "Maintain",
+    gain: "Gain",
+    calculateButton: "Calculate",
+    maintenance: (kcal: string) =>
+      `About ${kcal} kcal a day keeps your weight steady.`,
+    howFast: "How fast?",
+    losePace: (kg: string) => `${kg} kg less a week`,
+    gainPace: (kg: string) => `${kg} kg more a week`,
+    useGoal: (kcal: string) => `Use ${kcal} kcal`,
+    changeDetails: "Change details",
+    estimateNote: "A rough estimate, not medical advice.",
   },
 
   glossary: {
@@ -319,13 +375,13 @@ export const en = {
     planUnlimited: "Unlimited",
     titleExhaustedFree: "That was your last free AI fill",
     bodyExhaustedFree:
-      "AI fill reads what you ate and fills in the numbers for you. Pick a plan to keep it going. Everything else in Yaffle stays free.",
+      "AI fill looks up what you ate with Google Search and fills in the numbers. Pro and Unlimited come with more fills.",
     titleExhaustedPro: "You’ve used this cycle’s fills",
     bodyExhaustedPro: (date: string) =>
-      `Pro refills on ${date}. Need more before then? Unlimited keeps going.`,
-    titleBrowseFree: "Keep AI fill going",
+      `Pro refills on ${date}. Unlimited comes with more fills.`,
+    titleBrowseFree: "More AI fills",
     bodyBrowseFree: (left: string, limit: string) =>
-      `${left} of ${limit} free AI fills left. Everything else in Yaffle stays free.`,
+      `AI fill looks up what you ate with Google Search and fills in the numbers. ${left} of ${limit} free fills left.`,
     titleBrowsePaid: "Your plan",
     bodyBrowsePaid: (date: string) => `Your AI fills refill on ${date}.`,
     billing: "Billing",
@@ -341,7 +397,9 @@ export const en = {
     billedYearly: (price: string) => `${price} billed yearly`,
     billedMonthly: "billed monthly",
     continueWith: (plan: string) => `Continue with ${plan}`,
-    checkoutStub: "Checkout isn’t connected yet. This is a prototype.",
+    checkoutStub: "Checkout isn’t set up yet.",
+    // Checkout, plan change or the Paddle portal didn't open.
+    billingError: "That didn’t work. Check your connection and try again.",
     footnote: "Cancel anytime",
     // The free counter under the add card's macros, after an AI use.
     usageMeter: (used: string, limit: string) =>
@@ -362,12 +420,17 @@ export const en = {
       `${left} of ${limit} fills left · refills ${date}`,
     unlimitedStatus: (used: string, date: string) =>
       `${used} fills this cycle · refills ${date}`,
+    // A renewal payment failed; Paddle keeps retrying meanwhile.
+    pastDueStatus: "Payment failed. Update your card in Manage.",
+    // Cancelled, running to the end of the paid period.
+    endingStatus: (left: string, date: string) =>
+      `${left} fills left · ends ${date}`,
     upgrade: "Upgrade",
     manage: "Manage",
     // The one-time notice to existing users (no grandfathering, #59).
     noticeTitle: "AI fill has plans now",
     noticeBody: (limit: string) =>
-      `Everyone gets ${limit} free AI fills. Pro and Unlimited keep it going and support Yaffle’s development. Everything else in Yaffle stays free, as it always was.`,
+      `Everyone gets ${limit} free AI fills. Pro and Unlimited come with more and support Yaffle’s development. Everything else in Yaffle stays free.`,
     noticeDismiss: "Got it",
   },
 

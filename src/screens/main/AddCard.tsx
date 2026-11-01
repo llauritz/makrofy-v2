@@ -1,7 +1,8 @@
 import * as React from "react"
-import { Plus, Sparkles } from "lucide-react"
+import { Plus } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
+import { AiSparkle } from "@/components/AiSparkle"
 import { Squircle } from "@/components/ui/squircle"
 import type { EntrySource } from "@/data/entries"
 import { useProductCuration } from "@/data/useProductCuration"
@@ -30,6 +31,7 @@ import {
   parseMacros,
   parseOptional,
   type EntryDraft,
+  type MacroInputs,
 } from "./fields"
 import { MACROS } from "./macros"
 import { MacroChips, MacroInputPill } from "./MacroPills"
@@ -52,24 +54,39 @@ import {
 // form and its flags. #a5988a (not muted-foreground) for placeholders and the
 // "g" unit in BOTH modes matches the record screenshots (issue #4).
 
+/**
+ * A filled, read-only card: the welcome screen's example (#35). It is this
+ * very component rather than a lookalike, so the example can never drift from
+ * the real card.
+ */
+export interface AddCardDemo {
+  label: string
+  kcal: string
+  macros: MacroInputs
+}
+
 export function AddCard({
   onAdd,
   index = EMPTY_INDEX,
   uid = null,
+  demo,
 }: {
   onAdd: (draft: EntryDraft, source: EntrySource) => void
   index?: ProductIndex
   /** The identity behind the card. The AI button requires one (Guests count,
    * spec § AI macro-fill); null disables the whole card, as before. */
   uid?: string | null
+  demo?: AddCardDemo
 }) {
   const { t } = useI18n()
-  const [label, setLabel] = React.useState("")
-  const [kcal, setKcal] = React.useState("")
-  const [macros, setMacros] = React.useState(EMPTY_MACROS)
+  const [label, setLabel] = React.useState(demo?.label ?? "")
+  const [kcal, setKcal] = React.useState(demo?.kcal ?? "")
+  const [macros, setMacros] = React.useState(demo?.macros ?? EMPTY_MACROS)
   // Whether the current form contents came from a Suggestion tap or an AI
   // fill. Typing in the label makes it a manual Entry again.
-  const [source, setSource] = React.useState<EntrySource>("manual")
+  const [source, setSource] = React.useState<EntrySource>(
+    demo ? "ai" : "manual"
+  )
   const [suggestions, setSuggestions] = React.useState(EMPTY_SUGGESTIONS)
   // The Product whose curation card a long-pressed Suggestion opened (#73) —
   // the Glossary's ProductDetail inline, writing the same synced overlay. Kept
@@ -110,7 +127,8 @@ export function AddCard({
     setSuggestions((prev) => refreshSuggestions(prev, label, index))
   }
 
-  const disabled = uid === null
+  // A demo has no identity but must look live, not dimmed; it is inert instead.
+  const disabled = uid === null && !demo
   // A blank-kcal Entry is intentional (0-kcal, dashed) — a label is the only
   // requirement to commit.
   const canAdd = label.trim() !== "" && !disabled
@@ -237,7 +255,11 @@ export function AddCard({
     // The squircle's clip would erase a box-shadow, so this card's hairline
     // shadow moves to the wrapper as a drop-shadow, which traces the clipped
     // silhouette.
-    <div className="mx-4 mt-1 drop-shadow-[0_1px_2px_rgba(43,32,21,0.05)]">
+    <div
+      className="mx-4 mt-1 drop-shadow-[0_1px_2px_rgba(43,32,21,0.05)]"
+      // Inert also hides it from assistive tech; the caller labels the example.
+      inert={demo ? true : undefined}
+    >
       <Squircle radius="3xl" outline="solid" className="bg-card p-3">
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
@@ -260,15 +282,16 @@ export function AddCard({
                 whileTap={{ scale: 0.9 }}
                 aria-label={t.addCard.fillWithAi}
                 className={
-                  "flex h-7 w-7 items-center justify-center rounded-full transition-opacity disabled:opacity-40" +
+                  "flex h-7 w-7 items-center justify-center rounded-full transition-opacity" +
+                  // The spinning star is the wait itself, so it keeps full strength
+                  // while the button is disabled for the round trip.
+                  (thinking ? "" : " disabled:opacity-40") +
                   // Offline the button dims in place but stays tappable — the
                   // tap answers with the quiet connection note in the zone.
                   (online ? "" : " opacity-40")
                 }
               >
-                <Sparkles
-                  className={"h-4 w-4" + (thinking ? " animate-pulse" : "")}
-                />
+                <AiSparkle spinning={thinking} className="h-[18px] w-[18px]" />
               </motion.button>
             </div>
           </div>

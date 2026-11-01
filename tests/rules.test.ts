@@ -90,3 +90,54 @@ describe("an unauthenticated caller", () => {
     )
   })
 })
+
+// ADR 0012: the entitlement doc is the Paddle webhook's alone to write.
+describe("the entitlement doc (settings/subscription)", () => {
+  const seedPro = () =>
+    env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/alice/settings/subscription"), {
+        plan: "pro",
+        status: "active",
+      })
+    })
+
+  it("is readable by its owner", async () => {
+    await seedPro()
+    const db = env.authenticatedContext("alice").firestore()
+    await assertSucceeds(getDoc(doc(db, "users/alice/settings/subscription")))
+  })
+
+  it("cannot be created, changed, or deleted by its owner", async () => {
+    const db = env.authenticatedContext("alice").firestore()
+    const ref = doc(db, "users/alice/settings/subscription")
+    await assertFails(setDoc(ref, { plan: "unlimited", status: "active" }))
+    await seedPro()
+    await assertFails(setDoc(ref, { plan: "unlimited" }, { merge: true }))
+    await assertFails(deleteDoc(ref))
+  })
+
+  it("is invisible to other users", async () => {
+    await seedPro()
+    const db = env.authenticatedContext("mallory").firestore()
+    await assertFails(getDoc(doc(db, "users/alice/settings/subscription")))
+  })
+
+  it("leaves the rest of settings and the AI cycle docs writable", async () => {
+    const db = env.authenticatedContext("alice").firestore()
+    await assertSucceeds(setDoc(doc(db, "users/alice/settings/goal"), { kcal: 1800 }))
+    await assertSucceeds(
+      setDoc(doc(db, "users/alice/aiCycles/2026-11-01T00:00:00.000Z"), { fills: 1 }),
+    )
+  })
+})
+
+describe("server-only collections outside /users", () => {
+  it("refuse every client", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "paddleEvents/evt_1"), { uid: "alice" })
+    })
+    const db = env.authenticatedContext("alice").firestore()
+    await assertFails(getDoc(doc(db, "paddleEvents/evt_1")))
+    await assertFails(setDoc(doc(db, "paddleEvents/evt_2"), { uid: "alice" }))
+  })
+})

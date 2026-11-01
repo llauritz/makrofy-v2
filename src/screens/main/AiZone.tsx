@@ -1,7 +1,8 @@
 import * as React from "react"
-import { Sparkles, X } from "lucide-react"
+import { X } from "lucide-react"
 import { motion } from "motion/react"
 
+import { AiSparkle } from "@/components/AiSparkle"
 import { useTheme } from "@/components/theme-provider"
 import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
@@ -195,7 +196,7 @@ function UpgradeButton() {
         whileTap={{ scale: 0.95 }}
         className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
       >
-        <Sparkles className="h-3.5 w-3.5" />
+        <AiSparkle solid className="h-3.5 w-3.5" />
         {paywall.cycle.plan === "free"
           ? t.paywall.seePlans
           : t.paywall.getUnlimited}

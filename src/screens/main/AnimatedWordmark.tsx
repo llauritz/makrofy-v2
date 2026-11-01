@@ -1,16 +1,23 @@
 import * as React from "react"
-import type { AnimationItem, LottiePlayer } from "lottie-web"
+import type { AnimationItem } from "lottie-web"
 
 import { useI18n } from "@/lib/i18n/useI18n"
+import {
+  loadedWordmarkPlayer,
+  loadWordmarkPlayer,
+  type WordmarkPlayer,
+} from "./wordmark-player"
 
-// The animated Yaffle wordmark (#79). The static Fraunces text paints first —
-// the instant first frame (ADR 0011) must never wait on a player — then the
-// Lottie swaps in and plays the intro once, holding its final frame. A tap
-// replays it. The player (lottie_light, SVG renderer) and the animation JSON
-// ride in a lazy chunk, so the main bundle stays flat; reduced motion or a
-// failed load simply keep the static text. The text→player swap is a cut,
-// not the house fade-through (spec § Motion): the intro's own entrance is
-// the appearance animation, and a fade layered under it would double up.
+// The animated Yaffle wordmark (#79). The instant first frame (ADR 0011) must
+// never wait on a player: when the player hasn't loaded yet, the static
+// Fraunces text paints first and the Lottie swaps in once it arrives. When it
+// has (the asset preload in src/lib/preload.ts usually sees to that), the
+// animation starts on the very first frame with no static text before it.
+// It plays the intro once, holding its final frame; a tap replays it. Reduced
+// motion or a failed load simply keep the static text. The text→player swap
+// is a cut, not the house fade-through (spec § Motion): the intro's own
+// entrance is the appearance animation, and a fade layered under it would
+// double up.
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
 
@@ -25,23 +32,28 @@ const REPLAY_AFTER_HIDDEN_MS = 10_000
 // letters freeze mid-entrance.
 const INTRO_SEGMENT: [number, number] = [0, 26]
 
-type Player = { lottie: LottiePlayer; animationData: unknown }
+// The comp is 1000 × 200: the wordmark is five times as wide as it is tall.
+const ASPECT = 5
 
-export function AnimatedWordmark() {
+function reducedMotion(): boolean {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches
+}
+
+/** `height` in px: 30 in the header, larger on the welcome screen (#35). */
+export function AnimatedWordmark({ height = 30 }: { height?: number }) {
   const { t } = useI18n()
   const containerRef = React.useRef<HTMLDivElement>(null)
   const animRef = React.useRef<AnimationItem | null>(null)
-  const [player, setPlayer] = React.useState<Player | null>(null)
+  const [player, setPlayer] = React.useState<WordmarkPlayer | null>(() =>
+    reducedMotion() ? null : loadedWordmarkPlayer()
+  )
 
   React.useEffect(() => {
-    if (window.matchMedia(REDUCED_MOTION_QUERY).matches) return
+    if (player || reducedMotion()) return
     let disposed = false
-    Promise.all([
-      import("lottie-web/build/player/lottie_light"),
-      import("@/assets/yaffle-wordmark.json"),
-    ])
-      .then(([{ default: lottie }, { default: animationData }]) => {
-        if (!disposed) setPlayer({ lottie, animationData })
+    loadWordmarkPlayer()
+      .then((loaded) => {
+        if (!disposed) setPlayer(loaded)
       })
       .catch(() => {
         // Best-effort: the static wordmark stays.
@@ -49,11 +61,13 @@ export function AnimatedWordmark() {
     return () => {
       disposed = true
     }
-  }, [])
+  }, [player])
 
   // Second phase: the container only exists once `player` renders the button,
-  // so the animation mounts here rather than in the load handler.
-  React.useEffect(() => {
+  // so the animation mounts here rather than in the load handler. A layout
+  // effect, so the first animation frame is in place before the browser
+  // paints: never an empty frame where the wordmark should be.
+  React.useLayoutEffect(() => {
     if (!player || !containerRef.current) return
     const anim = player.lottie.loadAnimation({
       container: containerRef.current,
@@ -125,7 +139,10 @@ export function AnimatedWordmark() {
   // wordmark stays the same plain div the header always had.
   if (!player) {
     return (
-      <div className="font-wordmark text-[30px] leading-none font-semibold">
+      <div
+        className="font-wordmark leading-none font-semibold"
+        style={{ fontSize: height }}
+      >
         {t.app.name}
       </div>
     )
@@ -143,7 +160,8 @@ export function AnimatedWordmark() {
       <div
         ref={containerRef}
         aria-hidden
-        className="-ml-[2px] h-[30px] w-[150px]"
+        className="-ml-[2px]"
+        style={{ height, width: height * ASPECT }}
       />
     </button>
   )

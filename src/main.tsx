@@ -9,6 +9,7 @@ import { startBootMirror } from "@/data/boot-mirror"
 import { bootstrapIdentity } from "@/data/identity"
 import { refreshOnResume } from "@/data/resume-sync"
 import { auth, db } from "@/lib/firebase"
+import { preloadAssets } from "@/lib/preload"
 import { captureInstallPrompt } from "@/pwa/install-store"
 import { registerServiceWorker } from "@/pwa/register"
 
@@ -30,6 +31,10 @@ refreshOnResume(db)
 // Chromium offers installation once per page load, early; catch it before
 // React renders so the install card and the Settings row can both use it.
 captureInstallPrompt()
+
+// Fetch the fonts and the wordmark animation now, alongside sign-in, so a
+// first run's welcome screen can appear fully formed (src/lib/preload.ts).
+void preloadAssets()
 
 // Precache the app shell and keep it silently up to date (spec § PWA & offline).
 registerServiceWorker()

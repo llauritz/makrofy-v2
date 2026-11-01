@@ -46,7 +46,7 @@ export default defineConfig({
         // static legal pages (public/*.html), which are their own documents —
         // they are precached, so they still open offline.
         navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/__\//, /^\/(terms|privacy|refunds)(\.html)?$/],
+        navigateFallbackDenylist: [/^\/__\//, /^\/(pricing|terms|privacy|refunds)(\.html)?$/],
         cleanupOutdatedCaches: true,
       },
     }),
