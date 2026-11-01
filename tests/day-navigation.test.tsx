@@ -30,7 +30,12 @@ import {
 const dayLog = vi.hoisted(() => new Map<string, unknown[]>())
 
 vi.mock("@/lib/firebase", () => ({ app: {}, db: {}, auth: {} }))
-vi.mock("@/data/identity", () => ({ refreshIdentity: vi.fn() }))
+vi.mock("@/data/identity", () => ({ startGoogleSignIn: vi.fn() }))
+vi.mock("@/data/cloud-account", () => ({
+  useCloudAccount: () => ({ account: "google", dismissed: null }),
+  dismissCloudPrompt: vi.fn(),
+  forgetGoogleAccount: vi.fn(),
+}))
 vi.mock("@/data/hooks", () => ({
   useIdentity: () => "test-uid",
   useDay: (_uid: string, day: string) => dayLog.get(day) ?? [],
@@ -39,6 +44,7 @@ vi.mock("@/data/hooks", () => ({
   useLoggedDays: () => new Set<string>(),
   useProductIndex: () => ({ products: new Map(), totalEntries: 0 }),
   useSyncStatus: () => "synced",
+  useDaySyncing: () => false,
   // The morning strip's feeds (#22): an empty history keeps it hidden, so day
   // navigation is exercised without the strip in the tree.
   useAllEntries: () => [],

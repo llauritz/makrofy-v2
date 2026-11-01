@@ -12,6 +12,25 @@
        #17110c) so it follows the in-app toggle, not just the OS preference. -->
   <meta name="theme-color" content="#f6f1e6" />
 
+  <!-- Resolve light/dark before the first frame. ThemeProvider applies the
+       same class once React runs, but that is after the whole bundle has
+       evaluated — up to a second on a phone — and until then a dark-mode user
+       would see the light background. Mirrors theme-provider.tsx: the stored
+       choice ("theme"), else the OS preference. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("theme")
+        if (t !== "dark" && t !== "light") {
+          t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+        }
+        document.documentElement.classList.add(t)
+        var m = document.querySelector('meta[name="theme-color"]')
+        if (m) m.setAttribute("content", t === "dark" ? "#17110c" : "#f6f1e6")
+      } catch (e) {}
+    })()
+  </script>
+
   <!-- Warm up DNS+TLS to Firebase while the JS parses: the launch paints from
        the boot mirror (#69), but auth's background accounts:lookup and the
        Firestore streams follow immediately — on mobile the handshakes are a

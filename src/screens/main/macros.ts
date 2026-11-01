@@ -32,8 +32,3 @@ export const MACROS = [
 export type Macro = (typeof MACROS)[number]
 /** The Entry field a macro maps to — 'protein' | 'fat' | 'carbs'. */
 export type MacroField = Macro["field"]
-
-/** A translucent wash of a macro mark color, for chip/pill backgrounds. */
-export function macroTint(mark: string, percent: number) {
-  return `color-mix(in oklab, ${mark} ${percent}%, transparent)`
-}

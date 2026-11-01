@@ -1,0 +1,159 @@
+/* Shared styles for the static legal pages (terms, privacy, refunds).
+   These pages are plain HTML on purpose: Paddle's domain review needs them to
+   load without a login or JavaScript, so they live outside the React app.
+   Colours follow the Warm Market tokens in src/index.css. */
+:root {
+  color-scheme: light dark;
+  --bg: #f6f1e6;
+  --fg: #2b2015;
+  --muted: #7d7060;
+  --card: #fffdf7;
+  --border: #eee5d2;
+  --todo-bg: #ffe9a8;
+  --todo-fg: #5a3d00;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17110c;
+    --fg: #f1e8d8;
+    --muted: #a69580;
+    --card: #211911;
+    --border: #33281c;
+    --todo-bg: #5a3d00;
+    --todo-fg: #ffe9a8;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.6 "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+}
+main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+header.legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  font: 600 1.5rem/1 Fraunces, Georgia, serif;
+  color: inherit;
+  text-decoration: none;
+}
+nav.legal-nav {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+nav.legal-nav a {
+  color: var(--muted);
+}
+nav.legal-nav a[aria-current="page"] {
+  color: var(--fg);
+  font-weight: 600;
+  text-decoration: none;
+}
+h1 {
+  font: 600 2rem/1.2 Fraunces, Georgia, serif;
+  margin: 2rem 0 0.25rem;
+}
+h2 {
+  font-size: 1.125rem;
+  margin: 2rem 0 0.5rem;
+}
+h3 {
+  font-size: 1rem;
+  margin: 1.25rem 0 0.25rem;
+}
+.updated {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 0 0 1.5rem;
+}
+a {
+  color: inherit;
+}
+ul {
+  padding-left: 1.25rem;
+}
+li + li {
+  margin-top: 0.25rem;
+}
+.summary {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.75rem 1.25rem;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  display: block;
+  overflow-x: auto;
+}
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  font-weight: 600;
+}
+/* Placeholders the owner must fill before launch. Visible on purpose. */
+.todo {
+  background: var(--todo-bg);
+  color: var(--todo-fg);
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+footer.legal {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+/* At phone width the three-column data table stacks into one card per row. */
+@media (max-width: 34rem) {
+  thead {
+    display: none;
+  }
+  table,
+  tbody,
+  tr,
+  td {
+    display: block;
+  }
+  tr {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    border: 0;
+    padding: 0.125rem 0;
+  }
+  td:nth-child(2)::before {
+    content: "Why: ";
+    font-weight: 600;
+  }
+  td:nth-child(3)::before {
+    content: "Legal basis: ";
+    font-weight: 600;
+  }
+}

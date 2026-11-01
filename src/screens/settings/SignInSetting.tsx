@@ -2,6 +2,7 @@ import { LogIn, UserRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Squircle } from "@/components/ui/squircle"
+import { forgetGoogleAccount } from "@/data/cloud-account"
 import { useAuthUser } from "@/data/hooks"
 import { signOutToGuest, startGoogleSignIn } from "@/data/identity"
 import { auth } from "@/lib/firebase"
@@ -37,7 +38,10 @@ export function SignInSetting() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => void signOutToGuest(auth)}
+          onClick={() => {
+            forgetGoogleAccount()
+            void signOutToGuest(auth)
+          }}
         >
           {t.signIn.signOut}
         </Button>

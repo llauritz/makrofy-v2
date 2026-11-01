@@ -42,13 +42,29 @@ export default defineConfig({
         // never touches Firestore or AI traffic — those stay pure network.
         globPatterns: ["**/*.{js,css,html,woff2,png,svg,webmanifest}"],
         // Offline navigations fall back to the cached shell, except Firebase's
-        // reserved auth/init paths, which must reach the network.
+        // reserved auth/init paths, which must reach the network, and the
+        // static legal pages (public/*.html), which are their own documents —
+        // they are precached, so they still open offline.
         navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/__\//],
+        navigateFallbackDenylist: [/^\/__\//, /^\/(terms|privacy|refunds)(\.html)?$/],
         cleanupOutdatedCaches: true,
       },
     }),
   ],
+  // AI_BENCH=1 builds also ship the AI bench page (/ai-bench.html) so it can
+  // run against real App Check: PR previews set it; live builds don't. To
+  // bench on live, set AI_BENCH in the merge workflow temporarily (done once,
+  // 2026-11-01 — results in docs/research/ai-bench/).
+  build: process.env.AI_BENCH
+    ? {
+        rollupOptions: {
+          input: {
+            main: path.resolve(__dirname, "index.html"),
+            aiBench: path.resolve(__dirname, "ai-bench.html"),
+          },
+        },
+      }
+    : undefined,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

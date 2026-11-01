@@ -199,11 +199,30 @@ export function listenToDay(
 ): Unsubscribe {
   // Sorted client-side: a Day holds at most dozens of Entries, and
   // where('date') + orderBy('createdAt') would need a composite index.
-  const q = query(entriesCollection(db, uid), where("date", "==", day))
-  return onSnapshot(q, (snap) =>
+  return onSnapshot(dayQuery(db, uid, day), (snap) =>
     onChange(
       toEntries(snap).sort((a, b) => a.createdAt.toMillis() - b.createdAt.toMillis()),
     ),
+  )
+}
+
+/**
+ * Observe whether one Day's Entries are still served from the local cache
+ * (true) or confirmed current by the server (false) — the feed for the faint
+ * "still updating" spinner under the log. Same query as listenToDay, so the SDK
+ * shares one target between the two; metadata-only changes are included so
+ * the flip to server-confirmed lands even when no Entry changed.
+ */
+export function listenToDayFreshness(
+  db: Firestore,
+  uid: string,
+  day: string,
+  onChange: (fromCache: boolean) => void,
+): Unsubscribe {
+  return onSnapshot(
+    dayQuery(db, uid, day),
+    { includeMetadataChanges: true },
+    (snap) => onChange(snap.metadata.fromCache),
   )
 }
 
@@ -316,6 +335,10 @@ function assignPresentMacros(
 
 function entriesCollection(db: Firestore, uid: string) {
   return collection(db, "users", uid, "entries")
+}
+
+function dayQuery(db: Firestore, uid: string, day: string) {
+  return query(entriesCollection(db, uid), where("date", "==", day))
 }
 
 function toEntries(snap: QuerySnapshot): Entry[] {

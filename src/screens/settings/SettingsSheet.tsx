@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/bottom-sheet"
 import { Segmented } from "@/components/ui/segmented"
 import { Squircle } from "@/components/ui/squircle"
+import { dismissCloudPrompt } from "@/data/cloud-account"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useGoal, useIdentity } from "@/data/hooks"
 import { db } from "@/lib/firebase"
@@ -19,6 +20,7 @@ import { useI18n } from "@/lib/i18n/useI18n"
 import type { Language } from "@/lib/language"
 import { InstallAppEntry } from "@/pwa/InstallApp"
 import { ExportImport } from "@/screens/settings/ExportImport"
+import { PlanSetting } from "@/screens/settings/PlanSetting"
 import { SignInSetting } from "@/screens/settings/SignInSetting"
 
 // The real settings surface (#17): goal · glossary · theme · language, then the
@@ -26,7 +28,7 @@ import { SignInSetting } from "@/screens/settings/SignInSetting"
 // now) and export/import (#24). Self-contained like a screen: it reads and writes the
 // synced Goal and the device-local theme/language directly. Controlled by its
 // owner (MainScreen) so several affordances can open it — the header gear, the
-// header sync indicator, and the summary ring. The goal is the one synced
+// header cloud, and the summary ring. The goal is the one synced
 // setting (ADR 0003); theme and language stay on the device.
 export function SettingsSheet({
   open,
@@ -38,6 +40,11 @@ export function SettingsSheet({
   onOpenGlossary: () => void
 }) {
   const { t } = useI18n()
+  // Opening Settings without signing in turns the header's sign-in invitation
+  // down: the cloud stands alone from then on (CloudSyncButton).
+  React.useEffect(() => {
+    if (open) dismissCloudPrompt()
+  }, [open])
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="max-h-[88svh] gap-6 overflow-y-auto">
@@ -60,12 +67,45 @@ export function SettingsSheet({
         <LanguageSetting />
 
         <div className="flex flex-col gap-1 border-t pt-4">
+          <PlanSetting onOpen={() => onOpenChange(false)} />
           <SignInSetting />
           <InstallAppEntry />
           <ExportImport />
         </div>
+
+        <LegalLinks />
       </BottomSheetContent>
     </BottomSheet>
+  )
+}
+
+// The legal pages are static documents outside the app (public/*.html), so
+// Paddle's domain review and signed-out visitors can reach them. They open in
+// a new tab so an installed PWA keeps its own window.
+function LegalLinks() {
+  const { t } = useI18n()
+  const links = [
+    { href: "/terms", label: t.settings.terms },
+    { href: "/privacy", label: t.settings.privacy },
+    { href: "/refunds", label: t.settings.refunds },
+  ]
+  return (
+    <nav
+      aria-label={t.settings.legalLinks}
+      className="flex justify-center gap-4 text-xs text-muted-foreground"
+    >
+      {links.map((link) => (
+        <a
+          key={link.href}
+          href={link.href}
+          target="_blank"
+          rel="noopener"
+          className="underline-offset-2 hover:text-foreground hover:underline"
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
   )
 }
 

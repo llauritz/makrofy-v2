@@ -25,6 +25,6 @@ export function useI18n(): I18n {
       t: dictionaryFor(language),
       n: (value: number) => formatNumber(value, language),
     }),
-    [language],
+    [language]
   )
 }

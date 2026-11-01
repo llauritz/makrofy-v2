@@ -174,12 +174,11 @@ export const en = {
     grams: (macro: string) => `${macro} grams`,
   },
 
-  sync: {
-    attention: "Sign-in needed to sync your changes",
-    pending: "Not synced — changes saved on this device",
-    savedTitle: "Saved on this device",
-    savedBody:
-      "Your changes are saved on this device and sync automatically as soon as you’re back online — nothing is lost while you’re offline.",
+  cloud: {
+    syncData: "Sync data",
+    loginAgain: "Log in again",
+    offAria: "Sync is off. Open settings",
+    offlineAria: "Offline, changes saved on this device. Open settings",
   },
 
   settings: {
@@ -197,6 +196,10 @@ export const en = {
     // both dictionaries by convention, so the toggle reads the same everywhere.
     languageEnglish: "English",
     languageSpanish: "Español",
+    legalLinks: "Legal",
+    terms: "Terms",
+    privacy: "Privacy",
+    refunds: "Refunds",
   },
 
   signIn: {
@@ -211,12 +214,12 @@ export const en = {
     howTo: "How to",
     addToHomeScreen: "Add to home screen",
     iosTitle: "Install Yaffle",
-    iosBody: "Add Yaffle to your home screen for a full-screen, offline-ready app.",
+    iosBody:
+      "Add Yaffle to your home screen for a full-screen, offline-ready app.",
     iosStep1: (
       <>
-        Tap the{" "}
-        <span className="font-medium text-foreground">Share</span> button in
-        Safari&rsquo;s toolbar.
+        Tap the <span className="font-medium text-foreground">Share</span>{" "}
+        button in Safari&rsquo;s toolbar.
       </>
     ),
     iosStep2: (
@@ -353,6 +356,66 @@ export const en = {
     caloriesPer: (basis: string) => `Calories per ${basis}`,
     gramsPer: (macro: string, basis: string) => `${macro} grams per ${basis}`,
     saveReading: "Save reading",
+  },
+
+  // The subscription paywall prototype (#65). Allowances and prices arrive
+  // formatted; "Pro" reads the same in both languages, "Unlimited" translates.
+  paywall: {
+    planFree: "Free",
+    planPro: "Pro",
+    planUnlimited: "Unlimited",
+    titleExhaustedFree: "That was your last free AI fill",
+    bodyExhaustedFree:
+      "AI fill reads what you ate and fills in the numbers for you. Pick a plan to keep it going. Everything else in Yaffle stays free.",
+    titleExhaustedPro: "You’ve used this cycle’s fills",
+    bodyExhaustedPro: (date: string) =>
+      `Pro refills on ${date}. Need more before then? Unlimited keeps going.`,
+    titleBrowseFree: "Keep AI fill going",
+    bodyBrowseFree: (left: string, limit: string) =>
+      `${left} of ${limit} free AI fills left. Everything else in Yaffle stays free.`,
+    titleBrowsePaid: "Your plan",
+    bodyBrowsePaid: (date: string) => `Your AI fills refill on ${date}.`,
+    billing: "Billing",
+    billingAnnual: "Yearly",
+    billingMonthly: "Monthly",
+    save: (pct: string) => `Save ${pct}%`,
+    freeLine: (limit: string) => `${limit} free AI fills`,
+    paidLine: (limit: string) => `${limit} AI fills / 30 days`,
+    supportsDev: "Supports development",
+    bestValue: "Best value",
+    currentPlan: "Your plan",
+    perMonth: (price: string) => `${price}/mo`,
+    billedYearly: (price: string) => `${price} billed yearly`,
+    billedMonthly: "billed monthly",
+    continueWith: (plan: string) => `Continue with ${plan}`,
+    checkoutStub: "Checkout isn’t connected yet. This is a prototype.",
+    footnote: "Cancel anytime",
+    // The free counter under the add card's macros, after an AI use.
+    usageMeter: (used: string, limit: string) =>
+      `${used}/${limit} free AI fills used`,
+    // The ✨ refusal at cycle exhaustion — the paywall's front door (#64).
+    exhaustedFree: (limit: string) => `You’ve used all ${limit} free AI fills.`,
+    exhaustedPro: (limit: string, date: string) =>
+      `You’ve used this cycle’s ${limit} AI fills. More on ${date}.`,
+    exhaustedUnlimited: (limit: string, date: string) =>
+      `You’ve reached the fair-use limit of ${limit} AI fills. More on ${date}.`,
+    seePlans: "See plans",
+    getUnlimited: "Get Unlimited",
+    // The Settings row: where the plan, the counter and the reset date live.
+    aiFill: "AI fill",
+    freeStatus: (left: string, limit: string) =>
+      `${left} of ${limit} free fills left`,
+    proStatus: (left: string, limit: string, date: string) =>
+      `${left} of ${limit} fills left · refills ${date}`,
+    unlimitedStatus: (used: string, date: string) =>
+      `${used} fills this cycle · refills ${date}`,
+    upgrade: "Upgrade",
+    manage: "Manage",
+    // The one-time notice to existing users (no grandfathering, #59).
+    noticeTitle: "AI fill has plans now",
+    noticeBody: (limit: string) =>
+      `Everyone gets ${limit} free AI fills. Pro and Unlimited keep it going and support Yaffle’s development. Everything else in Yaffle stays free, as it always was.`,
+    noticeDismiss: "Got it",
   },
 
   day: {

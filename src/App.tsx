@@ -11,6 +11,7 @@ import { FADE_IN, SPRING } from "@/screens/main/anim"
 import { MainScreen } from "@/screens/main/MainScreen"
 import { resolveAppView } from "@/screens/onboarding/gate"
 import { OnboardingScreen } from "@/screens/onboarding/OnboardingScreen"
+import { PaywallProvider } from "@/screens/paywall/Paywall"
 import { StatsScreen } from "@/screens/stats/StatsScreen"
 
 // Dev convenience: ?theme=dark|light forces the mode (shareable per-mode links,
@@ -115,10 +116,12 @@ export function App() {
           animate={{ opacity: 1 }}
           transition={FADE_IN}
         >
-          <MainScreen
-            onOpenGlossary={() => openGlossary("main")}
-            onOpenStats={() => setScreen("stats")}
-          />
+          <PaywallProvider>
+            <MainScreen
+              onOpenGlossary={() => openGlossary("main")}
+              onOpenStats={() => setScreen("stats")}
+            />
+          </PaywallProvider>
         </motion.div>
       )}
     </MotionConfig>

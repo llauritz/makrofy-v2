@@ -19,7 +19,8 @@ import {
   parseMacros,
   parseOptional,
 } from "./fields"
-import { MACROS, macroTint } from "./macros"
+import { MACROS } from "./macros"
+import { MacroInputPill } from "./MacroPills"
 import {
   aiZoneStateOf,
   FLAGGED_OUTLINE,
@@ -151,7 +152,6 @@ export function EntryEditor({
         <div className="relative min-w-0 flex-1">
           <Squircle asChild pill>
             <input
-              autoFocus
               value={label}
               onChange={(e) => onLabelChange(e.target.value)}
               onKeyDown={onKeyDown}
@@ -202,37 +202,21 @@ export function EntryEditor({
       </div>
       <div className="mt-2.5 flex items-center gap-2">
         {MACROS.map((m) => (
-          <Squircle asChild pill key={m.key}>
-            <label
-              className={
-                "flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-3 py-2.5" +
-                (flags.has(m.key) ? " " + FLAGGED_OUTLINE : "") +
-                (ai.thinking && fillable.has(m.key) ? " animate-pulse" : "")
-              }
-              style={{ backgroundColor: macroTint(m.mark, 11) }}
-            >
-              <span
-                className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: m.mark }}
-              />
-              <span className="text-xs font-medium text-muted-foreground">
-                {m.letter}
-              </span>
-              <input
-                value={macros[m.key]}
-                onChange={(e) =>
-                  setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
-                }
-                onKeyDown={onKeyDown}
-                onFocus={acceptFlag(m.key)}
-                placeholder="0"
-                inputMode="decimal"
-                aria-label={t.macros.grams(t.macros[m.field])}
-                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
-              />
-              <span className="text-xs text-[#a5988a]">{t.units.g}</span>
-            </label>
-          </Squircle>
+          <MacroInputPill
+            key={m.key}
+            macro={m}
+            className={
+              (flags.has(m.key) ? FLAGGED_OUTLINE : "") +
+              (ai.thinking && fillable.has(m.key) ? " animate-pulse" : "")
+            }
+            value={macros[m.key]}
+            onChange={(e) =>
+              setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+            }
+            onKeyDown={onKeyDown}
+            onFocus={acceptFlag(m.key)}
+            aria-label={t.macros.grams(t.macros[m.field])}
+          />
         ))}
       </div>
       <AiZone

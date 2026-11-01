@@ -8,7 +8,7 @@ The consolidated output of the [V2 wayfinder map](https://github.com/llauritz/ma
 
 A one-person calorie/macro tracker. Screens:
 
-- **Main**: header (Fraunces wordmark, sync indicator, settings) · Day strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
+- **Main**: header (Fraunces wordmark, cloud sync button, settings) · Day strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
 - **Statistics dashboard** (from the stats button) with a **week report subpage**; a **morning glance strip** appears on the main screen once per morning.
 - **Food glossary** (from Settings): the browsable, alphabetical Product index and the home of all curation — correct/pin/delete Readings, merge/delete Products (#40).
 - **Onboarding**: a welcome screen, then a goal screen (prefilled, with an optional daily-need calculator).
@@ -82,7 +82,7 @@ Normative: [#5](https://github.com/llauritz/makrofy-v2/issues/5); screenshots `d
 
 Normative: [#3](https://github.com/llauritz/makrofy-v2/issues/3) + `docs/research/gemini-firebase-ai-logic-macro-fill.md` (schema, worked examples, pricing). Surfaces beyond the add card: [#53](https://github.com/llauritz/makrofy-v2/issues/53) + ADR 0010.
 
-- **Model**: `gemini-3.1-flash-lite` via Firebase AI Logic with Google Search grounding (owner reverted the brief 2026-07-16 `gemini-3.5-flash` escalation same day; never 2.5 — no single-call grounded structured output, pricier grounding).
+- **Model**: `gemini-3.5-flash-lite` at `thinkingLevel: LOW` via Firebase AI Logic with Google Search grounding (owner chose it 2026-11-01 over `gemini-3.1-flash-lite`: newer, stronger, same grounding fee; LOW thinking because thinking time is user wait. Earlier: owner reverted a brief 2026-07-16 `gemini-3.5-flash` escalation as too pricey; never 2.5 — no single-call grounded structured output, pricier grounding). Dev bench at `/ai-bench.html` times model configs against the production request.
 - **Four tiers**, one flat `status`-enum response: *confident* → fill · *unsure* → fill + 2px-dashed flagged fields (tap to accept/fix) · *ambiguous* → exactly one question with answer chips (chip = second and **final** round trip) · *hopeless* → refusal + usable hint.
 - **The AI never rewrites the label**; interpretation shows in the info row; committed AI entries carry ✨ (`source: 'ai'`).
 - **Three surfaces, one choreography** (#53, ADR 0010): the add card (fill overwrites the draft; only Add commits) · the inline editor (✨ in the label input; fill completes only blank fields under Save; dashed outlines seed from the Entry's persisted flags and Save persists the survivors) · the dashed 0-kcal row (✨ left of the muted number; responses answer inside that same card; a confident answer commits the missing fields directly with ✨ provenance).
@@ -107,7 +107,9 @@ Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10).
 
 - **Install**: quiet "Install app" settings entry (`beforeinstallprompt` native prompt on Chromium; iOS instruction sheet). No banners.
 - **Icon**: Fraunces "M", ink on flour — standard, maskable, monochrome, apple-touch. Android splash from manifest `background_color: #f6f1e6`; per-mode `theme-color` `#f6f1e6`/`#17110c`; `display: standalone`.
-- **Sync indicator**: silent (invisible when synced) / pending (offline + queued collapse into one; tap explains) / attention (auth-expired write pause only; tap re-auths). Fed by snapshot metadata.
+- **Cloud sync button** (header, left of the gear): signed out, a crossed-out cloud with a faint outlined "Sync data" text button on its left (or "Log in again" once a Google session lapsed without a sign-out); the text button goes straight to Google sign-in. Once the user has tapped it, or opened Settings, without signing in, the crossed-out cloud stands alone, bare on the background (no pill), and opens Settings. Signed in, the header shows nothing while synced or uploading; only a real offline stretch (after the sync settle) brings back the crossed-out cloud.
+- **Sync settle**: the cloud's sync state (fed by snapshot metadata) only counts once it lasts: offline-pending and auth trouble after ~1 s; pending while the browser reports a connection only after 10 s, so a slow launch or write ack never flashes anything.
+- **Updating spinner**: a quiet spinner under the log while the selected Day is on screen from the cache but not yet confirmed by the server (launch, return to the app, Day switch). Online only; appears only after 500 ms, in its own space below the last card, and fades out when confirmed; gives up after 10 s. Returning to the app after 30 s+ hidden cycles Firestore's network so a silently dropped stream can't hold the log on stale data.
 - **Updates**: `vite-plugin-pwa` silent auto-update. Service worker precaches the app shell only.
 
 ## Deploy & environments
