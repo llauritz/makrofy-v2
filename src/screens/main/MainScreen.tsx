@@ -16,6 +16,7 @@ import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import {
   useCoverage,
   useDay,
+  useDaySyncing,
   useGoal,
   useIdentity,
   useLoggedDays,
@@ -30,6 +31,7 @@ import { AddCard } from "./AddCard"
 import { CalendarSheet } from "./CalendarSheet"
 import { CoverageControl } from "./CoverageControl"
 import { DayStrip } from "./DayStrip"
+import { DaySyncSpinner } from "./DaySyncSpinner"
 import { EntryList } from "./EntryList"
 import type { EntryDraft } from "./fields"
 import { Header } from "./Header"
@@ -73,6 +75,7 @@ export function MainScreen({
   const loggedDays = useLoggedDays(uid)
   const productIndex = useProductIndex(uid)
   const syncStatus = useSyncStatus(uid)
+  const daySyncing = useDaySyncing(uid, selectedDay)
 
   const clearTimer = () => {
     if (timer.current !== undefined) {
@@ -179,6 +182,7 @@ export function MainScreen({
             onDelete={requestDelete}
             onAiFill={handleAiFill}
           />
+          <DaySyncSpinner active={daySyncing} />
           <CoverageControl
             day={selectedDay}
             entryCount={visible.length}
