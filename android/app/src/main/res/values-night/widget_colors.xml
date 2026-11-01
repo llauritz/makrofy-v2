@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_card">#2A211A</color>
+    <color name="widget_border">#3A2F22</color>
+    <color name="widget_ink">#F3ECE2</color>
+    <color name="widget_on_ink">#17110C</color>
+    <color name="widget_muted">#A5988A</color>
+    <color name="widget_input">#211A12</color>
+    <color name="widget_ring_track">#3A2F22</color>
+    <color name="widget_macro_p">#5B91E4</color>
+    <color name="widget_macro_f">#B98A20</color>
+    <color name="widget_macro_c">#E07D6E</color>
+</resources>

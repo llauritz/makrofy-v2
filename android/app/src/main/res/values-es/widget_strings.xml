@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small_label">Anillo de Yaffle</string>
+    <string name="widget_small_description">Las calorías de hoy de un vistazo</string>
+    <string name="widget_wide_label">Yaffle hoy</string>
+    <string name="widget_wide_description">Calorías y macros de hoy</string>
+    <string name="widget_placeholder">Abre Yaffle para empezar</string>
+    <string name="widget_add">Añadir comida</string>
+</resources>

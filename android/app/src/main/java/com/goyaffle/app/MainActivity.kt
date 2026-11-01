@@ -6,6 +6,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.getcapacitor.BridgeActivity
+import com.goyaffle.app.widget.YaffleWidgetPlugin
 
 /**
  * The Capacitor shell around the web app (docs/adr/0012). Native code stays
@@ -20,6 +21,7 @@ class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Local plugins must be registered before super.onCreate builds the bridge.
         registerPlugin(SystemChromePlugin::class.java)
+        registerPlugin(YaffleWidgetPlugin::class.java)
         super.onCreate(savedInstanceState)
 
         // Draw behind the system bars on every API level (Android 15+ enforces

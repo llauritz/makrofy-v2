@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A ring about two-thirds full, for the widget picker's preview. Geometry
+     follows SummaryCard: 116 box, radius 46, 11 stroke, starting at 12 o'clock. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="116dp" android:height="116dp"
+    android:viewportWidth="116" android:viewportHeight="116">
+    <path android:pathData="M58,12a46,46 0,1 1,0 92a46,46 0,1 1,0 -92"
+        android:strokeColor="@color/widget_ring_track" android:strokeWidth="11" />
+    <path android:pathData="M58,12A46,46 0,1 1,18.16 81"
+        android:strokeColor="@color/widget_ink" android:strokeWidth="11"
+        android:strokeLineCap="round" />
+</vector>

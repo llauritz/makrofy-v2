@@ -79,6 +79,12 @@ The APK lands in `android/app/build/outputs/apk/debug/`.
 - `android/app/src/main/java/com/goyaffle/app/` — Kotlin: `MainActivity`
   (registers local plugins, keeps the WebView between the system bars) and
   `SystemChrome` (bar colours).
+- `android/app/src/main/java/com/goyaffle/app/widget/` — the home screen
+  widget (ADR 0014): a Jetpack Glance widget in two picker sizes (2×2 ring,
+  4×2 summary card) that paints only the snapshot the web app hands it
+  (`src/native/widget-snapshot.ts`, kept fresh by `src/native/WidgetSync.tsx`).
+  Its fonts in `res/font` are static, Latin-subset cuts of the app's Public
+  Sans, Nunito and Fraunces.
 - `src/native/` — the typed TypeScript side of every native feature, no-ops on
   the web. Screens import from here and never check the platform themselves.
 - `android/app/src/main/res/` — icons and splash, drawn from the same brand Y

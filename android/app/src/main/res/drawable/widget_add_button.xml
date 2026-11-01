@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The "+" button: the add card's ink circle (h-10) with its Lucide plus
+     (h-5, stroke 2.5), as one vector so it scales as a whole. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp" android:height="40dp"
+    android:viewportWidth="40" android:viewportHeight="40">
+    <path android:pathData="M20,0a20,20 0,1 1,0 40a20,20 0,1 1,0 -40z"
+        android:fillColor="@color/widget_ink" />
+    <path android:pathData="M14.17,20h11.66M20,14.17v11.66"
+        android:strokeColor="@color/widget_on_ink" android:strokeWidth="2.08"
+        android:strokeLineCap="round" android:strokeLineJoin="round" />
+</vector>

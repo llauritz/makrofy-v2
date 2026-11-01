@@ -5,6 +5,8 @@ import { useTheme } from "@/components/theme-provider"
 import { useGoalStatus, useIdentity } from "@/data/hooks"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { useBackHandler } from "@/native/back"
+import { watchWidgetTaps } from "@/native/widget"
+import { WidgetSync } from "@/native/WidgetSync"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
 import { MainScreen } from "@/screens/main/MainScreen"
@@ -28,6 +30,16 @@ function useThemeParam() {
 type AppScreen = "main" | "glossary" | "stats"
 
 export function App() {
+  return (
+    <>
+      {/* Keeps the Android home screen widget fresh; nothing on the web. */}
+      <WidgetSync />
+      <AppScreens />
+    </>
+  )
+}
+
+function AppScreens() {
   useThemeParam()
 
   const uid = useIdentity()
@@ -52,6 +64,11 @@ export function App() {
         ? () => setScreen("main")
         : null
   )
+
+  // A home screen widget tap (Android) always lands on the main screen, which
+  // acts on it itself — a tap made while another screen or the splash is up
+  // waits for Main to mount (src/native/widget.ts).
+  React.useEffect(() => watchWidgetTaps(() => setScreen("main")), [])
 
   // Splash until identity and the first Goal snapshot settle, so the ring never
   // flashes the fallback goal before the synced value arrives.

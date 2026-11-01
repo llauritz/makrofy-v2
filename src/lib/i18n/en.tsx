@@ -310,6 +310,18 @@ export const en = {
     tomorrow: "Tomorrow",
   },
 
+  widget: {
+    // The Android home screen widget (src/native/widget-snapshot.ts). Its
+    // visible lines reuse `summary`; these are its screen-reader texts.
+    add: "Add food",
+    description: (
+      consumed: string,
+      goal: string,
+      headline: string,
+      macros: string,
+    ) => `${consumed} of ${goal} kcal eaten today. ${headline}. ${macros}.`,
+  },
+
   calendar: {
     openCalendar: "Open calendar",
     openCalendarOn: (date: string) => `Open calendar, ${date}`,
