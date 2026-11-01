@@ -4,6 +4,14 @@
 // snapshots until auth settles). The mirror is a plain read/write pair: the
 // data hooks seed from readBootMirror, startBootMirror follows auth and the
 // live listeners to keep it fresh.
+import {
+  collection,
+  doc,
+  query,
+  waitForPendingWrites,
+  where,
+  type Firestore,
+} from "firebase/firestore"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
@@ -20,6 +28,7 @@ import {
   clearFirestoreData,
   createEmulatorApp,
   destroyEmulatorApp,
+  serverCurrent,
   waitFor,
   type EmulatorApp,
 } from "./emulator"
@@ -48,6 +57,21 @@ describe("readBootMirror", () => {
   })
 })
 
+// Every target the mirror listens on for `uid` today, server-confirmed — so a
+// test's writes never race the mirror's listeners still being added (see
+// serverCurrent). The queries mirror boot-mirror.ts's listeners exactly, so
+// they share its server targets.
+async function mirrorListening(db: Firestore, uid: string): Promise<void> {
+  const day = localDay(new Date())
+  const entries = collection(db, "users", uid, "entries")
+  await Promise.all([
+    serverCurrent(doc(db, "users", uid, "settings", "goal")),
+    serverCurrent(entries),
+    serverCurrent(query(entries, where("date", "==", day))),
+    serverCurrent(doc(db, "users", uid, "days", day)),
+  ])
+}
+
 describe("startBootMirror", () => {
   let ctx: EmulatorApp
   let stop: (() => void) | undefined
@@ -68,6 +92,7 @@ describe("startBootMirror", () => {
     await waitFor(() =>
       readBootMirror(store)?.uid === user.uid ? true : undefined,
     )
+    await mirrorListening(ctx.db, user.uid)
 
     setGoal(ctx.db, user.uid, { kcal: 2100, protein: 130 })
     await waitFor(() =>
@@ -99,6 +124,10 @@ describe("startBootMirror", () => {
     stop = startBootMirror(ctx.auth, ctx.db, store)
 
     const first = await ensureIdentity(ctx.auth)
+    await waitFor(() =>
+      readBootMirror(store)?.uid === first.uid ? true : undefined,
+    )
+    await mirrorListening(ctx.db, first.uid)
     setGoal(ctx.db, first.uid, { kcal: 1800 })
     addEntry(ctx.db, first.uid, {
       date: localDay(new Date()),
@@ -128,6 +157,10 @@ describe("startBootMirror", () => {
     const store = fakeStore()
     stop = startBootMirror(ctx.auth, ctx.db, store)
     const user = await ensureIdentity(ctx.auth)
+    await waitFor(() =>
+      readBootMirror(store)?.uid === user.uid ? true : undefined,
+    )
+    await mirrorListening(ctx.db, user.uid)
     const today = localDay(new Date())
     const earlier = stepDay(today, -3)
 
@@ -146,6 +179,9 @@ describe("startBootMirror", () => {
     ctx = createEmulatorApp()
     const user = await ensureIdentity(ctx.auth)
     setGoal(ctx.db, user.uid, { kcal: 1900 })
+    // Acknowledged before the mirror's listeners start, so they can't race it
+    // (see serverCurrent).
+    await waitForPendingWrites(ctx.db)
     // A previous launch's mirror for this very uid.
     const store = fakeStore({
       "yaffle:boot-mirror:v1": JSON.stringify({

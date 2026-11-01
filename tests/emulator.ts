@@ -5,7 +5,10 @@ import { connectAuthEmulator, getAuth, type Auth } from "firebase/auth"
 import {
   connectFirestoreEmulator,
   initializeFirestore,
+  onSnapshot,
+  type DocumentReference,
   type Firestore,
+  type Query,
 } from "firebase/firestore"
 
 const PROJECT_ID = "goyaffle"
@@ -66,4 +69,38 @@ export async function clearFirestoreData(): Promise<void> {
     { method: "DELETE" },
   )
   if (!res.ok) throw new Error(`clearFirestoreData failed: ${res.status}`)
+}
+
+/**
+ * Resolve once the server has confirmed `target` — a query or document some
+ * listener under test already holds (identical targets share one server
+ * stream, so this listener's confirmation is theirs too).
+ *
+ * Why tests need it: the Firestore emulator can answer a listen target that is
+ * still being added with a snapshot taken *before* a write that is in flight
+ * at the same moment, and the client then keeps that stale "missing" view
+ * even after the write is acknowledged. A test that writes the instant its
+ * listeners start (straight after sign-in) hits this on a loaded CI runner;
+ * writing only once the targets are current avoids it.
+ */
+export function serverCurrent(
+  target: DocumentReference | Query,
+  timeoutMs = 10_000,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      stop()
+      reject(new Error("serverCurrent timed out"))
+    }, timeoutMs)
+    const onMeta = (snap: { metadata: { fromCache: boolean } }) => {
+      if (snap.metadata.fromCache) return
+      clearTimeout(timer)
+      queueMicrotask(() => stop())
+      resolve()
+    }
+    const stop =
+      "type" in target && target.type === "document"
+        ? onSnapshot(target as DocumentReference, { includeMetadataChanges: true }, onMeta, reject)
+        : onSnapshot(target as Query, { includeMetadataChanges: true }, onMeta, reject)
+  })
 }
