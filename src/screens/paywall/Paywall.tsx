@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { Check, Heart, LogIn, Sparkles } from "lucide-react"
+import { Check, Heart, Sparkles } from "lucide-react"
 import { motion } from "motion/react"
 import * as React from "react"
 
@@ -34,9 +34,9 @@ import { readPaywallPreview } from "./preview"
 // ladder from #59/#60 — Free / Pro / Unlimited, Pro centre-stage and marked
 // best value (compromise + centre-stage, pricing note §5), yearly first with
 // monthly one tap away. It opens from the ✨ refusal at cycle exhaustion (the
-// front door) and from the Settings plan row. Guests meet "Sign in with Google
-// to subscribe" in place of the checkout button (ADR 0002: link in place, no
-// guest checkout). Checkout itself is #66, so the paid CTA is a stub.
+// front door) and from the Settings plan row. Guests sign in with Google on
+// the way to checkout (ADR 0002: link in place, no guest checkout). Checkout
+// itself is #66, so the paid CTA is a stub.
 //
 // Everything here is dark unless the URL carries ?paywall (see ./preview):
 // without it `usePaywall()` is null and no surface renders.
@@ -171,40 +171,29 @@ function PaywallSheet({
           ))}
         </div>
 
+        {/* One button for everyone. Most subscribers are already signed in;
+            a Guest's tap goes through Google sign-in first (ADR 0002: link in
+            place, no guest checkout) and comes back to pick up checkout. */}
         <div className="flex flex-col gap-2">
-          {guest ? (
-            <>
-              <Button
-                size="lg"
-                className="h-12 w-full text-[15px]"
-                disabled={user === null}
-                onClick={() => void startGoogleSignIn(auth)}
-              >
-                <LogIn />
-                {t.paywall.signInToSubscribe}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                size="lg"
-                className="h-12 w-full text-[15px]"
-                disabled={!canChoose}
-                onClick={() => setStubbed(true)}
-              >
-                {t.paywall.continueWith(planName[chosen])}
-              </Button>
-              {stubbed && (
-                <p className="text-center text-[13px] text-muted-foreground">
-                  {t.paywall.checkoutStub}
-                </p>
-              )}
-            </>
+          <Button
+            size="lg"
+            className="h-12 w-full text-[15px]"
+            disabled={user === null || !canChoose}
+            onClick={() =>
+              guest ? void startGoogleSignIn(auth) : setStubbed(true)
+            }
+          >
+            {t.paywall.continueWith(planName[chosen])}
+          </Button>
+          {stubbed && (
+            <p className="text-center text-[13px] text-muted-foreground">
+              {t.paywall.checkoutStub}
+            </p>
           )}
         </div>
 
         <p className="px-1 text-center text-[11px] leading-relaxed text-muted-foreground">
-          {t.paywall.footnote(n(CYCLE_LIMIT.unlimited))}
+          {t.paywall.footnote}
         </p>
       </BottomSheetContent>
     </BottomSheet>
@@ -351,10 +340,9 @@ function PaidCard({
     billing === "annual"
       ? t.paywall.billedYearly(money(price.annual))
       : t.paywall.billedMonthly
-  const line =
-    plan === "pro"
-      ? t.paywall.proLine(n(CYCLE_LIMIT.pro))
-      : t.paywall.unlimitedLine
+  // Both paid cards state their allowance; Unlimited's 10,000 is its
+  // fair-use cap, disclosed right on the card rather than in a footnote.
+  const line = t.paywall.paidLine(n(CYCLE_LIMIT[plan]))
 
   return (
     <Squircle

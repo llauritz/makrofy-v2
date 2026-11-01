@@ -10,7 +10,7 @@
 export type Plan = "free" | "pro" | "unlimited"
 export type Billing = "annual" | "monthly"
 
-/** ✨ fills per 30-day cycle. Unlimited's cap is disclosed only as a fair-use footnote. */
+/** ✨ fills per 30-day cycle. Unlimited's 10,000 is shown on its plan card. */
 export const CYCLE_LIMIT: Record<Plan, number> = {
   free: 10,
   pro: 1_000,

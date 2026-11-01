@@ -324,8 +324,7 @@ export const en = {
     billingMonthly: "Monthly",
     save: (pct: string) => `Save ${pct}%`,
     freeLine: (limit: string) => `${limit} free AI fills`,
-    proLine: (limit: string) => `${limit} AI fills every 30 days`,
-    unlimitedLine: "Unlimited AI fills",
+    paidLine: (limit: string) => `${limit} AI fills / 30 days`,
     supportsDev: "Supports development",
     bestValue: "Best value",
     currentPlan: "Your plan",
@@ -333,10 +332,8 @@ export const en = {
     billedYearly: (price: string) => `${price} billed yearly`,
     billedMonthly: "billed monthly",
     continueWith: (plan: string) => `Continue with ${plan}`,
-    signInToSubscribe: "Sign in with Google to subscribe",
     checkoutStub: "Checkout isn’t connected yet. This is a prototype.",
-    footnote: (fairUse: string) =>
-      `Cancel anytime · Unlimited fair use: ${fairUse} fills / 30 days`,
+    footnote: "Cancel anytime",
     // The free counter under the add card's macros, after an AI use.
     usageMeter: (used: string, limit: string) =>
       `${used}/${limit} free AI fills used`,

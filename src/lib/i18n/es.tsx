@@ -298,8 +298,7 @@ export const es: Dictionary = {
     billingMonthly: "Mensual",
     save: (pct) => `Ahorra un ${pct}%`,
     freeLine: (limit) => `${limit} rellenos con IA gratis`,
-    proLine: (limit) => `${limit} rellenos con IA cada 30 días`,
-    unlimitedLine: "Rellenos con IA ilimitados",
+    paidLine: (limit) => `${limit} rellenos / 30 días`,
     supportsDev: "Apoya el desarrollo",
     bestValue: "Mejor valor",
     currentPlan: "Tu plan",
@@ -307,10 +306,8 @@ export const es: Dictionary = {
     billedYearly: (price) => `${price} al año`,
     billedMonthly: "facturado cada mes",
     continueWith: (plan) => `Continuar con ${plan}`,
-    signInToSubscribe: "Inicia sesión con Google para suscribirte",
     checkoutStub: "El pago aún no está conectado. Esto es un prototipo.",
-    footnote: (fairUse) =>
-      `Cancela cuando quieras · Uso razonable de Ilimitado: ${fairUse} rellenos / 30 días`,
+    footnote: "Cancela cuando quieras",
     usageMeter: (used, limit) =>
       `${used}/${limit} rellenos con IA gratis usados`,
     exhaustedFree: (limit) => `Usaste los ${limit} rellenos con IA gratis.`,
