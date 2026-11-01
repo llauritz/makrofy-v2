@@ -2,12 +2,15 @@ import * as React from "react"
 import { motion, MotionConfig } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
-import { useGoalStatus, useIdentity } from "@/data/hooks"
+import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
+import { useEntriesStatus, useGoalStatus, useIdentity } from "@/data/hooks"
+import { db } from "@/lib/firebase"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
 import { MainScreen } from "@/screens/main/MainScreen"
 import { resolveAppView } from "@/screens/onboarding/gate"
+import { OnboardingScreen } from "@/screens/onboarding/OnboardingScreen"
 import { StatsScreen } from "@/screens/stats/StatsScreen"
 
 // Dev convenience: ?theme=dark|light forces the mode (shareable per-mode links,
@@ -20,7 +23,7 @@ function useThemeParam() {
   }, [setTheme])
 }
 
-// The top-level screens the app switches between. Onboarding is parked (#35);
+// The top-level screens the app switches between once past onboarding (#35);
 // the Glossary (#40) is a full screen reached from Settings — and from the
 // stats dashboard (#22), which is itself the full screen behind the summary
 // card's stats button. Back returns to whichever screen opened the Glossary.
@@ -31,7 +34,19 @@ export function App() {
 
   const uid = useIdentity()
   const goalStatus = useGoalStatus(uid)
-  const view = resolveAppView(uid, goalStatus)
+  // Only asked while the Goal is unset: has this profile logged before?
+  const entriesStatus = useEntriesStatus(goalStatus === "unset" ? uid : null)
+  const view = resolveAppView(uid, goalStatus, entriesStatus)
+
+  // A profile that logged while onboarding was parked but never set a Goal
+  // gets the default written once — the figure its ring already shows — so
+  // later launches resolve from the Goal (and the boot mirror) at once
+  // instead of waiting on the Entries check.
+  const needsDefaultGoal =
+    uid !== null && goalStatus === "unset" && entriesStatus === "some"
+  React.useEffect(() => {
+    if (needsDefaultGoal && uid) setGoal(db, uid, { kcal: DEFAULT_GOAL_KCAL })
+  }, [needsDefaultGoal, uid])
   // App-level view state: which full screen is showing. The screens swap by a
   // plain conditional below — only one is mounted at a time. The Glossary
   // remembers its opener (Settings on Main, or the stats dashboard) so its
@@ -47,13 +62,18 @@ export function App() {
   // flashes the fallback goal before the synced value arrives.
   if (view === "loading") return <Splash />
 
-  // First-run onboarding (src/screens/onboarding/OnboardingScreen.tsx) is PARKED
-  // pending a rework — see issue #35. Until then a fresh profile (view
-  // "onboarding") is treated like a returning one: straight to the main screen,
-  // where the goal is set in Settings and the ring falls back to
-  // DEFAULT_GOAL_KCAL meanwhile. Re-enable by rendering OnboardingScreen when
-  // `view === "onboarding"`.
-  //
+  // First run (#35): intro, welcome, goal. Writing the Goal flips the gate to
+  // "main" through the Goal listener; nothing here switches by hand.
+  if (view === "onboarding") {
+    return (
+      <MotionConfig reducedMotion="user">
+        <OnboardingScreen
+          onSubmit={(kcal) => uid && setGoal(db, uid, { kcal })}
+        />
+      </MotionConfig>
+    )
+  }
+
   // reducedMotion="user": with the OS reduce-motion setting on, movement
   // snaps and fades remain — the degraded mode of spec § Motion.
   //

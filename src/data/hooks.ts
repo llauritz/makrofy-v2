@@ -23,7 +23,9 @@ import {
 import {
   listenToAllEntries,
   listenToDay,
+  listenToHasEntries,
   listenToSyncMetadata,
+  type EntriesStatus,
   type Entry,
 } from "@/data/entries"
 import { listenToGoal, type Goal, type GoalStatus } from "@/data/goal"
@@ -242,6 +244,24 @@ export function useGoalStatus(uid: string | null): GoalStatus {
   // (resolveAppView short-circuits on a null uid), so a stale status here can
   // never surface as a wrong screen.
   return status
+}
+
+/**
+ * Whether the profile has any Entry, for the first-run gate: "loading" until
+ * the first snapshot for this uid lands. Pass null to skip the listener (the
+ * gate only asks while the Goal is unset).
+ */
+export function useEntriesStatus(uid: string | null): EntriesStatus {
+  const [state, setState] = React.useState<{
+    uid: string
+    has: boolean
+  } | null>(null)
+  React.useEffect(() => {
+    if (!uid) return
+    return listenToHasEntries(db, uid, (has) => setState({ uid, has }))
+  }, [uid])
+  if (!uid || state === null || state.uid !== uid) return "loading"
+  return state.has ? "some" : "none"
 }
 
 /**
