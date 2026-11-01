@@ -6,8 +6,8 @@ import { aiCycle, CYCLE_LIMIT, type AiCycle, type Plan } from "@/data/plans"
 // cycle read from the URL, and every paywall surface stays dark without it:
 //
 //   ?paywall                  free plan, 7 of 10 tries used
-//   ?paywall&plan=pro     Pro, 188 of 1,000 used
-//   ?paywall&plan=unlimited         Unlimited
+//   ?paywall&plan=pro         Pro, 188 of 1,000 used
+//   ?paywall&plan=unlimited   Unlimited
 //   ?paywall&used=all         any plan, exhausted (the next ✨ shows the refusal)
 //   ?paywall&used=3           any count, clamped to the plan's limit
 //   ?paywall=notice           also opens the one-time "plans are here" notice

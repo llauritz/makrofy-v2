@@ -239,7 +239,7 @@ export function AddCard({
     // shadow moves to the wrapper as a drop-shadow, which traces the clipped
     // silhouette.
     <div className="mx-4 mt-1 drop-shadow-[0_1px_2px_rgba(43,32,21,0.05)]">
-      <Squircle radius="3xl" outline="solid" className="relative bg-card p-3">
+      <Squircle radius="3xl" outline="solid" className="bg-card p-3">
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <Squircle asChild pill>

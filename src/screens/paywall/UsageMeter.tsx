@@ -9,8 +9,8 @@ import { usePaywall } from "./Paywall"
 
 // The free plan's ✨ counter on the add card (#65). Two parts: a quiet
 // "3/10 free AI fills used" line under the macros, shown while the AI zone has
-// something to say (after a fill), and a thin line along the card's bottom
-// edge that fills to the share used. When the last free fill is spent the line
+// something to say (after a fill), and a thin round-capped line under the
+// card's content that fills to the share used. When the last free fill is spent the line
 // gives way to the plans card — the same hint card the ✨ refusal raises — so
 // the way up appears on the 10th fill, not only on the 11th tap. Free only:
 // paid plans don't count down on the card. Dark without ?paywall.
@@ -63,19 +63,25 @@ export function UsageNote({
   return <FadeSwap swapKey={key}>{content}</FadeSwap>
 }
 
-/** The thin fill line on the card's bottom edge; the card's squircle clips it. */
+/**
+ * The thin progress line under the card's content, inside its padding: a
+ * faint full-width track with a round-capped fill to the share used.
+ */
 export function UsageLine() {
   const paywall = usePaywall()
   const cycle = paywall?.cycle
   if (!cycle || cycle.plan !== "free" || cycle.used === 0) return null
   const pct = Math.min(100, (cycle.used / cycle.limit) * 100)
   return (
-    <motion.div
-      aria-hidden
-      className="pointer-events-none absolute bottom-0 left-0 h-[3px] bg-foreground/55"
-      initial={false}
-      animate={{ width: `${pct}%` }}
-      transition={SPRING}
-    />
+    <div aria-hidden className="px-1 pt-2.5">
+      <div className="h-[2px] overflow-hidden rounded-full bg-foreground/10">
+        <motion.div
+          className="h-full rounded-full bg-foreground/60"
+          initial={false}
+          animate={{ width: `${pct}%` }}
+          transition={SPRING}
+        />
+      </div>
+    </div>
   )
 }

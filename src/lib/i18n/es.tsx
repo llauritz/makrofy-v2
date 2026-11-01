@@ -308,11 +308,9 @@ export const es: Dictionary = {
     billedMonthly: "facturado cada mes",
     continueWith: (plan) => `Continuar con ${plan}`,
     signInToSubscribe: "Inicia sesión con Google para suscribirte",
-    signInNote:
-      "Al iniciar sesión conservas todo lo que registraste. Solo se vincula a tu cuenta de Google.",
     checkoutStub: "El pago aún no está conectado. Esto es un prototipo.",
     footnote: (fairUse) =>
-      `Precios con impuestos incluidos. Cancela cuando quieras. Uso razonable: Ilimitado incluye ${fairUse} rellenos con IA cada 30 días.`,
+      `Cancela cuando quieras · Uso razonable de Ilimitado: ${fairUse} rellenos / 30 días`,
     usageMeter: (used, limit) =>
       `${used}/${limit} rellenos con IA gratis usados`,
     exhaustedFree: (limit) => `Usaste los ${limit} rellenos con IA gratis.`,

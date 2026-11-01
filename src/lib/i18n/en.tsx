@@ -334,11 +334,9 @@ export const en = {
     billedMonthly: "billed monthly",
     continueWith: (plan: string) => `Continue with ${plan}`,
     signInToSubscribe: "Sign in with Google to subscribe",
-    signInNote:
-      "Signing in keeps everything you’ve logged. It just links it to your Google account.",
     checkoutStub: "Checkout isn’t connected yet. This is a prototype.",
     footnote: (fairUse: string) =>
-      `Prices include tax. Cancel anytime. Fair use: Unlimited includes ${fairUse} AI fills every 30 days.`,
+      `Cancel anytime · Unlimited fair use: ${fairUse} fills / 30 days`,
     // The free counter under the add card's macros, after an AI use.
     usageMeter: (used: string, limit: string) =>
       `${used}/${limit} free AI fills used`,

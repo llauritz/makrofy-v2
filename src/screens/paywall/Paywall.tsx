@@ -183,9 +183,6 @@ function PaywallSheet({
                 <LogIn />
                 {t.paywall.signInToSubscribe}
               </Button>
-              <p className="px-2 text-center text-[13px] text-muted-foreground">
-                {t.paywall.signInNote}
-              </p>
             </>
           ) : (
             <>
@@ -402,7 +399,11 @@ function PaidCard({
           </div>
           <div className="text-[13px] text-muted-foreground">{line}</div>
           <div className="mt-0.5 flex items-center gap-1 text-[12px] text-muted-foreground">
-            <Heart className="h-3 w-3 shrink-0" />
+            {/* Unlimited's heart is filled — the bigger support — Pro's is outlined. */}
+            <Heart
+              className="h-3 w-3 shrink-0"
+              fill={plan === "unlimited" ? "currentColor" : "none"}
+            />
             {t.paywall.supportsDev}
           </div>
         </div>
