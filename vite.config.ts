@@ -51,8 +51,9 @@ export default defineConfig({
       },
     }),
   ],
-  // PR preview builds (AI_BENCH=1 in the preview workflow) also ship the dev
-  // AI bench page so it can be run against real App Check; live builds don't.
+  // AI_BENCH=1 builds also ship the AI bench page (/ai-bench.html) so it can
+  // run against real App Check: always on PR previews, and on live only while
+  // the merge workflow sets it (temporary, pre-launch).
   build: process.env.AI_BENCH
     ? {
         rollupOptions: {
