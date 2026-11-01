@@ -70,10 +70,12 @@ export function UsageNote({
 export function UsageLine() {
   const paywall = usePaywall()
   const cycle = paywall?.cycle
+  // Hidden once the fills run out: the plans card says it all by then.
   if (!cycle || cycle.plan !== "free" || cycle.used === 0) return null
+  if (cycle.remaining === 0) return null
   const pct = Math.min(100, (cycle.used / cycle.limit) * 100)
   return (
-    <div aria-hidden className="px-1 pt-2.5">
+    <div aria-hidden className="px-1 pt-1.5 pb-1.5">
       <div className="h-[2px] overflow-hidden rounded-full bg-foreground/10">
         <motion.div
           className="h-full rounded-full bg-foreground/60"
