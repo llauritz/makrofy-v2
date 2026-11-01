@@ -18,9 +18,12 @@ import { Squircle } from "@/components/ui/squircle"
 // Screens pass a macro and values; they never set the pill's colors, tint or
 // letter themselves. tests/macro-pills.test.ts fails on a hand-built copy.
 
-/** A translucent wash of a macro's color, for the pill's background. */
+/** A translucent wash of a macro's color, for the pill's background. A
+ * theme can strengthen one macro's wash with `--macro-<key>-wash` (index.css):
+ * light mode's pale fat yellow needs more of it to read as strong as the
+ * blue and red. */
 function tint(macro: Macro, percent: number) {
-  return `color-mix(in oklab, ${macro.mark} ${percent}%, transparent)`
+  return `color-mix(in oklab, ${macro.mark} calc(${percent}% * var(--macro-${macro.key}-wash, 1)), transparent)`
 }
 
 const CHIP_TINT = 13
