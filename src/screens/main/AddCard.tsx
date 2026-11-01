@@ -20,7 +20,7 @@ import {
 import { useLongPress } from "@/lib/useLongPress"
 import { useOnline } from "@/lib/useOnline"
 import { ProductDetail } from "@/screens/glossary/ProductDetail"
-import { UsageLine, UsageNote } from "@/screens/paywall/UsageMeter"
+import { UsageNote } from "@/screens/paywall/UsageMeter"
 import { AiZone } from "./AiZone"
 import { FadeSwap } from "./FadeSwap"
 import { SPRING } from "./anim"
@@ -351,7 +351,6 @@ export function AddCard({
           zoneActive={zoneState.kind !== "empty"}
           refusalShowing={zoneState.kind === "hint" && !!zoneState.upgrade}
         />
-        <UsageLine />
       </Squircle>
     </div>
   )
