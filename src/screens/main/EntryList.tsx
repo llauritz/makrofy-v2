@@ -57,7 +57,7 @@ export function EntryList({
             <Squircle
               radius="2xl"
               outline="dashed"
-              outlineClassName="text-[#cbbfa4] dark:text-[#4a3e2e]"
+              outlineClassName="text-dash"
               className="px-4 py-8 text-center"
             >
               <Utensils
@@ -91,7 +91,7 @@ export function EntryList({
                     radius="2xl"
                     outline={dashed ? "dashed" : "solid"}
                     outlineClassName={
-                      dashed ? "text-[#cbbfa4] dark:text-[#4a3e2e]" : undefined
+                      dashed ? "text-dash" : undefined
                     }
                     className={dashed ? undefined : "bg-card"}
                   >
@@ -185,7 +185,7 @@ function EntryRow({
             {entry.source === "ai" && (
               <Sparkles
                 aria-label={t.entryList.aiAssisted}
-                className="h-3 w-3 shrink-0 text-[#a5988a]"
+                className="h-3 w-3 shrink-0 text-placeholder"
               />
             )}
           </div>
@@ -216,7 +216,7 @@ function EntryRow({
         <div
           className={
             "shrink-0 text-[15px] font-semibold tabular-nums " +
-            (noKcal ? "text-[#a5988a]" : "") +
+            (noKcal ? "text-placeholder" : "") +
             (ai.thinking ? " animate-pulse" : "")
           }
         >

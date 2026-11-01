@@ -249,7 +249,7 @@ export function AddCard({
                 onKeyDown={onKeyDown}
                 placeholder={t.addCard.placeholder}
                 aria-label={t.addCard.food}
-                className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-[#a5988a]"
+                className="w-full rounded-full bg-input py-3 pr-10 pl-4 text-sm outline-none placeholder:text-placeholder"
               />
             </Squircle>
             <div className="absolute inset-y-0 right-1.5 flex items-center">
@@ -282,7 +282,7 @@ export function AddCard({
               inputMode="decimal"
               aria-label={t.addCard.calories}
               className={
-                "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-[#a5988a] " +
+                "w-16 rounded-full bg-input px-3 py-3 text-center text-sm tabular-nums placeholder:text-placeholder " +
                 // outline-none (focus reset) and the dashed flag outline are
                 // mutually exclusive — both set outline-style.
                 (flags.has("kcal") ? FLAGGED_OUTLINE : "outline-none") +
@@ -313,9 +313,9 @@ export function AddCard({
                   placeholder="0"
                   inputMode="decimal"
                   aria-label={t.macros.grams(t.macros[m.field])}
-                  className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
+                  className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-placeholder"
                 />
-                <span className="text-xs text-[#a5988a]">{t.units.g}</span>
+                <span className="text-xs text-placeholder">{t.units.g}</span>
               </label>
             </Squircle>
           ))}

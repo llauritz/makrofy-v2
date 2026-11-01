@@ -370,7 +370,7 @@ function ReadingEditor({
             onFocus={(e) => e.target.select()}
             inputMode="decimal"
             aria-label={t.productDetail.caloriesPer(basis)}
-            className="w-20 rounded-full bg-card px-3 py-2 text-center text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
+            className="w-20 rounded-full bg-card px-3 py-2 text-center text-sm tabular-nums outline-none placeholder:text-placeholder"
             placeholder={t.units.kcal}
           />
         </Squircle>
@@ -401,9 +401,9 @@ function ReadingEditor({
                 placeholder="0"
                 inputMode="decimal"
                 aria-label={t.productDetail.gramsPer(t.macros[m.field], basis)}
-                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
+                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-placeholder"
               />
-              <span className="text-xs text-[#a5988a]">{t.units.g}</span>
+              <span className="text-xs text-placeholder">{t.units.g}</span>
             </label>
           </Squircle>
         ))}

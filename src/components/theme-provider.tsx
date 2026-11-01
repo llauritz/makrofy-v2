@@ -1,10 +1,21 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 
+import {
+  MATERIAL_YOU_TOKENS,
+  materialYouTokens,
+  type MaterialYouPalette,
+} from "@/lib/material-you"
 import { setSystemBarsTheme } from "@/native/chrome"
+import {
+  fetchMaterialYouPalette,
+  readMaterialYouPalette,
+} from "@/native/material-you"
 
 type Theme = "dark" | "light" | "system"
 type ResolvedTheme = "dark" | "light"
+/** Yaffle's own Warm Market palette, or the wallpaper's (Android 12+ only). */
+export type ColorSource = "yaffle" | "wallpaper"
 
 type ThemeProviderProps = {
   children: React.ReactNode
@@ -16,10 +27,15 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme
   setTheme: (theme: Theme) => void
+  colorSource: ColorSource
+  setColorSource: (source: ColorSource) => void
+  /** True only in the Android app on Android 12+, which has wallpaper colours. */
+  wallpaperColorsAvailable: boolean
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 const THEME_VALUES: Theme[] = ["dark", "light", "system"]
+const COLOR_SOURCE_KEY = "color-source"
 
 const ThemeProviderContext = React.createContext<
   ThemeProviderState | undefined
@@ -49,7 +65,7 @@ const THEME_COLORS: Record<ResolvedTheme, string> = {
   dark: "#17110c",
 }
 
-function applyThemeColorMeta(resolvedTheme: ResolvedTheme) {
+function applyThemeColorMeta(resolvedTheme: ResolvedTheme, color: string) {
   let meta = document.querySelector<HTMLMetaElement>(
     'meta[name="theme-color"]'
   )
@@ -58,10 +74,31 @@ function applyThemeColorMeta(resolvedTheme: ResolvedTheme) {
     meta.name = "theme-color"
     document.head.appendChild(meta)
   }
-  meta.content = THEME_COLORS[resolvedTheme]
+  meta.content = color
   // The Android app has no browser chrome to read the meta: its status and
   // navigation bars are painted from the same colour (no-op on the web).
-  setSystemBarsTheme(THEME_COLORS[resolvedTheme], resolvedTheme === "dark")
+  setSystemBarsTheme(color, resolvedTheme === "dark")
+}
+
+// Wallpaper colours are inline custom properties on <html>, which beat both
+// the :root and .dark blocks in index.css; clearing them falls straight back
+// to Warm Market. Returns the background colour actually in use.
+function applyColorTokens(
+  resolvedTheme: ResolvedTheme,
+  palette: MaterialYouPalette | null
+): string {
+  const style = document.documentElement.style
+  if (!palette) {
+    for (const name of Object.keys(MATERIAL_YOU_TOKENS)) {
+      style.removeProperty(`--${name}`)
+    }
+    return THEME_COLORS[resolvedTheme]
+  }
+  const tokens = materialYouTokens(palette, resolvedTheme)
+  for (const [name, value] of Object.entries(tokens)) {
+    style.setProperty(`--${name}`, value)
+  }
+  return tokens.background
 }
 
 function disableTransitionsTemporarily() {
@@ -118,6 +155,34 @@ export function ThemeProvider({
     return defaultTheme
   })
 
+  // Present before the first render in the Android app (the shell injects it
+  // ahead of any script), so launch is already in the wallpaper's colours.
+  const [palette, setPalette] = React.useState(readMaterialYouPalette)
+  const [colorSource, setColorSourceState] = React.useState<ColorSource>(
+    () =>
+      localStorage.getItem(COLOR_SOURCE_KEY) === "yaffle"
+        ? "yaffle"
+        : "wallpaper"
+  )
+
+  React.useEffect(() => {
+    if (palette) return undefined
+    let cancelled = false
+    void fetchMaterialYouPalette().then((fetched) => {
+      if (!cancelled && fetched) setPalette(fetched)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [palette])
+
+  const setColorSource = React.useCallback((next: ColorSource) => {
+    localStorage.setItem(COLOR_SOURCE_KEY, next)
+    setColorSourceState(next)
+  }, [])
+
+  const activePalette = colorSource === "wallpaper" ? palette : null
+
   const setTheme = React.useCallback(
     (nextTheme: Theme) => {
       localStorage.setItem(storageKey, nextTheme)
@@ -137,13 +202,14 @@ export function ThemeProvider({
 
       root.classList.remove("light", "dark")
       root.classList.add(resolvedTheme)
-      applyThemeColorMeta(resolvedTheme)
+      const background = applyColorTokens(resolvedTheme, activePalette)
+      applyThemeColorMeta(resolvedTheme, background)
 
       if (restoreTransitions) {
         restoreTransitions()
       }
     },
-    [disableTransitionOnChange]
+    [disableTransitionOnChange, activePalette]
   )
 
   React.useEffect(() => {
@@ -234,8 +300,11 @@ export function ThemeProvider({
     () => ({
       theme,
       setTheme,
+      colorSource,
+      setColorSource,
+      wallpaperColorsAvailable: palette !== null,
     }),
-    [theme, setTheme]
+    [theme, setTheme, colorSource, setColorSource, palette]
   )
 
   return (

@@ -25,7 +25,7 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
           cy={c}
           r={r}
           fill="none"
-          stroke="light-dark(#efe6d4, #3a2f22)"
+          stroke="var(--hairline)"
           strokeWidth={11}
         />
         {/* Start the meter at 12 o'clock. */}

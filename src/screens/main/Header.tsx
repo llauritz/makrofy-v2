@@ -28,7 +28,7 @@ export function Header({
           type="button"
           onClick={onOpenSettings}
           aria-label={t.header.settings}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dcc8] bg-card text-muted-foreground transition-colors hover:text-foreground dark:border-border"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-chip-border bg-card text-muted-foreground transition-colors hover:text-foreground"
         >
           <Settings2 className="h-[18px] w-[18px]" />
         </button>

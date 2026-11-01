@@ -101,7 +101,7 @@ export function CalendarSheet({
                   (selected
                     ? "bg-foreground text-background"
                     : today
-                      ? "ring-1 ring-[#cbbfa4] ring-inset dark:ring-[#4a3e2e]"
+                      ? "ring-1 ring-dash ring-inset"
                       : "") +
                   (!cell.inMonth
                     ? " text-muted-foreground/50"
@@ -119,7 +119,7 @@ export function CalendarSheet({
                     (loggedDays.has(cell.day)
                       ? selected
                         ? "bg-background/70"
-                        : "bg-[#b9ab92] dark:bg-[#5a4c3b]"
+                        : "bg-dot"
                       : "bg-transparent")
                   }
                 />

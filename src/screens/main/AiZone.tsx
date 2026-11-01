@@ -174,7 +174,7 @@ function DismissButton({
       type="button"
       aria-label={label}
       onClick={onDismiss}
-      className="mt-0.5 shrink-0 text-[#a5988a]"
+      className="mt-0.5 shrink-0 text-placeholder"
     >
       <X className="h-4 w-4" />
     </button>

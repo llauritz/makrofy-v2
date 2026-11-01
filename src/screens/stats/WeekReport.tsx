@@ -140,7 +140,7 @@ export function WeekReport({
               <Squircle
                 radius="3xl"
                 outline="dashed"
-                outlineClassName="text-[#cbbfa4] dark:text-[#4a3e2e]"
+                outlineClassName="text-dash"
                 className="mt-6 px-4 py-3.5"
               >
                 <div className="text-[13px] font-semibold text-muted-foreground">
