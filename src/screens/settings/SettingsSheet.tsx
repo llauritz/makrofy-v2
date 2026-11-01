@@ -10,6 +10,7 @@ import {
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet"
 import { Squircle } from "@/components/ui/squircle"
+import { dismissCloudPrompt } from "@/data/cloud-account"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useGoal, useIdentity } from "@/data/hooks"
 import { db } from "@/lib/firebase"
@@ -26,7 +27,7 @@ import { SignInSetting } from "@/screens/settings/SignInSetting"
 // now) and export/import (#24). Self-contained like a screen: it reads and writes the
 // synced Goal and the device-local theme/language directly. Controlled by its
 // owner (MainScreen) so several affordances can open it — the header gear, the
-// header sync indicator, and the summary ring. The goal is the one synced
+// header cloud, and the summary ring. The goal is the one synced
 // setting (ADR 0003); theme and language stay on the device.
 export function SettingsSheet({
   open,
@@ -38,6 +39,11 @@ export function SettingsSheet({
   onOpenGlossary: () => void
 }) {
   const { t } = useI18n()
+  // Opening Settings without signing in turns the header's sign-in invitation
+  // down: the cloud stands alone from then on (CloudSyncButton).
+  React.useEffect(() => {
+    if (open) dismissCloudPrompt()
+  }, [open])
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="max-h-[88svh] gap-6 overflow-y-auto">

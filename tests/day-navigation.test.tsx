@@ -30,7 +30,12 @@ import {
 const dayLog = vi.hoisted(() => new Map<string, unknown[]>())
 
 vi.mock("@/lib/firebase", () => ({ app: {}, db: {}, auth: {} }))
-vi.mock("@/data/identity", () => ({ refreshIdentity: vi.fn() }))
+vi.mock("@/data/identity", () => ({ startGoogleSignIn: vi.fn() }))
+vi.mock("@/data/cloud-account", () => ({
+  useCloudAccount: () => ({ account: "google", dismissed: null }),
+  dismissCloudPrompt: vi.fn(),
+  forgetGoogleAccount: vi.fn(),
+}))
 vi.mock("@/data/hooks", () => ({
   useIdentity: () => "test-uid",
   useDay: (_uid: string, day: string) => dayLog.get(day) ?? [],

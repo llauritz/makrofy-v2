@@ -8,7 +8,7 @@ The consolidated output of the [V2 wayfinder map](https://github.com/llauritz/ma
 
 A one-person calorie/macro tracker. Screens:
 
-- **Main**: header (Fraunces wordmark, sync indicator, settings) · Day strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
+- **Main**: header (Fraunces wordmark, cloud sync button, settings) · Day strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
 - **Statistics dashboard** (from the stats button) with a **week report subpage**; a **morning glance strip** appears on the main screen once per morning.
 - **Food glossary** (from Settings): the browsable, alphabetical Product index and the home of all curation — correct/pin/delete Readings, merge/delete Products (#40).
 - **Onboarding**: one goal screen, prefilled, straight in.
@@ -107,7 +107,7 @@ Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10).
 
 - **Install**: quiet "Install app" settings entry (`beforeinstallprompt` native prompt on Chromium; iOS instruction sheet). No banners.
 - **Icon**: Fraunces "M", ink on flour — standard, maskable, monochrome, apple-touch. Android splash from manifest `background_color: #f6f1e6`; per-mode `theme-color` `#f6f1e6`/`#17110c`; `display: standalone`.
-- **Sync indicator**: silent (invisible when synced) / pending (offline + queued collapse into one; tap explains) / attention (auth-expired write pause only; tap re-auths). Fed by snapshot metadata.
+- **Cloud sync button** (header, left of the gear): signed out, a crossed-out cloud with a faint outlined "Sync data" text button on its left (or "Log in again" once a Google session lapsed without a sign-out); the text button goes straight to Google sign-in. Once the user has tapped it, or opened Settings, without signing in, the cloud stands alone. Signed in, the cloud is on: a rising arrow while writes are queued, crossed out while offline, a brief check when an upload lands. The cloud alone opens Settings. Fed by snapshot metadata after the settle, so a normal load never flashes it.
 - **Updates**: `vite-plugin-pwa` silent auto-update. Service worker precaches the app shell only.
 
 ## Deploy & environments

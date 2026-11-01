@@ -174,12 +174,13 @@ export const en = {
     grams: (macro: string) => `${macro} grams`,
   },
 
-  sync: {
-    attention: "Sign-in needed to sync your changes",
-    pending: "Not synced — changes saved on this device",
-    savedTitle: "Saved on this device",
-    savedBody:
-      "Your changes are saved on this device and sync automatically as soon as you’re back online — nothing is lost while you’re offline.",
+  cloud: {
+    syncData: "Sync data",
+    loginAgain: "Log in again",
+    offAria: "Sync is off. Open settings",
+    syncedAria: "Synced. Open settings",
+    uploadingAria: "Syncing. Open settings",
+    offlineAria: "Offline, changes saved on this device. Open settings",
   },
 
   settings: {
