@@ -73,6 +73,8 @@ export interface AuthUser {
   isAnonymous: boolean
   displayName: string | null
   email: string | null
+  /** The Google profile photo, when the account has one. */
+  photoURL: string | null
 }
 
 /**
@@ -94,11 +96,15 @@ export function useAuthUser(): AuthUser | null {
 
 function summarizeUser(user: User | null): AuthUser | null {
   if (!user) return null
+  // A Guest who links Google keeps an empty top-level profile: the name and
+  // photo only land on the Google provider entry, so read them from there.
+  const google = user.providerData.find((p) => p.providerId === "google.com")
   return {
     uid: user.uid,
     isAnonymous: user.isAnonymous,
-    displayName: user.displayName,
-    email: user.email,
+    displayName: user.displayName ?? google?.displayName ?? null,
+    email: user.email ?? google?.email ?? null,
+    photoURL: user.photoURL ?? google?.photoURL ?? null,
   }
 }
 

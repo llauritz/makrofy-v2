@@ -1,4 +1,5 @@
 import { LogIn, UserRound } from "lucide-react"
+import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import { Squircle } from "@/components/ui/squircle"
@@ -23,14 +24,15 @@ export function SignInSetting({ highlight = false }: { highlight?: boolean }) {
 
   if (signedIn) {
     return (
+      // The avatar hangs left into the row's padding so the name lines up
+      // with the labels of the rows below (Export / Import data): 4px + 32px
+      // + 10px = the 16px + 18px icon + 12px of a plain row.
       <Squircle
         radius="2xl"
-        className="relative isolate flex items-center gap-3 px-4 py-3"
+        className="relative isolate flex items-center gap-2.5 py-3 pr-4 pl-1"
       >
         <RowBlink active={highlight} />
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
-          <UserRound className="h-[18px] w-[18px]" />
-        </span>
+        <Avatar photoURL={user.photoURL} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15px] font-medium">
             {user.displayName ?? t.signIn.signedInFallback}
@@ -75,5 +77,30 @@ export function SignInSetting({ highlight = false }: { highlight?: boolean }) {
         </span>
       </button>
     </Squircle>
+  )
+}
+
+// The Google profile photo, round like every account avatar (a circle is the
+// pill exception to the squircle rule). Google's photo host can refuse
+// requests that carry a referrer, so none is sent; if it still fails to
+// load, the plain person glyph stands in.
+function Avatar({ photoURL }: { photoURL: string | null }) {
+  const [failed, setFailed] = React.useState(false)
+  if (photoURL && !failed) {
+    return (
+      <img
+        src={photoURL}
+        alt=""
+        referrerPolicy="no-referrer"
+        draggable={false}
+        onError={() => setFailed(true)}
+        className="h-8 w-8 shrink-0 rounded-full bg-secondary object-cover"
+      />
+    )
+  }
+  return (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
+      <UserRound className="h-4 w-4" />
+    </span>
   )
 }
