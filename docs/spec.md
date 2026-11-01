@@ -88,7 +88,7 @@ Normative: [#3](https://github.com/llauritz/makrofy-v2/issues/3) + `docs/researc
 - **Three surfaces, one choreography** (#53, ADR 0010): the add card (fill overwrites the draft; only Add commits) · the inline editor (✨ in the label input; fill completes only blank fields under Save; dashed outlines seed from the Entry's persisted flags and Save persists the survivors) · the dashed 0-kcal row (✨ left of the muted number; responses answer inside that same card; a confident answer commits the missing fields directly with ✨ provenance).
 - **On a logged Entry the fill writes only missing fields** — logged values are never overwritten; they anchor the prompt ("porridge (12 g protein)") so the estimate stays consistent with them; kcal 0 counts as missing.
 - **Two-speed conditional grounding**: staples ungrounded ~0.5 s, silent; branded/variable foods grounded 1.8–3.8 s and **must show the Google Search Suggestions chip** at response time (Google's terms — compliance). The heuristic is prompt design.
-- **Safety**: App Check (reCAPTCHA Enterprise) enforced; AI button requires a Firebase identity (Guests count); per-user daily quota app-side; budget alert as backstop (alerts don't cap spend).
+- **Safety**: App Check (reCAPTCHA Enterprise) enforced; AI button requires a Firebase identity (Guests count); per-plan 30-day fill allowance app-side (ADR 0013; the old daily quota gates until billing goes live); budget alert as backstop (alerts don't cap spend).
 - **Offline**: AI button dims; tap shows "AI fill needs a connection" in the response zone. Manual entry and typeahead never wait on the AI.
 - **Before building**: the SDK spike ([#20](https://github.com/llauritz/makrofy-v2/issues/20)) must confirm grounding + `responseSchema` on this exact model; fallback is the documented two-step.
 
@@ -111,6 +111,16 @@ Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10).
 - **Sync settle**: the cloud's sync state (fed by snapshot metadata) only counts once it lasts: offline-pending and auth trouble after ~1 s; pending while the browser reports a connection only after 10 s, so a slow launch or write ack never flashes anything.
 - **Updating spinner**: a quiet spinner under the log while the selected Day is on screen from the cache but not yet confirmed by the server (launch, return to the app, Day switch). Online only; appears only after 500 ms, in its own space below the last card, and fades out when confirmed; gives up after 10 s. Returning to the app after 30 s+ hidden cycles Firestore's network so a silently dropped stream can't hold the log on stale data.
 - **Updates**: `vite-plugin-pwa` silent auto-update. Service worker precaches the app shell only.
+
+## Subscription
+
+Normative: [#58](https://github.com/llauritz/makrofy-v2/issues/58) map + ADR 0012 (entitlement) + ADR 0013 (AI allowance). Setup and go-live: `docs/runbooks/paddle.md`.
+
+- **Plans**: Free 10 AI fills · Pro 1,000 per 30 days ($3.99/mo, $29.99/yr) · Unlimited 10,000 per 30 days ($9.99/mo, $79.99/yr). AI fill is the only gate.
+- **Paddle** is the Merchant of Record: overlay checkout (Paddle.js) carrying the uid as custom data; purchases need a Google-linked account; Manage opens Paddle's customer portal; a payer changes plan in place.
+- **One server writer**: the `paddleWebhook` Cloud Function writes `/users/{uid}/settings/subscription`; rules let the owner read it, never write it.
+- **Billing switch**: dark until `paddle-config.ts` says `production`; `?paywall` turns it on for the tab to test the sandbox.
+- **Public pages** for Paddle's domain review: `/pricing`, `/terms`, `/privacy`, `/refunds` (static HTML in `public/`).
 
 ## Deploy & environments
 

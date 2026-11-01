@@ -2,22 +2,32 @@ import { Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Squircle } from "@/components/ui/squircle"
+import * as React from "react"
+
+import { isEntitling } from "@/data/entitlement"
+import { openExternal, portalLink } from "@/lib/billing"
 import { formatShortDate } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { usePaywall } from "@/screens/paywall/Paywall"
 
 // The Settings plan row (#65): the plan, what's left of the ✨ allowance, and
 // — for paid plans — the cycle's reset date, which #64 says must be findable
-// here. Free gets Upgrade; paid gets Manage (the Paddle portal arrives with
-// #66; the prototype opens the paywall on the plan above). Free never shows a
-// date: its tries refill silently and the copy neither promises nor denies it.
-// Renders nothing while the paywall prototype is off.
+// here. Free gets Upgrade, which opens the plans. Anyone with a Paddle
+// subscription gets Manage, which opens Paddle's customer portal (cancel,
+// card, invoices — #66). A failed payment or a scheduled end takes over the
+// status line. Free never shows a date: its tries refill silently and the
+// copy neither promises nor denies it. Renders nothing while billing is off.
 export function PlanSetting({ onOpen }: { onOpen: () => void }) {
   const { t, n, language } = useI18n()
   const paywall = usePaywall()
+  const [problem, setProblem] = React.useState(false)
   if (paywall === null) return null
-  const { cycle } = paywall
+  const { cycle, entitlement } = paywall
   const date = formatShortDate(cycle.resetsOn, language)
+  const subscribed =
+    entitlement !== null &&
+    entitlement.plan !== "free" &&
+    isEntitling(entitlement.status)
 
   const name =
     cycle.plan === "free"
@@ -25,12 +35,20 @@ export function PlanSetting({ onOpen }: { onOpen: () => void }) {
       : cycle.plan === "pro"
         ? t.paywall.planPro
         : t.paywall.planUnlimited
-  const status =
-    cycle.plan === "free"
-      ? t.paywall.freeStatus(n(cycle.remaining), n(cycle.limit))
-      : cycle.plan === "pro"
-        ? t.paywall.proStatus(n(cycle.remaining), n(cycle.limit), date)
-        : t.paywall.unlimitedStatus(n(cycle.used), date)
+  const status = problem
+    ? t.paywall.billingError
+    : entitlement?.status === "past_due" && subscribed
+      ? t.paywall.pastDueStatus
+      : entitlement?.cancelsAt && subscribed
+        ? t.paywall.endingStatus(
+            n(cycle.remaining),
+            formatShortDate(entitlement.cancelsAt, language)
+          )
+        : cycle.plan === "free"
+          ? t.paywall.freeStatus(n(cycle.remaining), n(cycle.limit))
+          : cycle.plan === "pro"
+            ? t.paywall.proStatus(n(cycle.remaining), n(cycle.limit), date)
+            : t.paywall.unlimitedStatus(n(cycle.used), date)
 
   return (
     <Squircle radius="2xl" className="flex items-center gap-3 px-4 py-3">
@@ -39,19 +57,27 @@ export function PlanSetting({ onOpen }: { onOpen: () => void }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-medium">{name}</div>
-        <div className="truncate text-[13px] text-muted-foreground">
+        <div className="line-clamp-2 text-[13px] text-muted-foreground">
           {status}
         </div>
       </div>
       <Button
-        variant={cycle.plan === "free" ? "default" : "outline"}
+        variant={subscribed ? "outline" : "default"}
         size="sm"
         onClick={() => {
+          if (subscribed) {
+            setProblem(false)
+            openExternal(portalLink).catch((err) => {
+              console.error("Customer portal failed", err)
+              setProblem(true)
+            })
+            return
+          }
           onOpen()
           paywall.open("browse")
         }}
       >
-        {cycle.plan === "free" ? t.paywall.upgrade : t.paywall.manage}
+        {subscribed ? t.paywall.manage : t.paywall.upgrade}
       </Button>
     </Squircle>
   )

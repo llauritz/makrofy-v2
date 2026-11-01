@@ -1,6 +1,11 @@
 import * as React from "react"
 
-import { AI_DAILY_LIMIT, consumeAiUse, readAiUsage } from "@/data/ai-quota"
+import {
+  AI_DAILY_LIMIT,
+  consumeAiUse,
+  readAiUsage,
+  recordAiCall,
+} from "@/data/ai-quota"
 import { fillMacros, type AiFillReply } from "@/lib/ai"
 import { localDay } from "@/lib/day"
 import { db } from "@/lib/firebase"
@@ -15,11 +20,12 @@ import {
   type FormFlag,
 } from "@/lib/macro-fill"
 import { useOnline } from "@/lib/useOnline"
-import { usePaywall } from "@/screens/paywall/Paywall"
+import { useAiCycleState, usePaywall } from "@/screens/paywall/Paywall"
 import type { AiZoneState } from "./AiZone"
 
 // The AI fill choreography every ✨ surface shares (spec § AI macro-fill,
-// #21/#53): the offline note, the daily quota gate, the serial guard against
+// #21/#53): the offline note, the quota gate (the plan cycle once billing is
+// on, ADR 0013; the daily brake until then), the serial guard against
 // stale replies, and the four-tier reply handling with its one-question cap.
 // What differs per surface — where a fill's numbers land and which flags stay
 // standing — arrives through the `apply` callback; the add card overwrites
@@ -58,6 +64,7 @@ export function useAiFill({
   const { t, n, language } = useI18n()
   const online = useOnline()
   const paywall = usePaywall()
+  const cycleState = useAiCycleState()
   const [phase, setPhase] = React.useState<AiPhase>(AI_IDLE)
   const [interpretation, setInterpretation] = React.useState<string | null>(
     null
@@ -96,11 +103,12 @@ export function useAiFill({
     const runId = ++run.current
     setInterpretation(null)
     setAttribution(null)
-    // The paywall prototype's cycle gate (#64/#65): an exhausted cycle refuses
-    // with a typed, per-plan line — read from the local counter, so it answers
+    // The plan cycle gate (ADR 0013): an exhausted cycle refuses with a
+    // typed, per-plan line — read from the live counter, so it answers
     // offline too. Free and Pro carry the way up; Unlimited's fair-use line
-    // doesn't sell anything. Without ?paywall this is skipped entirely.
-    if (paywall !== null && paywall.cycle.remaining === 0) {
+    // doesn't sell anything. Only a new ✨ fill is refused: the answer to a
+    // clarifying question rides free. Skipped while billing is off.
+    if (!final && paywall !== null && paywall.cycle.remaining === 0) {
       const { plan, limit, resetsOn } = paywall.cycle
       const date = formatShortDate(resetsOn, language)
       setPhase({
@@ -122,22 +130,38 @@ export function useAiFill({
       return
     }
     setPhase({ kind: "thinking" })
+    // The cycle this trip counts against, fixed before the call so a reply
+    // landing after a rollover still counts where it started.
+    const cycleId = cycleState?.cycleId ?? null
+    let called = false
+    let grounded = false
     try {
-      const day = localDay(new Date())
-      const used = await readAiUsage(db, uid, day)
-      if (runId !== run.current) return
-      if (used >= AI_DAILY_LIMIT) {
-        setPhase({ kind: "hint", hint: t.addCard.aiLimit })
-        return
+      if (paywall === null) {
+        // Until billing is on, the old daily brake still applies.
+        const day = localDay(new Date())
+        const used = await readAiUsage(db, uid, day)
+        if (runId !== run.current) return
+        if (used >= AI_DAILY_LIMIT) {
+          setPhase({ kind: "hint", hint: t.addCard.aiLimit })
+          return
+        }
+        consumeAiUse(db, uid, day)
       }
-      consumeAiUse(db, uid, day)
-      paywall?.consume()
+      called = true
       const reply = await fillMacros(prompt)
+      grounded = reply?.attribution != null
       if (runId !== run.current) return
       applyReply(reply, description, final)
     } catch {
       if (runId !== run.current) return
       setPhase({ kind: "hint", hint: t.addCard.aiError })
+    } finally {
+      // One write per round trip, after it: a fill counts once, its
+      // clarifying answer only as a call (ADR 0013). A failed call still hit
+      // the service, so it counts too.
+      if (called && cycleId !== null) {
+        recordAiCall(db, uid, cycleId, { fill: !final, grounded })
+      }
     }
   }
 

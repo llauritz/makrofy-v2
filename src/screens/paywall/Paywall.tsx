@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/bottom-sheet"
 import { Button } from "@/components/ui/button"
 import { Squircle, SquircleOutline } from "@/components/ui/squircle"
-import { useAuthUser } from "@/data/hooks"
+import { isEntitling, type Entitlement } from "@/data/entitlement"
+import { useAuthUser, useIdentity } from "@/data/hooks"
 import { startGoogleSignIn } from "@/data/identity"
 import {
-  aiCycle,
   annualSavingPct,
   CYCLE_LIMIT,
   perMonth,
@@ -24,22 +24,34 @@ import {
   type Billing,
   type Plan,
 } from "@/data/plans"
+import {
+  changePlan,
+  loadPaddle,
+  openCheckout,
+  paddleConfigured,
+} from "@/lib/billing"
 import { auth } from "@/lib/firebase"
 import { formatPrice, formatShortDate } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { cn } from "@/lib/utils"
-import { readPaywallPreview } from "./preview"
+import { billingSwitch } from "./switch"
+import { useSubscriptionState, type SubscriptionState } from "./useSubscription"
 
-// The paywall prototype (#65): one bottom sheet presenting the three-plan
-// ladder from #59/#60 — Free / Pro / Unlimited, Pro centre-stage and marked
-// best value (compromise + centre-stage, pricing note §5), yearly first with
+// The paywall (#65, #66): one bottom sheet presenting the three-plan ladder
+// from #59/#60 — Free / Pro / Unlimited, Pro centre-stage and marked best
+// value (compromise + centre-stage, pricing note §5), yearly first with
 // monthly one tap away. It opens from the ✨ refusal at cycle exhaustion (the
 // front door) and from the Settings plan row. Guests sign in with Google on
-// the way to checkout (ADR 0002: link in place, no guest checkout). Checkout
-// itself is #66, so the paid CTA is a stub.
+// the way to checkout (ADR 0002: link in place, no guest checkout). A first
+// purchase opens Paddle's overlay checkout; someone already paying changes
+// plan in place (a second checkout would start a second subscription). The
+// plan itself only ever arrives through the webhook-written entitlement doc
+// (ADR 0012), which the listener picks up a few seconds after payment.
 //
-// Everything here is dark unless the URL carries ?paywall (see ./preview):
-// without it `usePaywall()` is null and no surface renders.
+// Everything here is dark until billing is switched on (see ./switch): then
+// `usePaywall()` is null and no surface renders. The cycle counter runs
+// regardless — `useAiCycleState()` — so the fill telemetry exists before
+// launch (ADR 0013).
 
 type PaidPlan = Exclude<Plan, "free">
 
@@ -48,78 +60,135 @@ export type PaywallReason = "exhausted" | "browse"
 
 type PaywallApi = {
   cycle: AiCycle
+  entitlement: Entitlement | null
   open: (reason: PaywallReason) => void
-  /** Count one ✨ fill against the cycle — the prototype's stand-in for #64's counter. */
-  consume: () => void
 }
 
 const PaywallContext = React.createContext<PaywallApi | null>(null)
+const CycleContext = React.createContext<SubscriptionState | null>(null)
 
-/** The prototype's plan state and opener, or null when the paywall is off. */
+/** The plan state and opener, or null while billing is off or loading. */
 export function usePaywall(): PaywallApi | null {
   return React.useContext(PaywallContext)
 }
 
+/** The live AI cycle, whether or not billing is switched on; null while loading. */
+export function useAiCycleState(): SubscriptionState | null {
+  return React.useContext(CycleContext)
+}
+
 export function PaywallProvider({ children }: { children: React.ReactNode }) {
-  const [preview] = React.useState(() =>
-    readPaywallPreview(window.location.search)
-  )
+  const [billing] = React.useState(billingSwitch)
+  const uid = useIdentity()
+  const state = useSubscriptionState(uid)
   const [reason, setReason] = React.useState<PaywallReason | null>(null)
-  const [noticeOpen, setNoticeOpen] = React.useState(
-    preview?.showNotice ?? false
-  )
-  // The prototype's counter lives in memory: each ✨ fill bumps it, so the
-  // add card's meter fills up and the 10th fill brings on the plans card.
-  const [used, setUsed] = React.useState(preview?.cycle.used ?? 0)
+  const [noticeOpen, setNoticeOpen] = React.useState(billing.showNotice)
   const api = React.useMemo<PaywallApi | null>(
     () =>
-      preview && {
-        cycle: aiCycle(preview.cycle.plan, used, preview.cycle.resetsOn),
-        open: setReason,
-        consume: () => setUsed((u) => Math.min(u + 1, preview.cycle.limit)),
-      },
-    [preview, used]
+      billing.enabled && state
+        ? {
+            cycle: state.cycle,
+            entitlement: state.entitlement,
+            open: setReason,
+          }
+        : null,
+    [billing.enabled, state]
   )
 
-  if (api === null) return children
+  if (api === null) {
+    return (
+      <CycleContext.Provider value={state}>{children}</CycleContext.Provider>
+    )
+  }
   return (
-    <PaywallContext.Provider value={api}>
-      {children}
-      <PaywallSheet
-        cycle={api.cycle}
-        reason={reason}
-        onOpenChange={(open) => !open && setReason(null)}
-      />
-      <PlansNotice
-        open={noticeOpen}
-        onOpenChange={setNoticeOpen}
-        onSeePlans={() => {
-          setNoticeOpen(false)
-          setReason("browse")
-        }}
-      />
-    </PaywallContext.Provider>
+    <CycleContext.Provider value={state}>
+      <PaywallContext.Provider value={api}>
+        {children}
+        <PaywallSheet
+          cycle={api.cycle}
+          entitlement={api.entitlement}
+          reason={reason}
+          onOpenChange={(open) => !open && setReason(null)}
+        />
+        <PlansNotice
+          open={noticeOpen}
+          onOpenChange={setNoticeOpen}
+          onSeePlans={() => {
+            setNoticeOpen(false)
+            setReason("browse")
+          }}
+        />
+      </PaywallContext.Provider>
+    </CycleContext.Provider>
   )
 }
 
 function PaywallSheet({
   cycle,
+  entitlement,
   reason,
   onOpenChange,
 }: {
   cycle: AiCycle
+  entitlement: Entitlement | null
   reason: PaywallReason | null
   onOpenChange: (open: boolean) => void
 }) {
   const { t, n, language } = useI18n()
   const user = useAuthUser()
   const guest = user === null || user.isAnonymous
-  const [billing, setBilling] = React.useState<Billing>("annual")
+  // Someone already paying keeps their billing period on the toggle.
+  const [billing, setBilling] = React.useState<Billing>(
+    entitlement?.billing ?? "annual"
+  )
   // A paid user is offered the plan above theirs; everyone else Pro.
   const [chosen, setChosen] = React.useState<PaidPlan>(
     cycle.plan === "free" ? "pro" : "unlimited"
   )
-  const [stubbed, setStubbed] = React.useState(false)
+  const [busy, setBusy] = React.useState(false)
+  const [problem, setProblem] = React.useState<string | null>(null)
+  const paying =
+    entitlement !== null &&
+    entitlement.plan !== "free" &&
+    isEntitling(entitlement.status)
+
+  const proceed = async () => {
+    if (user === null) return
+    if (guest) {
+      void startGoogleSignIn(auth)
+      return
+    }
+    if (!paddleConfigured()) {
+      setProblem(t.paywall.checkoutStub)
+      return
+    }
+    setBusy(true)
+    setProblem(null)
+    try {
+      if (paying) {
+        await changePlan(chosen, billing)
+        onOpenChange(false)
+      } else {
+        // Load Paddle first, then close this sheet: the modal sheet makes the
+        // page inert, which would swallow taps on Paddle's overlay.
+        await loadPaddle()
+        onOpenChange(false)
+        await openCheckout({
+          plan: chosen,
+          billing,
+          uid: user.uid,
+          email: user.email,
+          language,
+          dark: document.documentElement.classList.contains("dark"),
+        })
+      }
+    } catch (err) {
+      console.error("Checkout failed", err)
+      setProblem(t.paywall.billingError)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const date = formatShortDate(cycle.resetsOn, language)
   const { title, body } = heading(t, n, cycle, reason ?? "browse", date)
@@ -134,7 +203,7 @@ function PaywallSheet({
     <BottomSheet
       open={reason !== null}
       onOpenChange={(open) => {
-        if (!open) setStubbed(false)
+        if (!open) setProblem(null)
         onOpenChange(open)
       }}
     >
@@ -178,16 +247,14 @@ function PaywallSheet({
           <Button
             size="lg"
             className="h-12 w-full text-[15px]"
-            disabled={user === null || !canChoose}
-            onClick={() =>
-              guest ? void startGoogleSignIn(auth) : setStubbed(true)
-            }
+            disabled={user === null || !canChoose || busy}
+            onClick={() => void proceed()}
           >
             {t.paywall.continueWith(planName[chosen])}
           </Button>
-          {stubbed && (
+          {problem && (
             <p className="text-center text-[13px] text-muted-foreground">
-              {t.paywall.checkoutStub}
+              {problem}
             </p>
           )}
         </div>

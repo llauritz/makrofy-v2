@@ -152,7 +152,8 @@ export const es: Dictionary = {
     syncData: "Sincronizar",
     loginAgain: "Iniciar sesión",
     offAria: "Sincronización desactivada. Abrir ajustes",
-    offlineAria: "Sin conexión, los cambios se guardan en este dispositivo. Abrir ajustes",
+    offlineAria:
+      "Sin conexión, los cambios se guardan en este dispositivo. Abrir ajustes",
   },
 
   settings: {
@@ -306,7 +307,8 @@ export const es: Dictionary = {
     billedYearly: (price) => `${price} al año`,
     billedMonthly: "facturado cada mes",
     continueWith: (plan) => `Continuar con ${plan}`,
-    checkoutStub: "El pago aún no está conectado. Esto es un prototipo.",
+    checkoutStub: "El pago aún no está configurado.",
+    billingError: "No funcionó. Revisa tu conexión y vuelve a intentarlo.",
     footnote: "Cancela cuando quieras",
     usageMeter: (used, limit) =>
       `${used}/${limit} rellenos con IA gratis usados`,
@@ -323,6 +325,8 @@ export const es: Dictionary = {
       `Te quedan ${left} de ${limit} · se recarga el ${date}`,
     unlimitedStatus: (used, date) =>
       `${used} rellenos este ciclo · se recarga el ${date}`,
+    pastDueStatus: "El pago falló. Actualiza la tarjeta en Gestionar.",
+    endingStatus: (left, date) => `Te quedan ${left} · termina el ${date}`,
     upgrade: "Mejorar",
     manage: "Gestionar",
     noticeTitle: "El relleno con IA ahora tiene planes",
