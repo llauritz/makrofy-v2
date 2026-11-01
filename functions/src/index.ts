@@ -1,0 +1,158 @@
+import { initializeApp } from "firebase-admin/app"
+import { getFirestore } from "firebase-admin/firestore"
+import { defineSecret } from "firebase-functions/params"
+import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https"
+import { logger } from "firebase-functions/v2"
+
+import { isEntitling, type PaddleSubscription } from "./entitlement.js"
+import { changeSubscriptionPrice, createPortalLink } from "./paddle-api.js"
+import { PADDLE, type Billing, type PaidPlan } from "./paddle-config.js"
+import { verifyPaddleSignature } from "./signature.js"
+import {
+  applyPaddleEvent,
+  applySubscription,
+  entitlementRef,
+  fromDoc,
+  type PaddleEvent,
+} from "./webhook.js"
+
+// Yaffle's server side (ADR 0012): Paddle's webhook writes each user's
+// entitlement doc, and two callables hand the app what needs the API key — a
+// customer-portal link and a plan change. Secrets come from Google Secret
+// Manager (`firebase functions:secrets:set <NAME>`); see docs/runbooks/paddle.md.
+
+initializeApp()
+const db = getFirestore()
+
+const PADDLE_WEBHOOK_SECRET = defineSecret("PADDLE_WEBHOOK_SECRET")
+const PADDLE_API_KEY = defineSecret("PADDLE_API_KEY")
+
+const REGION = "us-central1"
+
+/**
+ * Paddle notification destination:
+ * https://us-central1-goyaffle.cloudfunctions.net/paddleWebhook
+ * 200 tells Paddle the event is handled (or deliberately ignored); anything
+ * else makes it retry, which is what we want for a transient failure or a
+ * config error fixed by a redeploy.
+ */
+export const paddleWebhook = onRequest(
+  { region: REGION, secrets: [PADDLE_WEBHOOK_SECRET], maxInstances: 5 },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).send("POST only")
+      return
+    }
+    const ok = verifyPaddleSignature(
+      req.get("Paddle-Signature"),
+      req.rawBody,
+      PADDLE_WEBHOOK_SECRET.value()
+    )
+    if (!ok) {
+      logger.warn("Paddle webhook: bad signature")
+      res.status(401).send("Bad signature")
+      return
+    }
+    const event = req.body as PaddleEvent
+    try {
+      const outcome = await applyPaddleEvent(db, event)
+      if (outcome === "no-uid") {
+        // Nothing to retry: the checkout didn't carry a uid. Log loudly so
+        // the subscription can be matched up by hand.
+        logger.error("Paddle webhook: subscription without a uid", {
+          eventId: event.event_id,
+          type: event.event_type,
+        })
+      } else {
+        logger.info("Paddle webhook", {
+          eventId: event.event_id,
+          type: event.event_type,
+          outcome,
+        })
+      }
+      res.status(200).send(outcome)
+    } catch (err) {
+      logger.error("Paddle webhook failed", { eventId: event.event_id, err })
+      res.status(500).send("Failed")
+    }
+  }
+)
+
+/** Signed-in, non-guest caller's uid, or a refusal. */
+function memberUid(
+  auth:
+    | { uid: string; token: { firebase?: { sign_in_provider?: string } } }
+    | undefined
+): string {
+  if (!auth) throw new HttpsError("unauthenticated", "Sign in first.")
+  if (auth.token.firebase?.sign_in_provider === "anonymous") {
+    throw new HttpsError("permission-denied", "Sign in with Google first.")
+  }
+  return auth.uid
+}
+
+/** A link into Paddle's customer portal for the caller's subscription. */
+export const paddlePortal = onCall(
+  { region: REGION, secrets: [PADDLE_API_KEY] },
+  async (req) => {
+    const uid = memberUid(req.auth)
+    const entitlement = fromDoc((await entitlementRef(db, uid).get()).data())
+    if (!entitlement?.customerId) {
+      throw new HttpsError("failed-precondition", "No subscription.")
+    }
+    try {
+      const url = await createPortalLink(
+        PADDLE_API_KEY.value(),
+        entitlement.customerId,
+        entitlement.subscriptionId || null
+      )
+      return { url }
+    } catch (err) {
+      logger.error("Paddle portal failed", { uid, err })
+      throw new HttpsError("unavailable", "Paddle didn't answer.")
+    }
+  }
+)
+
+/**
+ * Move the caller's running subscription to another plan or billing period.
+ * A new checkout would open a second subscription, so a paying user changes
+ * plan here instead. Paddle's reply is applied at once; the webhook's echo of
+ * the same change is then a no-op.
+ */
+export const paddleChangePlan = onCall(
+  { region: REGION, secrets: [PADDLE_API_KEY] },
+  async (req) => {
+    const uid = memberUid(req.auth)
+    const { plan, billing } = (req.data ?? {}) as {
+      plan?: PaidPlan
+      billing?: Billing
+    }
+    const priceId =
+      plan && billing ? PADDLE.prices[plan]?.[billing] : undefined
+    if (!priceId) throw new HttpsError("invalid-argument", "Unknown plan.")
+
+    const entitlement = fromDoc((await entitlementRef(db, uid).get()).data())
+    if (!entitlement || !isEntitling(entitlement.status)) {
+      throw new HttpsError("failed-precondition", "No running subscription.")
+    }
+    let sub: PaddleSubscription
+    try {
+      sub = await changeSubscriptionPrice<PaddleSubscription>(
+        PADDLE_API_KEY.value(),
+        entitlement.subscriptionId,
+        priceId
+      )
+    } catch (err) {
+      logger.error("Paddle plan change failed", { uid, err })
+      throw new HttpsError("unavailable", "Paddle didn't answer.")
+    }
+    await applySubscription(
+      db,
+      uid,
+      sub,
+      new Date(sub.updated_at ?? Date.now())
+    )
+    return { plan }
+  }
+)

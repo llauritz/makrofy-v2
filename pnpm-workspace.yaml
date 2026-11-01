@@ -1,5 +1,9 @@
-packages: []
+packages:
+  - functions
 
 allowBuilds:
   esbuild: true
   msw: false
+  "@firebase/util": false
+  protobufjs: false
+  re2: false

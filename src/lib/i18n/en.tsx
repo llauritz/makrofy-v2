@@ -388,7 +388,9 @@ export const en = {
     billedYearly: (price: string) => `${price} billed yearly`,
     billedMonthly: "billed monthly",
     continueWith: (plan: string) => `Continue with ${plan}`,
-    checkoutStub: "Checkout isn’t connected yet. This is a prototype.",
+    checkoutStub: "Checkout isn’t set up yet.",
+    // Checkout, plan change or the Paddle portal didn't open.
+    billingError: "That didn’t work. Check your connection and try again.",
     footnote: "Cancel anytime",
     // The free counter under the add card's macros, after an AI use.
     usageMeter: (used: string, limit: string) =>
@@ -409,6 +411,11 @@ export const en = {
       `${left} of ${limit} fills left · refills ${date}`,
     unlimitedStatus: (used: string, date: string) =>
       `${used} fills this cycle · refills ${date}`,
+    // A renewal payment failed; Paddle keeps retrying meanwhile.
+    pastDueStatus: "Payment failed. Update your card in Manage.",
+    // Cancelled, running to the end of the paid period.
+    endingStatus: (left: string, date: string) =>
+      `${left} fills left · ends ${date}`,
     upgrade: "Upgrade",
     manage: "Manage",
     // The one-time notice to existing users (no grandfathering, #59).

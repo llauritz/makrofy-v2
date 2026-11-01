@@ -62,3 +62,19 @@ export function aiCycle(plan: Plan, used: number, resetsOn: Date): AiCycle {
     resetsOn,
   }
 }
+
+/**
+ * The 30-day cycle `now` falls in, counted in whole cycles from the anchor
+ * (#64: the cycle starts when the plan starts — account creation for Free, the
+ * entitlement doc's `planStartedAt` once a plan has been bought). A clock set
+ * before the anchor stays in the first cycle.
+ */
+export function cycleWindow(
+  anchor: Date,
+  now: Date
+): { start: Date; end: Date } {
+  const length = CYCLE_DAYS * 86_400_000
+  const k = Math.max(0, Math.floor((now.getTime() - anchor.getTime()) / length))
+  const start = new Date(anchor.getTime() + k * length)
+  return { start, end: new Date(start.getTime() + length) }
+}

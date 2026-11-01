@@ -3,9 +3,21 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // All of a user's data lives under /users/{uid}/... and only that user
     // may touch it (docs/research/firebase-backend-validation.md § 3).
+    //
+    // One carve-out: the entitlement doc at settings/subscription is written
+    // only by the Paddle webhook (Admin SDK, which bypasses rules) — the user
+    // may read it but never write it (ADR 0012). Rules grant access when ANY
+    // matching allow passes, so the exclusion has to live inside the
+    // catch-all's condition; a separate `allow write: if false` would not
+    // override it.
     match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
+      allow read: if request.auth != null
+                  && request.auth.uid == userId;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.path != /databases/$(database)/documents/users/$(userId)/settings/subscription;
     }
+    // Everything outside /users — e.g. the webhook's /paddleEvents log — is
+    // server-only: no rule matches, so every client request is refused.
   }
 }
