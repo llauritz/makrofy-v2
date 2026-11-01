@@ -31,6 +31,19 @@
     })()
   </script>
 
+  <!-- Since Chrome 135, Android's browser draws a viewport-fit=cover page
+       edge-to-edge: the page runs on under the gesture/navigation bar, and
+       env(safe-area-inset-bottom) reports that bar's height. The installed
+       app and iOS keep their current layout, so only the Android browser
+       tab sets the summary card on top of the bar (--dock-inset, index.css). -->
+  <script>
+    try {
+      if (/Android/i.test(navigator.userAgent) && matchMedia("(display-mode: browser)").matches) {
+        document.documentElement.classList.add("android-browser")
+      }
+    } catch (e) {}
+  </script>
+
   <!-- A returning launch paints straight from the boot mirror (ADR 0011), so
        the static launch splash below must never show for it: this class hides
        it from the first frame. The key mirrors KEY in src/data/boot-mirror.ts

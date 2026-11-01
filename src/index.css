@@ -119,6 +119,23 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Extra lift for the sticky bottom dock (summary card, undo bars), on top
+   of its own 0.75rem gutter. Zero everywhere except an Android browser tab
+   (class set before first paint in index.html). There, a non-zero
+   safe-area inset means Chrome is drawing the page under the gesture/
+   navigation bar, so the bar shows the page's own background (the card's
+   backdrop runs down under it) and the card sits directly on the bar's top
+   edge. A zero inset means the browser paints its own bar, so the card
+   keeps its 0.75rem gutter. It feeds the sticky `bottom` offset, not
+   padding, so it moves the dock without a re-layout. */
+:root {
+    --dock-inset: 0px;
+}
+
+.android-browser {
+    --dock-inset: max(0px, env(safe-area-inset-bottom, 0px) - 0.75rem);
+}
+
 /* The wordmark Lottie's letterforms are exported in the brand ink
    (#3f0f02); in dark theme that ink flips to the foreground token so the
    mark stays legible, tracking theme toggles live. The bird's plumage keeps
