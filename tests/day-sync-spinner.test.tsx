@@ -32,7 +32,7 @@ async function exitSettled() {
 describe("DaySyncSpinner", () => {
   it("stays hidden for a quick confirmation", () => {
     const { rerender } = render(<DaySyncSpinner active />)
-    act(() => vi.advanceTimersByTime(200))
+    act(() => vi.advanceTimersByTime(400))
     rerender(<DaySyncSpinner active={false} />)
     act(() => vi.advanceTimersByTime(1000))
     expect(spinner()).toBeNull()
@@ -41,13 +41,13 @@ describe("DaySyncSpinner", () => {
   it("appears once the wait outlasts the blink threshold", () => {
     render(<DaySyncSpinner active />)
     expect(spinner()).toBeNull()
-    act(() => vi.advanceTimersByTime(300))
+    act(() => vi.advanceTimersByTime(500))
     expect(spinner()).not.toBeNull()
   })
 
   it("hides the moment the Day is confirmed", async () => {
     const { rerender } = render(<DaySyncSpinner active />)
-    act(() => vi.advanceTimersByTime(300))
+    act(() => vi.advanceTimersByTime(500))
     expect(spinner()).not.toBeNull()
     rerender(<DaySyncSpinner active={false} />)
     await exitSettled()
@@ -55,7 +55,7 @@ describe("DaySyncSpinner", () => {
 
   it("gives up on a connection that stays stuck", async () => {
     render(<DaySyncSpinner active />)
-    act(() => vi.advanceTimersByTime(300))
+    act(() => vi.advanceTimersByTime(500))
     expect(spinner()).not.toBeNull()
     act(() => vi.advanceTimersByTime(10_000))
     await exitSettled()
