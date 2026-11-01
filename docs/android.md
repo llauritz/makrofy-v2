@@ -80,7 +80,7 @@ The APK lands in `android/app/build/outputs/apk/debug/`.
   (registers local plugins, keeps the WebView between the system bars) and
   `SystemChrome` (bar colours).
 - `android/app/src/main/java/com/goyaffle/app/widget/` — the home screen
-  widget (ADR 0014): a Jetpack Glance widget in two picker sizes (2×2 ring,
+  widget (ADR 0015): a Jetpack Glance widget in two picker sizes (2×2 ring,
   4×2 summary card) that paints only the snapshot the web app hands it
   (`src/native/widget-snapshot.ts`, kept fresh by `src/native/WidgetSync.tsx`).
   Its fonts in `res/font` are static, Latin-subset cuts of the app's Public

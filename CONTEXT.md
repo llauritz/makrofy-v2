@@ -39,7 +39,7 @@ The last-rendered launch state — uid, Goal, today's Entries — kept in localS
 _Avoid_: offline cache (that's the Firestore SDK's job, ADR 0001)
 
 **Widget snapshot**:
-The finished picture of today the app hands the Android home screen widget: today's ring, Remaining/Over and macro totals, already formatted and translated, plus the empty face of the next Day so the widget turns over at midnight on its own (ADR 0014). The widget paints only this; never the source of truth.
+The finished picture of today the app hands the Android home screen widget: today's ring, Remaining/Over and macro totals, already formatted and translated, plus the empty face of the next Day so the widget turns over at midnight on its own (ADR 0015). The widget paints only this; never the source of truth.
 _Avoid_: widget cache, widget data
 
 **Suggestion**:
