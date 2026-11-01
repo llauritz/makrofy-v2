@@ -117,7 +117,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <Page>
       <AnimatedWordmark height={40} />
-      <h1 className="mt-5 text-2xl leading-snug font-medium text-balance">
+      <h1 className="mt-5 text-2xl leading-[1.2] font-medium text-balance">
         {t.onboarding.headline}
       </h1>
 
