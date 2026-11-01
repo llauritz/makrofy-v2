@@ -35,8 +35,9 @@ export function InstallAppEntry() {
     }
   }
 
-  // Laid out like the main screen's install card: icon, title over a short
-  // explanation, and the action as an outlined pill. The whole row is the
+  // Laid out like the main screen's install card (icon, title over a short
+  // explanation, the action as an outlined pill), in the type of the other
+  // Settings rows (Sign in with Google). The whole row is the
   // button, so the pill is drawn, not nested.
   return (
     <>
@@ -46,19 +47,19 @@ export function InstallAppEntry() {
           onClick={onClick}
           className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted"
         >
-          <AppIcon className="mr-1" />
+          <AppIcon />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[14px] leading-[18px] font-semibold">
+            <span className="block truncate text-[15px] font-medium">
               {t.install.cardTitle}
             </span>
-            <span className="block truncate text-[12px] leading-[15px] text-muted-foreground">
+            <span className="block truncate text-[13px] text-muted-foreground">
               {t.install.cardBody}
             </span>
           </span>
           <Squircle
             pill
             outline="solid"
-            className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium"
+            className="shrink-0 rounded-full px-2 py-1 text-xs font-medium"
           >
             {affordance === "ios-guide"
               ? t.install.cardShowHow
