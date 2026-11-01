@@ -17,6 +17,32 @@ To compare another model later, add it to `CONFIGS` in `src/dev/ai-bench.ts`, ru
 - **Imperial units leak into `servingText`:** "16 fl oz", "about 2 cups", "7" to 7-7/8" long".
 - **Butter eggs reference:** 2 large eggs ≈ 143 kcal / 9.5 g fat, plus 10 g butter ≈ 72 kcal / 8.1 g fat, gives about 215 kcal / 17.6 g fat. Estimates of 215–225 kcal are right. The 242–254 kcal answers (fat 20–22 g) came from all three configs.
 
+### Per-config numbers
+
+| | 3.1 default | 3.5 default | 3.5 LOW |
+| --- | --- | --- | --- |
+| Median / mean ms | 3131 / 5012 | 3076 / 3981 | 2869 / 3200 |
+| Slowest call ms | 37727 | 13745 | 9032 |
+| Total search queries | 84 | 59 | 40 |
+| Calls with no search | 1 | 2 | 7 |
+| Search fee per fill after the free tier (at $14/1k) | $0.039 | $0.028 | $0.019 |
+
+- **Paired latency** (same food and round, median difference, 5,000-sample bootstrap 95% CI): 3.1 vs 3.5 default is a tie (−16 ms, CI −258 to 241). 3.5 LOW beats 3.5 default by 350 ms (CI 162 to 869) and 3.1 by 153 ms (CI 25 to 571).
+- With 30 calls per config, treat rare events (runaway searches, no-search counts) as direction, not measurement.
+- 3.1's clarifying questions were two-part on most calls. The prompt asks for one short question.
+
+### Accuracy checks
+
+These references come from retailer pages and a user-entered database, not manufacturer pages, so treat them as rough.
+
+| Food | Reference | 3.1 default | 3.5 default | 3.5 LOW |
+| --- | --- | --- | --- | --- |
+| Chobani vanilla 150 g | 110 kcal, P12 F0 C15 ([retailer label](https://www.shoprite.com/product/chobani-greek-nonfat-vanilla-yogurt-53-oz-id-00894700010021)) | 1 of 3 | 3 of 3 | 2 of 3 |
+| Havanna chocolate alfajor | 55 g, about 206 kcal, P3.5 F7 C32 ([FatSecret](https://www.fatsecret.es/calor%C3%ADas-nutrici%C3%B3n/havanna/alfajor-de-chocolate/1-alfajor)) | 1 of 3 | 3 of 3 | 3 of 3 |
+
+- **Big Mac: no winner.** Published figures vary by market ([McDonald's Singapore](https://www.mcdonalds.com.sg/food-menu/big-mac) lists 558 kcal). Every answer falls in the 540 to 580 kcal range seen in third-party databases.
+- **Starbucks latte: no winner.** I found no US figure. The [Starbucks Austria sheet](https://starbucks.at/sites/starbucks-at/files/2024-11/AT%20Beverage%20Nutrition%20Holiday.pdf) lists 181 kcal for that market's recipe, so the 210 to 230 kcal answers may run high.
+
 **Verdict:** keep `gemini-3.5-flash-lite` at LOW (live since #94). The bigger wins are in the prompt and request: stop searching for staples, and cap runaway searches.
 
 ## Summary
