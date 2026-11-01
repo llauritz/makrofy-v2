@@ -30,14 +30,19 @@
     --input: #f3ecdd;
     --ring: #7d7060;
     --radius: 0.875rem;
-    /* Macro coding, fixed order P/F/C = blue/yellow/red (CVD-validated).
-       Plain = mark color (chips, dots, fills); -text = ≥4.5:1 on the card. */
-    --macro-p: #2f6bc4;
-    --macro-f: #b8830a;
-    --macro-c: #c03b2e;
-    --macro-p-text: #2f6bc4;
-    --macro-f-text: #96690a;
-    --macro-c-text: #c03b2e;
+    /* Macro coding, fixed order P/F/C = blue/yellow/red. Plain = mark
+       color (chips, dots, chart fills): ≥3:1 on card and background.
+       -text = the P/F/C letters: ≥4.5:1 on the card, the input capsule and
+       the macro's own 13% chip tint. Chroma sits near the sRGB edge for each
+       hue; yellow is already at that edge at this lightness, so it can't get
+       louder without losing contrast. Carbs stays a step darker than fat so
+       the pair still separates under deuteranopia. */
+    --macro-p: #3382f6;
+    --macro-f: #b78200;
+    --macro-c: #c52116;
+    --macro-p-text: #1667d6;
+    --macro-f-text: #8d6300;
+    --macro-c-text: #c52116;
 }
 
 .dark {
@@ -60,12 +65,12 @@
     --border: #3a2f22;
     --input: #211a12;
     --ring: #a5988a;
-    --macro-p: #5b91e4;
-    --macro-f: #b98a20;
-    --macro-c: #cf6152;
-    --macro-p-text: #5b91e4;
-    --macro-f-text: #b98a20;
-    --macro-c-text: #e07d6e;
+    --macro-p: #5a98f7;
+    --macro-f: #e2a52c;
+    --macro-c: #f74534;
+    --macro-p-text: #5a98f7;
+    --macro-f-text: #e2a52c;
+    --macro-c-text: #f86d5b;
 }
 
 @theme inline {
