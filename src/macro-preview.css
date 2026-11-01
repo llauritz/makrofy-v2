@@ -1,0 +1,50 @@
+/* TEMPORARY (macro color preview, drop before merge): ?macros=current|b|c
+   swaps the P/F/C tokens so the PR preview can compare palettes live. */
+:root[data-macros="current"] {
+    --macro-p: #2f6bc4;
+    --macro-p-text: #2f6bc4;
+    --macro-f: #b8830a;
+    --macro-f-text: #96690a;
+    --macro-c: #c03b2e;
+    --macro-c-text: #c03b2e;
+}
+:root[data-macros="current"].dark {
+    --macro-p: #5b91e4;
+    --macro-p-text: #5b91e4;
+    --macro-f: #b98a20;
+    --macro-f-text: #b98a20;
+    --macro-c: #cf6152;
+    --macro-c-text: #e07d6e;
+}
+:root[data-macros="b"] {
+    --macro-p: #2e81f9;
+    --macro-p-text: #1270eb;
+    --macro-f: #ca8f00;
+    --macro-f-text: #9a6d00;
+    --macro-c: #d11c11;
+    --macro-c-text: #df1d13;
+}
+:root[data-macros="b"].dark {
+    --macro-p: #3d88f9;
+    --macro-p-text: #3d88f9;
+    --macro-f: #e3a922;
+    --macro-f-text: #e3a922;
+    --macro-c: #f9281b;
+    --macro-c-text: #f64f3d;
+}
+:root[data-macros="c"] {
+    --macro-p: #2b81fb;
+    --macro-p-text: #227cfb;
+    --macro-f: #e1a000;
+    --macro-f-text: #aa7800;
+    --macro-c: #e2170c;
+    --macro-c-text: #f6180f;
+}
+:root[data-macros="c"].dark {
+    --macro-p: #0e75fb;
+    --macro-p-text: #0e75fb;
+    --macro-f: #f0b21b;
+    --macro-f-text: #f0b21b;
+    --macro-c: #ec291b;
+    --macro-c-text: #ec291b;
+}
