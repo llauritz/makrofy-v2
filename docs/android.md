@@ -78,8 +78,20 @@ The APK lands in `android/app/build/outputs/apk/debug/`.
 - `capacitor.config.ts` — app id, served hostname, splash and plugin config.
 - `android/app/src/main/java/com/goyaffle/app/` — Kotlin: `MainActivity`
   (registers local plugins, keeps the WebView between the system bars) and
-  `SystemChrome` (bar colours).
+  `SystemChrome` (bar colours) and `MaterialYou` (wallpaper colours).
 - `src/native/` — the typed TypeScript side of every native feature, no-ops on
   the web. Screens import from here and never check the platform themselves.
 - `android/app/src/main/res/` — icons and splash, drawn from the same brand Y
   path as the PWA icons.
+
+## Wallpaper colours (Material You)
+
+On Android 12+ the app takes its colours from the wallpaper by default;
+Settings → Colors switches back to Yaffle's own palette. `MaterialYou.kt`
+reads the system's tonal ramps and injects them as `window.__yaffleMaterialYou`
+before the page's first script, so launch paints straight into them.
+`src/lib/material-you.ts` maps them onto the CSS tokens: every token keeps its
+Warm Market lightness and takes its hue from the wallpaper, so contrast is
+unchanged, and filled buttons (`primary`) become Material's accent colour. The
+macro colours and red stay fixed. On the web and on older Android nothing
+changes. The native splash is still Yaffle's own colour.

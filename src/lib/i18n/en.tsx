@@ -192,6 +192,11 @@ export const en = {
     themeSystem: "System",
     themeLight: "Light",
     themeDark: "Dark",
+    // Android 12+ only: Yaffle's own palette, or one taken from the wallpaper
+    // (what Android calls Material You / wallpaper colours).
+    colors: "Colors",
+    colorsYaffle: "Yaffle",
+    colorsWallpaper: "Wallpaper",
     language: "Language",
     // Language names are endonyms — each shown in its own language, the same in
     // both dictionaries by convention, so the toggle reads the same everywhere.

@@ -20,6 +20,7 @@ class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Local plugins must be registered before super.onCreate builds the bridge.
         registerPlugin(SystemChromePlugin::class.java)
+        registerPlugin(MaterialYouPlugin::class.java)
         super.onCreate(savedInstanceState)
 
         // Draw behind the system bars on every API level (Android 15+ enforces

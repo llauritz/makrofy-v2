@@ -274,7 +274,7 @@ export function DayStrip({
                 <SquircleOutline
                   pill
                   dashed={cell.isFrontier}
-                  className="text-[#cbbfa4] dark:text-[#4a3e2e]"
+                  className="text-dash"
                 />
               )}
               <ChipFace
@@ -331,7 +331,7 @@ function ChipFace({
           (logged
             ? inverted
               ? "bg-background/70"
-              : "bg-[#b9ab92] dark:bg-[#5a4c3b]"
+              : "bg-dot"
             : "bg-transparent")
         }
       />

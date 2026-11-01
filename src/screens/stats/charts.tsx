@@ -24,10 +24,10 @@ import { MACROS } from "@/screens/main/macros"
 
 const INK = "var(--foreground)"
 const MUTED = "var(--muted-foreground)"
-const TRACK = "light-dark(#efe6d4, #3a2f22)" // hairline grid, from the ring's track
+const TRACK = "var(--hairline)" // hairline grid, from the ring's track
 /** De-emphasis tan — the daily trend line, Coverage marks, and their legends. */
-export const TAN = "light-dark(#cbbfa4, #5a4c3b)"
-const DASH = "light-dark(#cbbfa4, #4a3e2e)" // dashed gap slots
+export const TAN = "var(--tan)"
+const DASH = "var(--dash)" // dashed gap slots
 const SURFACE = "var(--card)"
 
 /** Bar with a rounded data-end and a square baseline. */
@@ -760,7 +760,7 @@ export function StatTile({
       radius="2xl"
       outline={dashed ? "dashed" : "solid"}
       outlineClassName={
-        dashed ? "text-[#cbbfa4] dark:text-[#4a3e2e]" : undefined
+        dashed ? "text-dash" : undefined
       }
       className={
         "flex min-w-0 flex-1 flex-col px-3.5 py-3" + (dashed ? "" : " bg-card")

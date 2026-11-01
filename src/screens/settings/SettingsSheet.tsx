@@ -2,7 +2,7 @@ import { BookText, ChevronRight } from "lucide-react"
 import * as React from "react"
 
 import { useLanguage } from "@/components/language-provider"
-import { useTheme } from "@/components/theme-provider"
+import { type ColorSource, useTheme } from "@/components/theme-provider"
 import {
   BottomSheet,
   BottomSheetClose,
@@ -57,6 +57,7 @@ export function SettingsSheet({
           onClick={onOpenGlossary}
         />
         <ThemeSetting />
+        <ColorSourceSetting />
         <LanguageSetting />
 
         <div className="flex flex-col gap-1 border-t pt-4">
@@ -234,6 +235,27 @@ function ThemeSetting() {
           { value: "system", label: t.settings.themeSystem },
           { value: "light", label: t.settings.themeLight },
           { value: "dark", label: t.settings.themeDark },
+        ]}
+      />
+    </Field>
+  )
+}
+
+// Android 12+ only: paint the app in the wallpaper's colours (Material You) or
+// keep Yaffle's own. Hidden everywhere else, where there is nothing to choose.
+function ColorSourceSetting() {
+  const { t } = useI18n()
+  const { colorSource, setColorSource, wallpaperColorsAvailable } = useTheme()
+  if (!wallpaperColorsAvailable) return null
+  return (
+    <Field label={t.settings.colors}>
+      <Segmented<ColorSource>
+        ariaLabel={t.settings.colors}
+        value={colorSource}
+        onChange={setColorSource}
+        options={[
+          { value: "wallpaper", label: t.settings.colorsWallpaper },
+          { value: "yaffle", label: t.settings.colorsYaffle },
         ]}
       />
     </Field>

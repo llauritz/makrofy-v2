@@ -42,7 +42,7 @@ export const NO_FLAGS: ReadonlySet<FormFlag> = new Set()
  * no "~" characters); tapping the field selects the value and clears it.
  */
 export const FLAGGED_OUTLINE =
-  "outline-2 outline-dashed outline-[#8f7c5e] -outline-offset-2 dark:outline-[#8a775c]"
+  "outline-2 outline-dashed outline-ai-outline -outline-offset-2"
 
 export function useAiFill({
   uid,

@@ -38,6 +38,16 @@
     --macro-p-text: #2f6bc4;
     --macro-f-text: #96690a;
     --macro-c-text: #c03b2e;
+    /* Quieter Warm Market shades: placeholders, the ring's track and chart
+       grid, dashed empty slots, tan chart marks, day dots, the header chip's
+       edge and the AI-filled field outline. */
+    --placeholder: #a5988a;
+    --hairline: #efe6d4;
+    --dash: #cbbfa4;
+    --tan: #cbbfa4;
+    --dot: #b9ab92;
+    --chip-border: #e6dcc8;
+    --ai-outline: #8f7c5e;
 }
 
 .dark {
@@ -66,6 +76,13 @@
     --macro-p-text: #5b91e4;
     --macro-f-text: #b98a20;
     --macro-c-text: #e07d6e;
+    --placeholder: #a5988a;
+    --hairline: #3a2f22;
+    --dash: #4a3e2e;
+    --tan: #5a4c3b;
+    --dot: #5a4c3b;
+    --chip-border: #3a2f22;
+    --ai-outline: #8a775c;
 }
 
 @theme inline {
@@ -98,6 +115,13 @@
     --color-macro-p-text: var(--macro-p-text);
     --color-macro-f-text: var(--macro-f-text);
     --color-macro-c-text: var(--macro-c-text);
+    --color-placeholder: var(--placeholder);
+    --color-hairline: var(--hairline);
+    --color-dash: var(--dash);
+    --color-tan: var(--tan);
+    --color-dot: var(--dot);
+    --color-chip-border: var(--chip-border);
+    --color-ai-outline: var(--ai-outline);
     /* Squircled surfaces take these same steps as a `radius` token rather
        than a `rounded-*` class — components/ui/squircle.tsx mirrors the
        scale in px. Keep the two in step. */

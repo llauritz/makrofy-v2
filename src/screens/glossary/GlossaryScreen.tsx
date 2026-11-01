@@ -91,14 +91,14 @@ export function GlossaryScreen({ onBack }: { onBack: () => void }) {
       <div className="px-4 pb-2">
         <Squircle asChild pill>
           <div className="flex items-center gap-2 rounded-full bg-input px-4 py-2.5">
-            <Search className="h-4 w-4 shrink-0 text-[#a5988a]" />
+            <Search className="h-4 w-4 shrink-0 text-placeholder" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t.glossary.search}
               aria-label={t.glossary.search}
               autoComplete="off"
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#a5988a]"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-placeholder"
             />
           </div>
         </Squircle>
@@ -257,7 +257,7 @@ function Empty({ title, body }: { title: string; body: string }) {
     <Squircle
       radius="2xl"
       outline="dashed"
-      outlineClassName="text-[#cbbfa4] dark:text-[#4a3e2e]"
+      outlineClassName="text-dash"
       className="px-4 py-8 text-center"
     >
       <div className="text-[15px] font-medium">{title}</div>
