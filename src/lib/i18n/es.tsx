@@ -168,6 +168,10 @@ export const es: Dictionary = {
     language: "Idioma",
     languageEnglish: "English",
     languageSpanish: "Español",
+    legalLinks: "Legal",
+    terms: "Términos",
+    privacy: "Privacidad",
+    refunds: "Reembolsos",
   },
 
   signIn: {

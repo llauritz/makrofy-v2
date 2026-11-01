@@ -64,8 +64,40 @@ export function SettingsSheet({
           <InstallAppEntry />
           <ExportImport />
         </div>
+
+        <LegalLinks />
       </BottomSheetContent>
     </BottomSheet>
+  )
+}
+
+// The legal pages are static documents outside the app (public/*.html), so
+// Paddle's domain review and signed-out visitors can reach them. They open in
+// a new tab so an installed PWA keeps its own window.
+function LegalLinks() {
+  const { t } = useI18n()
+  const links = [
+    { href: "/terms", label: t.settings.terms },
+    { href: "/privacy", label: t.settings.privacy },
+    { href: "/refunds", label: t.settings.refunds },
+  ]
+  return (
+    <nav
+      aria-label={t.settings.legalLinks}
+      className="flex justify-center gap-4 text-xs text-muted-foreground"
+    >
+      {links.map((link) => (
+        <a
+          key={link.href}
+          href={link.href}
+          target="_blank"
+          rel="noopener"
+          className="underline-offset-2 hover:text-foreground hover:underline"
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
   )
 }
 

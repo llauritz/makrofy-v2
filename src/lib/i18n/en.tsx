@@ -197,6 +197,10 @@ export const en = {
     // both dictionaries by convention, so the toggle reads the same everywhere.
     languageEnglish: "English",
     languageSpanish: "Español",
+    legalLinks: "Legal",
+    terms: "Terms",
+    privacy: "Privacy",
+    refunds: "Refunds",
   },
 
   signIn: {
