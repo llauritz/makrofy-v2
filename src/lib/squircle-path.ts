@@ -41,34 +41,55 @@ function runIn(r: number, budget: number, smoothing: number) {
 const num = (n: number) => +n.toFixed(4)
 const pt = ([x, y]: Pt) => `${num(x)} ${num(y)}`
 
-/** The SVG path `d` of a `width` × `height` squircle. */
+/**
+ * The SVG path `d` of a `width` × `height` squircle, its top-left corner at
+ * (`x`, `y`) — the origin unless a ring's inner edge needs offsetting.
+ */
 export function squircleOutline({
   width: w,
   height: h,
   radii,
   smoothing,
+  x = 0,
+  y = 0,
 }: {
   width: number
   height: number
   radii: Radii
   smoothing: number
+  x?: number
+  y?: number
 }) {
   const cap = Math.min(w, h) / 2
   // Clockwise from the top edge. `back` points from the corner back along the
   // edge the path arrives on, `on` along the edge it leaves by — each is also
   // the other edge's inward direction.
   const corners = [
-    { r: radii.tr, at: [w, 0], back: [-1, 0], on: [0, 1], arrive: w, leave: h },
+    {
+      r: radii.tr,
+      at: [x + w, y],
+      back: [-1, 0],
+      on: [0, 1],
+      arrive: w,
+      leave: h,
+    },
     {
       r: radii.br,
-      at: [w, h],
+      at: [x + w, y + h],
       back: [0, -1],
       on: [-1, 0],
       arrive: h,
       leave: w,
     },
-    { r: radii.bl, at: [0, h], back: [1, 0], on: [0, -1], arrive: w, leave: h },
-    { r: radii.tl, at: [0, 0], back: [0, 1], on: [1, 0], arrive: h, leave: w },
+    {
+      r: radii.bl,
+      at: [x, y + h],
+      back: [1, 0],
+      on: [0, -1],
+      arrive: w,
+      leave: h,
+    },
+    { r: radii.tl, at: [x, y], back: [0, 1], on: [1, 0], arrive: h, leave: w },
   ] as const
   const parts = corners.map(({ r: want, at, back, on, arrive, leave }) => {
     const r = Math.min(want, cap)

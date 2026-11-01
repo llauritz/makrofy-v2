@@ -12,18 +12,13 @@ import {
 import { AnimatePresence, motion } from "motion/react"
 
 import { Squircle } from "@/components/ui/squircle"
-import {
-  displayRate,
-  productRate,
-  type GlossaryRate,
-  type PerBasis,
-} from "@/lib/glossary"
+import { displayRate, productRate, type PerBasis } from "@/lib/glossary"
 import { useI18n } from "@/lib/i18n/useI18n"
 import type { QuantityKind } from "@/lib/quantity"
 import type { Alias, Product, Reading } from "@/lib/suggestions"
 import { productRateLine } from "./rate"
-import { MACROS, macroTint } from "@/screens/main/macros"
-import { MacroLetter } from "@/screens/main/MacroLetter"
+import { MACROS } from "@/screens/main/macros"
+import { MacroChips, MacroInputPill } from "@/screens/main/MacroPills"
 import {
   EMPTY_MACROS,
   parseOptional,
@@ -77,7 +72,7 @@ export function ProductDetail({
             {productRateLine(product, t, n)} · ×{n(product.useCount)}
           </div>
           {/* The Rate's per-unit macros, per nutrition basis (spec § Detail). */}
-          {rate && <BasisMacroChips value={rate} />}
+          {rate && <MacroChips nutrients={rate} size="sm" />}
         </div>
         <IconButton onClick={onClose} label={t.common.close}>
           <X className="h-4 w-4" />
@@ -288,7 +283,7 @@ function ReadingRow({
                   ×{n(reading.votes)}
                 </span>
               </div>
-              <BasisMacroChips value={shown} />
+              <MacroChips nutrients={shown} size="sm" />
             </div>
             <IconButton
               onClick={() => setEditing(true)}
@@ -380,32 +375,17 @@ function ReadingEditor({
       </div>
       <div className="mt-2 flex items-center gap-2">
         {MACROS.map((m) => (
-          <Squircle asChild pill key={m.key}>
-            <label
-              className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full px-2.5 py-1.5"
-              style={{ backgroundColor: macroTint(m.mark, 11) }}
-            >
-              <span
-                className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: m.mark }}
-              />
-              <span className="text-xs font-medium text-muted-foreground">
-                {m.letter}
-              </span>
-              <input
-                value={macros[m.key]}
-                onChange={(e) =>
-                  setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
-                }
-                onKeyDown={onKeyDown}
-                placeholder="0"
-                inputMode="decimal"
-                aria-label={t.productDetail.gramsPer(t.macros[m.field], basis)}
-                className="w-full min-w-0 bg-transparent text-right text-sm tabular-nums outline-none placeholder:text-[#a5988a]"
-              />
-              <span className="text-xs text-[#a5988a]">{t.units.g}</span>
-            </label>
-          </Squircle>
+          <MacroInputPill
+            key={m.key}
+            macro={m}
+            size="sm"
+            value={macros[m.key]}
+            onChange={(e) =>
+              setMacros((prev) => ({ ...prev, [m.key]: e.target.value }))
+            }
+            onKeyDown={onKeyDown}
+            aria-label={t.productDetail.gramsPer(t.macros[m.field], basis)}
+          />
         ))}
         <IconButton onClick={onCancel} label={t.common.cancel}>
           <X className="h-4 w-4" />
@@ -421,30 +401,6 @@ function ReadingEditor({
           <Check className="h-4 w-4" strokeWidth={2.5} />
         </motion.button>
       </div>
-    </div>
-  )
-}
-
-// The per-basis macro chips (reusing the macro coding), shown under a Reading
-// or beside the Product's Rate.
-function BasisMacroChips({ value }: { value: GlossaryRate }) {
-  const { t, n } = useI18n()
-  const chips = MACROS.filter((m) => (value[m.field] ?? 0) > 0)
-  if (chips.length === 0) return null
-  return (
-    <div className="mt-1 flex gap-1.5">
-      {chips.map((m) => (
-        <Squircle asChild pill key={m.key}>
-          <span
-            className="flex items-baseline gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
-            style={{ backgroundColor: macroTint(m.mark, 13) }}
-          >
-            <MacroLetter macro={m} withGrams className="text-[13px]" />
-            {n(value[m.field] ?? 0)}
-            {t.units.g}
-          </span>
-        </Squircle>
-      ))}
     </div>
   )
 }

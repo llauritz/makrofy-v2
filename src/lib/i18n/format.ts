@@ -21,3 +21,27 @@ export function localeFor(language: Language): string {
 export function formatNumber(value: number, language: Language): string {
   return value.toLocaleString(localeFor(language))
 }
+
+/**
+ * A price in the active language's currency convention — "$29.99" in English,
+ * "29,99 US$" in Spanish. Prices are USD until checkout brings per-currency
+ * charm prices (#60, #66).
+ */
+export function formatPrice(
+  amount: number,
+  language: Language,
+  currency = "USD"
+): string {
+  return amount.toLocaleString(localeFor(language), {
+    style: "currency",
+    currency,
+  })
+}
+
+/** A short calendar date for reset/refill lines — "Nov 13" / "13 nov". */
+export function formatShortDate(date: Date, language: Language): string {
+  return new Intl.DateTimeFormat(localeFor(language), {
+    day: "numeric",
+    month: "short",
+  }).format(date)
+}

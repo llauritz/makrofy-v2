@@ -9,7 +9,7 @@ import { es } from "./es"
 // in DICTIONARIES below.
 
 export type { Dictionary } from "./en"
-export { formatNumber, localeFor } from "./format"
+export { formatNumber, formatPrice, formatShortDate, localeFor } from "./format"
 
 const DICTIONARIES: Record<Language, Dictionary> = { en, es }
 

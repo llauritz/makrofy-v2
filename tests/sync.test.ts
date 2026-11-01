@@ -3,7 +3,12 @@
 // the identity's token has lapsed (spec § PWA & offline; issue #19). No Firebase
 // here: the resolver is a pure function so every state is cheap to pin down.
 import { describe, expect, it } from "vitest"
-import { resolveSyncStatus } from "@/lib/sync"
+import {
+  resolveSyncStatus,
+  revealDelayMs,
+  SLOW_SYNC_MS,
+  SYNC_SETTLE_MS,
+} from "@/lib/sync"
 
 const online = { hasPendingWrites: false, fromCache: false }
 const offline = { hasPendingWrites: false, fromCache: true }
@@ -37,5 +42,28 @@ describe("resolveSyncStatus", () => {
     // authExpired is only ever set during a real write pause, but the resolver
     // must not be the thing that swallows it — a tap here re-auths, not explains.
     expect(resolveSyncStatus(online, expired)).toBe("attention")
+  })
+})
+
+describe("revealDelayMs", () => {
+  it("shows synced at once", () => {
+    expect(revealDelayMs("synced", { online: true })).toBe(0)
+    expect(revealDelayMs("synced", { online: false })).toBe(0)
+  })
+
+  it("waits only the short settle for attention, online or not", () => {
+    expect(revealDelayMs("attention", { online: true })).toBe(SYNC_SETTLE_MS)
+    expect(revealDelayMs("attention", { online: false })).toBe(SYNC_SETTLE_MS)
+  })
+
+  it("surfaces pending quickly when the device is offline", () => {
+    expect(revealDelayMs("pending", { online: false })).toBe(SYNC_SETTLE_MS)
+  })
+
+  it("holds pending back much longer while a connection is up", () => {
+    // A slow phone launch's cache→server hop runs past the short settle; that
+    // must not flash the offline cloud.
+    expect(revealDelayMs("pending", { online: true })).toBe(SLOW_SYNC_MS)
+    expect(SLOW_SYNC_MS).toBeGreaterThan(5 * SYNC_SETTLE_MS)
   })
 })

@@ -6,8 +6,9 @@
 // swaps the Day listener cleanly (ADR 0001 — the SDK cache serves the switch
 // instantly and offline). Launch is seeded from the boot mirror (issue #69):
 // online, Firebase Auth blocks its first event on a server round-trip and
-// Firestore holds even cached snapshots until then, so the identity, Goal and
-// today's Entries first render from the mirrored copy and hand over to the
+// Firestore holds even cached snapshots until then, so the identity, Goal,
+// today's Entries and Coverage label, and the logged-day dots first render
+// from the mirrored copy and hand over to the
 // live values the moment the SDK settles. A first-ever launch has no mirror;
 // uid stays null and no listener is opened until the Guest is minted.
 import * as React from "react"
@@ -23,6 +24,7 @@ import {
 import {
   listenToAllEntries,
   listenToDay,
+  listenToDayFreshness,
   listenToSyncMetadata,
   type Entry,
 } from "@/data/entries"
@@ -31,6 +33,7 @@ import { listenToOverlays } from "@/data/products"
 import { auth, db } from "@/lib/firebase"
 import {
   resolveSyncStatus,
+  revealDelayMs,
   type SnapshotMeta,
   type SyncStatus,
 } from "@/lib/sync"
@@ -42,6 +45,7 @@ import {
   type OverlayMap,
   type ProductIndex,
 } from "@/lib/suggestions"
+import { useOnline } from "@/lib/useOnline"
 
 /**
  * The app's current Firebase uid. Before auth settles it reads the mirrored
@@ -96,20 +100,16 @@ function summarizeUser(user: User | null): AuthUser | null {
   }
 }
 
-// How long any non-synced state must persist before it's shown. A normal online
-// write acks, and a load's cache→server hop clears, well inside this window — so
-// neither flashes the indicator — and a deliberate sign-out re-mints a Guest
-// inside it too, so attention never flashes. Only a genuine offline stretch or
-// an auth pause outlasts it.
-const SYNC_SETTLE_MS = 1200
-
 /**
  * The header sync indicator's live state (spec § PWA & offline). Snapshot
  * metadata drives silent↔pending; losing the identity's token unexpectedly
  * (onIdTokenChanged firing null after we had a user) raises attention, whose tap
- * re-auths. resolveSyncStatus (src/lib/sync.ts) holds the precedence; this hook
- * adds a short settle so a normal load never flashes the indicator, while a
- * genuine offline stretch or an actual auth pause still surfaces.
+ * re-auths. resolveSyncStatus (src/lib/sync.ts) holds the precedence and
+ * revealDelayMs the timing: a non-synced state only surfaces once it has
+ * lasted — briefly when offline or for attention, much longer while a
+ * connection is up — so a launch's slow cache→server hop on a phone never
+ * flashes the indicator, while a genuine offline stretch or an actual auth
+ * pause still surfaces.
  */
 export function useSyncStatus(uid: string | null): SyncStatus {
   const [meta, setMeta] = React.useState<SnapshotMeta>({
@@ -143,12 +143,10 @@ export function useSyncStatus(uid: string | null): SyncStatus {
     })
   }, [])
 
+  const online = useOnline()
   const target = resolveSyncStatus(meta, { authExpired })
-  // Only "synced" shows at once — the user never waits to learn they're fine.
-  // Every non-synced state waits out the settle, so a normal online write and a
-  // load's cache→server hop stay silent; only a genuine offline stretch or auth
-  // pause lasts long enough to surface.
-  const immediate = target === "synced"
+  const delay = revealDelayMs(target, { online })
+  const immediate = delay === 0
 
   // Reflect an immediate target during render (React's supported adjust-state-
   // during-render pattern) so there's no flash and no cascading effect; the
@@ -157,9 +155,9 @@ export function useSyncStatus(uid: string | null): SyncStatus {
 
   React.useEffect(() => {
     if (immediate) return
-    const timer = setTimeout(() => setDisplay(target), SYNC_SETTLE_MS)
+    const timer = setTimeout(() => setDisplay(target), delay)
     return () => clearTimeout(timer)
-  }, [immediate, target])
+  }, [immediate, target, delay])
 
   return display
 }
@@ -182,6 +180,33 @@ export function useDay(uid: string | null, day: string): Entry[] {
 }
 
 /**
+ * Whether one Day's log may still be catching up with the server — true from
+ * the moment it is shown (a mirror seed or a cached snapshot) until the server
+ * confirms it, and only while the browser reports a connection: offline, the
+ * cache *is* the latest there is, so there's nothing to wait for. Feeds the
+ * faint spinner under the log. A snapshot for another uid/Day doesn't count,
+ * so a Day switch starts out unconfirmed rather than borrowing the last Day's
+ * answer.
+ */
+export function useDaySyncing(uid: string | null, day: string): boolean {
+  const online = useOnline()
+  const key = uid === null ? null : `${uid}/${day}`
+  const [state, setState] = React.useState<{
+    key: string
+    fromCache: boolean
+  } | null>(null)
+  React.useEffect(() => {
+    if (!uid) return
+    const k = `${uid}/${day}`
+    return listenToDayFreshness(db, uid, day, (fromCache) =>
+      setState({ key: k, fromCache }),
+    )
+  }, [uid, day])
+  const confirmed = state !== null && state.key === key && !state.fromCache
+  return online && key !== null && !confirmed
+}
+
+/**
  * One Day's Coverage label (ADR 0006), live; null while unlabelled. Unlike
  * the sibling hooks this resets on a Day switch: a label is a claim about one
  * specific Day, and letting the previous Day's chip stay filled until the new
@@ -194,10 +219,17 @@ export function useCoverage(
   // The label is stored with the Day it belongs to, and a snapshot from a
   // different Day than the one being asked about reads as null — no
   // imperative reset needed when the selection moves.
+  // Today's label is mirrored (issue #69), so a launch doesn't paint the chip
+  // empty and then fill it a beat later.
   const [state, setState] = React.useState<{
     day: string
     level: CoverageLevel | null
-  } | null>(null)
+  } | null>(() => {
+    const mirror = readBootMirror()
+    return mirror && mirror.uid === uid && mirror.coverage !== undefined
+      ? { day: mirror.day, level: mirror.coverage }
+      : null
+  })
   React.useEffect(() => {
     if (!uid) return
     return listenToCoverage(db, uid, day, (level) => setState({ day, level }))
@@ -250,7 +282,14 @@ export function useGoalStatus(uid: string | null): GoalStatus {
  * typeahead and stats will read.
  */
 export function useLoggedDays(uid: string | null): Set<string> {
-  const [days, setDays] = React.useState<Set<string>>(() => new Set())
+  // Seeded from the mirror (issue #69) so the strip's dots paint with the
+  // first frame instead of popping in once auth settles.
+  const [days, setDays] = React.useState<Set<string>>(() => {
+    const mirror = readBootMirror()
+    return new Set(
+      mirror && mirror.uid === uid ? (mirror.loggedDays ?? []) : [],
+    )
+  })
   React.useEffect(() => {
     if (!uid) return
     return listenToAllEntries(db, uid, (entries) =>

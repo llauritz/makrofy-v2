@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/components/language-provider.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
 import { startBootMirror } from "@/data/boot-mirror"
 import { bootstrapIdentity } from "@/data/identity"
+import { refreshOnResume } from "@/data/resume-sync"
 import { auth, db } from "@/lib/firebase"
 import { registerServiceWorker } from "@/pwa/register"
 
@@ -19,6 +20,11 @@ void bootstrapIdentity(auth, db)
 // Keep the boot mirror fresh so the next launch paints without waiting for
 // auth to settle (issue #69). The hooks seed from it in src/data/hooks.ts.
 startBootMirror(auth, db)
+
+// Coming back to the app after a while gets a fresh server connection, so a
+// stream the phone silently dropped in the background can't hold back what
+// another device logged meanwhile.
+refreshOnResume(db)
 
 // Precache the app shell and keep it silently up to date (spec § PWA & offline).
 registerServiceWorker()

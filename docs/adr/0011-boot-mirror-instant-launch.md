@@ -52,10 +52,28 @@ the launch.
   unavailable or over quota all read as "nothing mirrored" — the launch
   behaves exactly as before this ADR. The key is versioned (`v1`); a schema
   change ships as `v2` and costs one splashed launch, not a parse hazard.
-- **No extra reads.** The mirror's two listeners duplicate queries the UI
+- **No extra reads.** The mirror's listeners duplicate queries the UI
   already holds; the SDK serves both from one cache and one server stream.
 
 The stale-first-frame trade is accepted: entries logged on another device
 since this device last synced appear only when the live listeners deliver —
 the "local copy instantly, fetch changes lazily" contract, and the same one
 the Firestore cache already imposes on every other screen.
+
+## Amendment (2026-11-01): follow today, mirror the rest of the first frame
+
+Two gaps showed up on phones. The mirror pinned "today" to the Day its
+listeners started on, and an installed PWA routinely lives in the background
+past midnight — so the next cold launch found a mirror for yesterday and
+painted an empty Day until auth settled. And the Day strip's dots and today's
+Coverage label weren't mirrored, so they popped in a beat after the first
+frame.
+
+- The today's-Day listeners now **follow the date**: they move at local
+  midnight and on any return to the foreground on a later Day.
+- The mirror also carries **`loggedDays`** (the dots, from the all-Entries
+  listener the UI already holds) and today's **`coverage`**. Both are optional
+  fields under the same `v1` key: an older mirror seeds no dots / no label.
+- A launch under the uid already mirrored **adopts** the stored mirror instead
+  of resetting it, so a hook mounting later in the launch still seeds real data.
+

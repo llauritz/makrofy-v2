@@ -35,7 +35,7 @@ _Avoid_: anonymous user (auth-implementation term)
 What happens when a Guest signs into an account that already has data: both sets of Entries are kept, combined without prompting.
 
 **Boot mirror**:
-The last-rendered launch state — uid, Goal, today's Entries — kept in localStorage so a returning launch paints instantly instead of waiting out Firebase Auth's online round-trip (ADR 0011). Never the source of truth: live listeners replace it the moment the SDK settles, and any doubt (new day, changed uid, corrupt state) reads as "nothing mirrored".
+The last-rendered launch state — uid, Goal, today's Entries and Coverage label, the logged-day dots — kept in localStorage so a returning launch paints instantly instead of waiting out Firebase Auth's online round-trip (ADR 0011). Never the source of truth: live listeners replace it the moment the SDK settles, and any doubt (new day, changed uid, corrupt state) reads as "nothing mirrored".
 _Avoid_: offline cache (that's the Firestore SDK's job, ADR 0001)
 
 **Suggestion**:
