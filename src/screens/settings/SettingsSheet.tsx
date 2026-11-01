@@ -65,11 +65,14 @@ export function SettingsSheet({
         />
         <ThemeSetting />
         <LanguageSetting />
+        {/* Sits above the divider, with the device-local preferences: it is
+            about this device, not the account. Renders nothing once
+            installed or where installing isn't possible. */}
+        <InstallAppEntry />
 
         <div className="flex flex-col gap-1 border-t pt-4">
           <PlanSetting onOpen={() => onOpenChange(false)} />
           <SignInSetting />
-          <InstallAppEntry />
           <ExportImport />
         </div>
 

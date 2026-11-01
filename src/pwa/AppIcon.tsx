@@ -8,9 +8,12 @@ import { cn } from "@/lib/utils"
 // The shadow hangs on a wrapper as a drop-shadow, since the clip would erase
 // a box-shadow.
 export function AppIcon({
+  size = 36,
   shadow = false,
   className,
 }: {
+  /** Edge length in px; the corner radius scales with it (9 at 36). */
+  size?: number
   shadow?: boolean
   className?: string
 }) {
@@ -24,11 +27,12 @@ export function AppIcon({
       )}
     >
       <Squircle
-        radius={9}
+        radius={size / 4}
         outline="solid"
         outlineClassName="text-black/10 dark:text-white/15"
         aria-hidden
-        className="h-9 w-9 bg-[url(/icons/icon-192.png)] bg-cover bg-center bg-origin-border"
+        className="bg-[url(/icons/icon-192.png)] bg-cover bg-center bg-origin-border"
+        style={{ width: size, height: size }}
       />
     </div>
   )
