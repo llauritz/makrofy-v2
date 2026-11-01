@@ -310,13 +310,13 @@ export const en = {
     planUnlimited: "Unlimited",
     titleExhaustedFree: "That was your last free AI fill",
     bodyExhaustedFree:
-      "AI fill reads what you ate and fills in the numbers for you. Pick a plan to keep it going. Everything else in Yaffle stays free.",
+      "AI fill looks up what you ate with Google Search and fills in the numbers. Pro and Unlimited come with more fills.",
     titleExhaustedPro: "You’ve used this cycle’s fills",
     bodyExhaustedPro: (date: string) =>
-      `Pro refills on ${date}. Need more before then? Unlimited keeps going.`,
-    titleBrowseFree: "Keep AI fill going",
+      `Pro refills on ${date}. Unlimited comes with more fills.`,
+    titleBrowseFree: "More AI fills",
     bodyBrowseFree: (left: string, limit: string) =>
-      `${left} of ${limit} free AI fills left. Everything else in Yaffle stays free.`,
+      `AI fill looks up what you ate with Google Search and fills in the numbers. ${left} of ${limit} free fills left.`,
     titleBrowsePaid: "Your plan",
     bodyBrowsePaid: (date: string) => `Your AI fills refill on ${date}.`,
     billing: "Billing",
@@ -358,7 +358,7 @@ export const en = {
     // The one-time notice to existing users (no grandfathering, #59).
     noticeTitle: "AI fill has plans now",
     noticeBody: (limit: string) =>
-      `Everyone gets ${limit} free AI fills. Pro and Unlimited keep it going and support Yaffle’s development. Everything else in Yaffle stays free, as it always was.`,
+      `Everyone gets ${limit} free AI fills. Pro and Unlimited come with more and support Yaffle’s development. Everything else in Yaffle stays free.`,
     noticeDismiss: "Got it",
   },
 

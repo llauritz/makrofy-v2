@@ -1,6 +1,7 @@
-import { Sparkles, Utensils } from "lucide-react"
+import { Utensils } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 
+import { AiSparkle } from "@/components/AiSparkle"
 import { Squircle } from "@/components/ui/squircle"
 import type { Entry, EntryAiFill, EntryEdit } from "@/data/entries"
 import { useI18n } from "@/lib/i18n/useI18n"
@@ -183,9 +184,9 @@ function EntryRow({
                 attribution showed in the card at response time, so the Entry
                 carries only this quiet mark. */}
             {entry.source === "ai" && (
-              <Sparkles
+              <AiSparkle
                 aria-label={t.entryList.aiAssisted}
-                className="h-3 w-3 shrink-0 text-[#a5988a]"
+                className="h-3 w-3"
               />
             )}
           </div>
@@ -202,15 +203,16 @@ function EntryRow({
             whileTap={{ scale: 0.9 }}
             aria-label={t.addCard.fillWithAi}
             className={
-              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-opacity disabled:opacity-40" +
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-opacity" +
+              // The spinning star is the wait itself, so it keeps full strength
+              // while the button is disabled for the round trip.
+              (ai.thinking ? "" : " disabled:opacity-40") +
               // Offline the button dims in place but stays tappable — the
               // tap answers with the quiet connection note in the zone.
               (online ? "" : " opacity-40")
             }
           >
-            <Sparkles
-              className={"h-4 w-4" + (ai.thinking ? " animate-pulse" : "")}
-            />
+            <AiSparkle spinning={ai.thinking} className="h-[18px] w-[18px]" />
           </motion.button>
         )}
         <div
