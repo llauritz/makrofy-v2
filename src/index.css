@@ -38,7 +38,7 @@
        sit beside the letter or a labelled legend. A pale yellow wash reads
        weaker than the blue and red ones, so fat's pill tint is 1.25× theirs
        (`--macro-*-wash`, MacroPills.tsx). In dark mode fat is a step
-       softer (#e4a830) so it sits level with the blue and red. */
+       softer (#d5a140) so it sits level with the blue and red. */
     --macro-p: #2f6bc4;
     --macro-f: #f7ae14;
     --macro-c: #c03b2e;
@@ -69,10 +69,10 @@
     --input: #211a12;
     --ring: #a5988a;
     --macro-p: #5b91e4;
-    --macro-f: #e4a830;
+    --macro-f: #d5a140;
     --macro-c: #cf6152;
     --macro-p-text: #5b91e4;
-    --macro-f-text: #e4a830;
+    --macro-f-text: #d5a140;
     --macro-c-text: #e07d6e;
     --macro-f-wash: 1;
 }
