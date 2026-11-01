@@ -1,6 +1,6 @@
 // Seam: the header cloud button's state — the sign-in invitation while signed
-// out, the cloud alone once it is turned down, the live sync glyph while
-// signed in. Pure, so every combination is pinned here.
+// out, the cloud alone once it is turned down, and a clear header while signed
+// in unless offline. Pure, so every combination is pinned here.
 import { describe, expect, it } from "vitest"
 import { resolveCloudButton } from "@/lib/cloud-button"
 
@@ -11,54 +11,51 @@ const base = {
 } as const
 
 describe("resolveCloudButton", () => {
-  it("invites a Guest to sync, with the cloud off", () => {
+  it("invites a Guest to sync", () => {
     expect(resolveCloudButton({ ...base, account: "guest" })).toEqual({
       kind: "prompt",
       label: "syncData",
-      glyph: "off",
     })
   })
 
   it("leaves the Guest the cloud alone once the invitation is turned down", () => {
     expect(
       resolveCloudButton({ ...base, account: "guest", dismissed: "sync" })
-    ).toEqual({ kind: "icon", glyph: "off" })
+    ).toEqual({ kind: "icon", reason: "signedOut" })
   })
 
   it("asks a lapsed Google user to log in again", () => {
     expect(resolveCloudButton({ ...base, account: "lapsed" })).toEqual({
       kind: "prompt",
       label: "loginAgain",
-      glyph: "off",
     })
   })
 
   it("still asks to log in again after an old Sync data dismissal", () => {
     expect(
       resolveCloudButton({ ...base, account: "lapsed", dismissed: "sync" })
-    ).toMatchObject({ kind: "prompt", label: "loginAgain" })
+    ).toEqual({ kind: "prompt", label: "loginAgain" })
   })
 
   it("drops to the cloud alone once Log in again is turned down", () => {
     expect(
       resolveCloudButton({ ...base, account: "lapsed", dismissed: "relogin" })
-    ).toEqual({ kind: "icon", glyph: "off" })
+    ).toEqual({ kind: "icon", reason: "signedOut" })
   })
 
-  it("shows a signed-in user a quiet cloud when synced", () => {
+  it("shows nothing to a signed-in user when synced", () => {
     expect(resolveCloudButton({ ...base, account: "google" })).toEqual({
-      kind: "icon",
-      glyph: "cloud",
+      kind: "hidden",
     })
   })
 
-  it("shows the rising arrow while writes are on their way up", () => {
+  it("shows nothing while writes are uploading online", () => {
     expect(
       resolveCloudButton({ ...base, account: "google", sync: "pending" })
-    ).toEqual({ kind: "icon", glyph: "uploading" })
+    ).toEqual({ kind: "hidden" })
   })
 
-  it("turns the cloud off while offline", () => {
+  it("shows the off cloud while offline", () => {
     expect(
       resolveCloudButton({
         ...base,
@@ -66,12 +63,12 @@ describe("resolveCloudButton", () => {
         sync: "pending",
         online: false,
       })
-    ).toEqual({ kind: "icon", glyph: "off" })
+    ).toEqual({ kind: "icon", reason: "offline" })
   })
 
-  it("never invites a signed-in user, whatever was dismissed", () => {
+  it("stays clear on a lost connection the sync status hasn't confirmed yet", () => {
     expect(
-      resolveCloudButton({ ...base, account: "google", dismissed: null })
-    ).toMatchObject({ kind: "icon" })
+      resolveCloudButton({ ...base, account: "google", online: false })
+    ).toEqual({ kind: "hidden" })
   })
 })

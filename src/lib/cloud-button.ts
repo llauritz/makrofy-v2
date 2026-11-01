@@ -17,14 +17,13 @@ export type CloudAccount = "google" | "guest" | "lapsed"
 /** Which invitation the user has already turned down on this device. */
 export type DismissedPrompt = "sync" | "relogin" | null
 
-/** The glyph inside the cloud. */
-export type CloudGlyph = "off" | "cloud" | "uploading"
-
 export type CloudButton =
-  /** The faint outlined text button, cloud on its right; a tap signs in. */
-  | { kind: "prompt"; label: "syncData" | "loginAgain"; glyph: "off" }
-  /** The cloud alone; a tap opens Settings. */
-  | { kind: "icon"; glyph: CloudGlyph }
+  /** Nothing in the header: signed in and syncing as it should. */
+  | { kind: "hidden" }
+  /** The faint outlined text button, the off cloud on its right; a tap signs in. */
+  | { kind: "prompt"; label: "syncData" | "loginAgain" }
+  /** The off cloud alone on the background; a tap opens Settings. */
+  | { kind: "icon"; reason: "signedOut" | "offline" }
 
 /**
  * Which button the header shows.
@@ -34,8 +33,8 @@ export type CloudButton =
  * user has either tapped it or opened Settings without signing in. After
  * that the cloud stands alone.
  *
- * Signed in, the cloud is on. It shows a rising arrow while changes are still
- * on their way up, and goes off while the device is offline.
+ * Signed in, the header stays clear: synced and uploading show nothing. Only
+ * an offline stretch (after the sync settle) brings the off cloud back.
  */
 export function resolveCloudButton({
   account,
@@ -50,15 +49,14 @@ export function resolveCloudButton({
 }): CloudButton {
   if (account === "guest") {
     return dismissed === "sync"
-      ? { kind: "icon", glyph: "off" }
-      : { kind: "prompt", label: "syncData", glyph: "off" }
+      ? { kind: "icon", reason: "signedOut" }
+      : { kind: "prompt", label: "syncData" }
   }
   if (account === "lapsed") {
     return dismissed === "relogin"
-      ? { kind: "icon", glyph: "off" }
-      : { kind: "prompt", label: "loginAgain", glyph: "off" }
+      ? { kind: "icon", reason: "signedOut" }
+      : { kind: "prompt", label: "loginAgain" }
   }
-  if (sync === "synced") return { kind: "icon", glyph: "cloud" }
-  if (!online) return { kind: "icon", glyph: "off" }
-  return { kind: "icon", glyph: "uploading" }
+  if (sync !== "synced" && !online) return { kind: "icon", reason: "offline" }
+  return { kind: "hidden" }
 }

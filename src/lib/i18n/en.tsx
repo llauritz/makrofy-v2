@@ -178,8 +178,6 @@ export const en = {
     syncData: "Sync data",
     loginAgain: "Log in again",
     offAria: "Sync is off. Open settings",
-    syncedAria: "Synced. Open settings",
-    uploadingAria: "Syncing. Open settings",
     offlineAria: "Offline, changes saved on this device. Open settings",
   },
 

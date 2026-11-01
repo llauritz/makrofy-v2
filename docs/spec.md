@@ -107,7 +107,7 @@ Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10).
 
 - **Install**: quiet "Install app" settings entry (`beforeinstallprompt` native prompt on Chromium; iOS instruction sheet). No banners.
 - **Icon**: Fraunces "M", ink on flour — standard, maskable, monochrome, apple-touch. Android splash from manifest `background_color: #f6f1e6`; per-mode `theme-color` `#f6f1e6`/`#17110c`; `display: standalone`.
-- **Cloud sync button** (header, left of the gear): signed out, a crossed-out cloud with a faint outlined "Sync data" text button on its left (or "Log in again" once a Google session lapsed without a sign-out); the text button goes straight to Google sign-in. Once the user has tapped it, or opened Settings, without signing in, the cloud stands alone. Signed in, the cloud is on: a rising arrow while writes are queued, crossed out while offline, a brief check when an upload lands. The cloud alone opens Settings. Fed by snapshot metadata after the settle, so a normal load never flashes it.
+- **Cloud sync button** (header, left of the gear): signed out, a crossed-out cloud with a faint outlined "Sync data" text button on its left (or "Log in again" once a Google session lapsed without a sign-out); the text button goes straight to Google sign-in. Once the user has tapped it, or opened Settings, without signing in, the crossed-out cloud stands alone, bare on the background (no pill), and opens Settings. Signed in, the header shows nothing while synced or uploading; only a real offline stretch (after the sync settle) brings back the crossed-out cloud.
 - **Updates**: `vite-plugin-pwa` silent auto-update. Service worker precaches the app shell only.
 
 ## Deploy & environments

@@ -151,8 +151,6 @@ export const es: Dictionary = {
     syncData: "Sincronizar",
     loginAgain: "Iniciar sesión",
     offAria: "Sincronización desactivada. Abrir ajustes",
-    syncedAria: "Sincronizado. Abrir ajustes",
-    uploadingAria: "Sincronizando. Abrir ajustes",
     offlineAria: "Sin conexión, los cambios se guardan en este dispositivo. Abrir ajustes",
   },
 

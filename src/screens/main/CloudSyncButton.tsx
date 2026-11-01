@@ -9,18 +9,20 @@ import { useI18n } from "@/lib/i18n/useI18n"
 import type { SyncStatus } from "@/lib/sync"
 import { useOnline } from "@/lib/useOnline"
 import { FADE_IN, FADE_OUT, SPRING } from "./anim"
-import { CloudGlyph } from "./CloudGlyph"
+import { CloudOffGlyph } from "./CloudOffGlyph"
 
-// The header's cloud (replaces the #19 sync indicator). One squircle pill that
-// is either a faint outlined text button with the cloud on its right ("Sync
-// data", "Log in again"), whose tap goes straight to Google, or the cloud
-// alone, matching the gear beside it, whose tap opens Settings. Moving between
-// the two is space-and-fade (ADR 0007): the text fades, then the pill springs
-// its real width down to the cloud's circle, the cloud pinned to the right the
-// whole way, while the outline firms up and the card fill comes in.
-// lib/cloud-button.ts decides which applies.
+// The header's cloud (replaces the #19 sync indicator). Signed out, it is a
+// faint outlined text button with the off cloud on its right ("Sync data",
+// "Log in again"), whose tap goes straight to Google; once that is turned
+// down, the cloud alone, bare on the background, whose tap opens Settings.
+// Signed in, the header is clear unless the device is offline. Moving between
+// these is space-and-fade (ADR 0007): the text fades, then the pill springs its
+// real width down to the cloud's tap target, the cloud pinned to the right the
+// whole way, while the outline fades out; appearing and leaving, the whole
+// button fades and makes or gives back its space. lib/cloud-button.ts decides
+// which applies.
 
-/** The cloud's circle, the gear's size. */
+/** The cloud's tap target, the gear's size. */
 const ICON = 36
 
 export function CloudSyncButton({
@@ -41,15 +43,12 @@ export function CloudSyncButton({
   })
   const prompt = button.kind === "prompt"
 
-  const label = prompt
-    ? t.cloud[button.label]
-    : account !== "google"
-      ? t.cloud.offAria
-      : button.glyph === "cloud"
-        ? t.cloud.syncedAria
-        : button.glyph === "uploading"
-          ? t.cloud.uploadingAria
-          : t.cloud.offlineAria
+  const label =
+    button.kind === "prompt"
+      ? t.cloud[button.label]
+      : button.kind === "icon" && button.reason === "offline"
+        ? t.cloud.offlineAria
+        : t.cloud.offAria
 
   const onClick = () => {
     if (!prompt) return onOpenSettings()
@@ -59,7 +58,18 @@ export function CloudSyncButton({
     void startGoogleSignIn(auth)
   }
 
-  return <CloudPill button={button} label={label} onClick={onClick} />
+  return (
+    <AnimatePresence initial={false}>
+      {button.kind !== "hidden" && (
+        <CloudPill
+          key="cloud"
+          button={button}
+          label={label}
+          onClick={onClick}
+        />
+      )}
+    </AnimatePresence>
+  )
 }
 
 /** The pill itself, state in, tap out — what the header and previews draw. */
@@ -68,7 +78,7 @@ export function CloudPill({
   label,
   onClick,
 }: {
-  button: CloudButton
+  button: Exclude<CloudButton, { kind: "hidden" }>
   label: string
   onClick: () => void
 }) {
@@ -79,23 +89,28 @@ export function CloudPill({
       pill
       outline="solid"
       outlineClassName={
-        prompt
-          ? "text-border transition-colors duration-300"
-          : "text-[#e6dcc8] transition-colors duration-300 dark:text-border"
+        "transition-colors duration-300 " +
+        (prompt ? "text-border" : "text-transparent")
       }
     >
       <motion.button
         type="button"
         onClick={onClick}
         aria-label={prompt ? undefined : label}
-        initial={false}
-        animate={{ width: prompt ? "auto" : ICON }}
-        transition={prompt ? SPRING : { ...SPRING, delay: 0.06 }}
+        initial={{ opacity: 0, width: 0 }}
+        animate={{ opacity: 1, width: prompt ? "auto" : ICON }}
+        exit={{
+          opacity: 0,
+          width: 0,
+          transition: { opacity: FADE_OUT, width: { ...SPRING, delay: 0.06 } },
+        }}
+        transition={{
+          width: prompt ? SPRING : { ...SPRING, delay: 0.06 },
+          opacity: FADE_IN,
+        }}
         className={
-          "flex h-9 shrink-0 items-center justify-end transition-colors duration-300 " +
-          (prompt
-            ? "bg-transparent text-muted-foreground hover:bg-muted/60"
-            : "bg-card text-muted-foreground hover:text-foreground")
+          "flex h-9 shrink-0 items-center justify-end text-muted-foreground transition-colors duration-300 " +
+          (prompt ? "hover:bg-muted/60" : "hover:text-foreground")
         }
       >
         <AnimatePresence initial={false}>
@@ -117,7 +132,7 @@ export function CloudPill({
           )}
         </AnimatePresence>
         <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center">
-          <CloudGlyph glyph={button.glyph} className="h-[18px] w-[18px]" />
+          <CloudOffGlyph className="h-[18px] w-[18px]" />
         </span>
       </motion.button>
     </Squircle>
