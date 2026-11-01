@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/components/theme-provider.tsx"
 import { startBootMirror } from "@/data/boot-mirror"
 import { bootstrapIdentity } from "@/data/identity"
 import { auth, db } from "@/lib/firebase"
+import { startBackButton } from "@/native/back"
+import { hideSplashAfterFirstPaint } from "@/native/boot"
 import { registerServiceWorker } from "@/pwa/register"
 
 // Guests get a real Firebase identity from first launch (ADR 0002); a Google
@@ -21,7 +23,11 @@ void bootstrapIdentity(auth, db)
 startBootMirror(auth, db)
 
 // Precache the app shell and keep it silently up to date (spec § PWA & offline).
+// The Android app skips it: its shell ships inside the APK (ADR 0012).
 registerServiceWorker()
+
+// Android: the back button closes sheets and screens before leaving the app.
+startBackButton()
 
 if (import.meta.env.DEV) {
   void import("@/lib/dev-console").then(({ exposeDevConsole }) =>
@@ -38,3 +44,6 @@ createRoot(document.getElementById("root")!).render(
     </ThemeProvider>
   </StrictMode>
 )
+
+// Android: the native splash covers the launch until this first frame.
+hideSplashAfterFirstPaint()

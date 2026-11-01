@@ -4,6 +4,7 @@ import { motion, MotionConfig } from "motion/react"
 import { useTheme } from "@/components/theme-provider"
 import { useGoalStatus, useIdentity } from "@/data/hooks"
 import { useI18n } from "@/lib/i18n/useI18n"
+import { useBackHandler } from "@/native/back"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
 import { MainScreen } from "@/screens/main/MainScreen"
@@ -42,6 +43,15 @@ export function App() {
     glossaryFrom.current = from
     setScreen("glossary")
   }
+  // Android back returns from a full screen to the one that opened it, like
+  // each screen's own back button (no-op on the web).
+  useBackHandler(
+    screen === "glossary"
+      ? () => setScreen(glossaryFrom.current)
+      : screen === "stats"
+        ? () => setScreen("main")
+        : null
+  )
 
   // Splash until identity and the first Goal snapshot settle, so the ring never
   // flashes the fallback goal before the synced value arrives.

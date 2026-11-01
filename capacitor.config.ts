@@ -8,6 +8,15 @@ const config: CapacitorConfig = {
   appId: "com.goyaffle.app",
   appName: "Yaffle",
   webDir: "dist",
+  server: {
+    // The bundled files are served under the production host, so the app runs
+    // at https://goyaffle.web.app inside the WebView. App Check's reCAPTCHA
+    // Enterprise key (src/lib/ai.ts) only attests the domains it lists, so
+    // this keeps AI fill working without a second key. Requests to this host
+    // never reach the network: the shell answers them from the APK.
+    hostname: "goyaffle.web.app",
+    androidScheme: "https",
+  },
   android: {
     // Release builds must not be debuggable over chrome://inspect.
     webContentsDebuggingEnabled: false,

@@ -1,6 +1,7 @@
 import {
   getRedirectResult,
   GoogleAuthProvider,
+  linkWithCredential,
   linkWithRedirect,
   signInAnonymously,
   signInWithCredential,
@@ -15,6 +16,8 @@ import type { Firestore } from "firebase/firestore"
 import { readAllDays, writeMissingDays } from "@/data/days"
 import { readAllEntries, writeEntries } from "@/data/entries"
 import { readAllOverlays, writeMissingOverlays } from "@/data/products"
+import { pickGoogleAccount } from "@/native/google-sign-in"
+import { isNativeApp } from "@/native/platform"
 
 const RETRY_BASE_MS = 2_000
 const RETRY_MAX_MS = 60_000
@@ -92,7 +95,7 @@ export interface MergeOutcome {
 
 /** What finishing a Google sign-in redirect did. */
 export type SignInOutcome =
-  | { kind: "none" } // no redirect was pending
+  | { kind: "none" } // no redirect was pending (or the web redirect is under way)
   | { kind: "linked"; uid: string } // linked cleanly onto the Guest UID
   | ({ kind: "merged" } & MergeOutcome) // collision → union merge
 
@@ -108,6 +111,9 @@ export async function bootstrapIdentity(
   auth: Auth,
   db: Firestore
 ): Promise<User> {
+  // The Android app signs in in place (startGoogleSignIn), so there is never a
+  // redirect to finish — and skipping it keeps launch off the network.
+  if (isNativeApp()) return ensureIdentity(auth)
   try {
     const outcome = await completeGoogleRedirect(auth, db)
     // A union merge is silent to the user (ADR 0002) but worth a dev-log — it's
@@ -123,16 +129,58 @@ export async function bootstrapIdentity(
 
 /**
  * Begin Google sign-in by *linking* the credential onto the current Guest, so
- * the UID is unchanged and the Guest's data stays put (ADR 0002). Redirect, not
- * popup: the authDomain/handler setup (#12, spec § Deploy) keeps the redirect
- * iframe same-origin under third-party-storage blocking, where popups fail. The
- * call navigates away and never resolves; the outcome lands in
- * completeGoogleRedirect on the next load.
+ * the UID is unchanged and the Guest's data stays put (ADR 0002).
+ *
+ * On the web: redirect, not popup — the authDomain/handler setup (#12, spec §
+ * Deploy) keeps the redirect iframe same-origin under third-party-storage
+ * blocking, where popups fail. The call navigates away and never resolves; the
+ * outcome lands in completeGoogleRedirect on the next load.
+ *
+ * In the Android app (ADR 0012) a WebView can't redirect to Google, so the
+ * system account picker supplies an ID token and the link happens in place —
+ * the call resolves with the outcome. Throws GoogleSignInCancelled when the
+ * picker is dismissed.
  */
-export async function startGoogleSignIn(auth: Auth): Promise<void> {
+export async function startGoogleSignIn(
+  auth: Auth,
+  db: Firestore
+): Promise<SignInOutcome> {
   const user = auth.currentUser
   if (!user) throw new Error("startGoogleSignIn: no identity to link onto")
+  if (isNativeApp()) {
+    const idToken = await pickGoogleAccount()
+    return linkGoogleIdToken(auth, db, idToken)
+  }
   await linkWithRedirect(user, new GoogleAuthProvider())
+  return { kind: "none" }
+}
+
+/**
+ * Link a Google ID token (from the native account picker) onto the current
+ * Guest — the in-place twin of the redirect flow. A clean link keeps the UID;
+ * a collision (the account already exists, the second-device case) union-
+ * merges into it with no prompt, exactly like completeGoogleRedirect.
+ */
+export async function linkGoogleIdToken(
+  auth: Auth,
+  db: Firestore,
+  idToken: string
+): Promise<SignInOutcome> {
+  const user = auth.currentUser
+  if (!user) throw new Error("linkGoogleIdToken: no identity to link onto")
+  const credential = GoogleAuthProvider.credential(idToken)
+  try {
+    const result = await linkWithCredential(user, credential)
+    return { kind: "linked", uid: result.user.uid }
+  } catch (err) {
+    if (!isCredentialInUseError(err)) throw err
+    const resolved =
+      GoogleAuthProvider.credentialFromError(err as AuthError) ?? credential
+    return {
+      kind: "merged",
+      ...(await unionMergeInto(auth, db, resolved, user.uid)),
+    }
+  }
 }
 
 /**

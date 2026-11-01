@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 
+import { setSystemBarsTheme } from "@/native/chrome"
+
 type Theme = "dark" | "light" | "system"
 type ResolvedTheme = "dark" | "light"
 
@@ -57,6 +59,9 @@ function applyThemeColorMeta(resolvedTheme: ResolvedTheme) {
     document.head.appendChild(meta)
   }
   meta.content = THEME_COLORS[resolvedTheme]
+  // The Android app has no browser chrome to read the meta: its status and
+  // navigation bars are painted from the same colour (no-op on the web).
+  setSystemBarsTheme(THEME_COLORS[resolvedTheme], resolvedTheme === "dark")
 }
 
 function disableTransitionsTemporarily() {
