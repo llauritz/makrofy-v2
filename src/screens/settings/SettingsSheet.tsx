@@ -19,6 +19,7 @@ import type { Language } from "@/lib/language"
 import { cn } from "@/lib/utils"
 import { InstallAppEntry } from "@/pwa/InstallApp"
 import { ExportImport } from "@/screens/settings/ExportImport"
+import { RemindersSetting } from "@/screens/settings/RemindersSetting"
 import { SignInSetting } from "@/screens/settings/SignInSetting"
 
 // The real settings surface (#17): goal · glossary · theme · language, then the
@@ -58,6 +59,8 @@ export function SettingsSheet({
         />
         <ThemeSetting />
         <LanguageSetting />
+        {/* Android only (ADR 0013); renders nothing on web. */}
+        <RemindersSetting />
 
         <div className="flex flex-col gap-1 border-t pt-4">
           <SignInSetting />

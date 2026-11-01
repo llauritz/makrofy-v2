@@ -86,3 +86,10 @@ How an Entry's numbers came to be: manual, history (a Suggestion), or ai (an AI 
 
 **Meal type**:
 Breakfast/lunch/dinner/snack/unknown, attached silently to each Entry (clock-derived when logging on today, unknown on Backfill). Invisible in V2's UI; exists for Health Connect export in V3.
+
+**Reminder**:
+An optional, device-local nudge to log, at a time of day the user picks (Android only). Off by default; the times live on the device, never in Firestore. Its notification names the meal its time falls in, using the Meal type clock windows.
+_Avoid_: notification (the OS mechanism), alarm, push
+
+**Smart skip**:
+A Reminder's rule for staying quiet: today's Reminder doesn't fire if an Entry for today was logged since the previous Reminder (or since midnight, for the first). On by default, switchable.

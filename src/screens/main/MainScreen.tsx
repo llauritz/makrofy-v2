@@ -26,6 +26,7 @@ import { refreshIdentity } from "@/data/identity"
 import { localDay, stepDay } from "@/lib/day"
 import { auth, db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
+import { useReminderAddRequest } from "@/native/useReminders"
 import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
 import { CalendarSheet } from "./CalendarSheet"
@@ -102,6 +103,16 @@ export function MainScreen({
     setEditingId(null)
     setSelectedDay(day)
   }
+  // A tapped reminder (ADR 0013) lands on today with nothing in front of the
+  // add card, and the cursor in its label.
+  const [addFocus, setAddFocus] = React.useState(0)
+  useReminderAddRequest(() => {
+    goToDay(localDay(new Date()))
+    setSettingsOpen(false)
+    setCalendarOpen(false)
+    setAddFocus((n) => n + 1)
+  })
+
   // The swipe steps ±1 Day, unbounded (#34): drifting past the strip's reach
   // is fine — the selection then lives on the calendar button, not a chip.
   const swipe = useDaySwipe((delta) => goToDay(stepDay(selectedDay, delta)))
@@ -171,7 +182,12 @@ export function MainScreen({
             gap below the log swipes too, not just the content itself. The Day
             strip owns its own horizontal scroll, so it stays outside. */}
         <div {...swipe} className="flex flex-1 flex-col touch-pan-y">
-          <AddCard onAdd={handleAdd} index={productIndex} uid={uid} />
+          <AddCard
+            onAdd={handleAdd}
+            index={productIndex}
+            uid={uid}
+            focusRequest={addFocus}
+          />
           <EntryList
             entries={newestFirst}
             editingId={editingId}
