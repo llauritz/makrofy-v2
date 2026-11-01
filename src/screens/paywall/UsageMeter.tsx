@@ -1,6 +1,7 @@
 import { motion } from "motion/react"
 import * as React from "react"
 
+import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { HintCard } from "@/screens/main/AiZone"
 import { SPRING } from "@/screens/main/anim"
@@ -96,19 +97,16 @@ function MeterRow({
           />
         </div>
       </div>
-      {/* A plain CSS border, not a <Squircle> stroke: the row centres this
-          pill on half pixels, and an SVG hairline there anti-aliases unevenly
-          (heavier top/left, faint bottom), where the browser snaps a border
-          to whole device pixels. At 26px tall a pill's squircle smoothing is
-          invisible, so nothing is lost. */}
-      <motion.button
-        type="button"
-        onClick={onSeePlans}
-        whileTap={{ scale: 0.95 }}
-        className="shrink-0 rounded-full border border-border px-3 py-1 text-xs font-medium"
-      >
-        {t.paywall.seePlans}
-      </motion.button>
+      <Squircle asChild pill outline="solid">
+        <motion.button
+          type="button"
+          onClick={onSeePlans}
+          whileTap={{ scale: 0.95 }}
+          className="shrink-0 rounded-full px-3 py-1 text-xs font-medium"
+        >
+          {t.paywall.seePlans}
+        </motion.button>
+      </Squircle>
     </div>
   )
 }
