@@ -23,6 +23,7 @@ import type { QuantityKind } from "@/lib/quantity"
 import type { Alias, Product, Reading } from "@/lib/suggestions"
 import { productRateLine } from "./rate"
 import { MACROS, macroTint } from "@/screens/main/macros"
+import { MacroLetter } from "@/screens/main/MacroLetter"
 import {
   EMPTY_MACROS,
   parseOptional,
@@ -438,11 +439,8 @@ function BasisMacroChips({ value }: { value: GlossaryRate }) {
             className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
             style={{ backgroundColor: macroTint(m.mark, 13) }}
           >
-            <span
-              className="h-1 w-1 rounded-full"
-              style={{ backgroundColor: m.mark }}
-            />
-            {m.letter} {n(value[m.field] ?? 0)}
+            <MacroLetter macro={m} className="text-[12px]" />
+            {n(value[m.field] ?? 0)}
             {t.units.g}
           </span>
         </Squircle>
