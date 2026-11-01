@@ -2,7 +2,11 @@ import * as React from "react"
 import { motion, MotionConfig } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
-import { useGoalStatus, useIdentity } from "@/data/hooks"
+import {
+  useGoalStatus,
+  useHealthConnectSync,
+  useIdentity,
+} from "@/data/hooks"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { useBackHandler } from "@/native/back"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
@@ -33,6 +37,9 @@ export function App() {
   const uid = useIdentity()
   const goalStatus = useGoalStatus(uid)
   const view = resolveAppView(uid, goalStatus)
+  // Android only: mirror Entries into Health Connect while "Send food" is on
+  // (ADR 0014). A no-op on the web; never in the way of the first paint.
+  useHealthConnectSync(uid)
   // App-level view state: which full screen is showing. The screens swap by a
   // plain conditional below — only one is mounted at a time. The Glossary
   // remembers its opener (Settings on Main, or the stats dashboard) so its

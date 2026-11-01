@@ -81,6 +81,9 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-ktx:$androidxCoreVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    // Health Connect (docs/adr/0014): the client and the coroutines it is built on.
+    implementation "androidx.health.connect:connect-client:$healthConnectClientVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesVersion"
     implementation project(':capacitor-android')
     implementation project(':capacitor-cordova-android-plugins')
 }

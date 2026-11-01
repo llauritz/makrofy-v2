@@ -27,8 +27,14 @@ import {
   type Entry,
 } from "@/data/entries"
 import { listenToGoal, type Goal, type GoalStatus } from "@/data/goal"
+import {
+  disableHealthToggle,
+  startNutritionSync,
+  useHealthPrefs,
+} from "@/data/health-connect"
 import { listenToOverlays } from "@/data/products"
 import { auth, db } from "@/lib/firebase"
+import { isHealthConnectPlatform } from "@/native/health-connect"
 import {
   resolveSyncStatus,
   type SnapshotMeta,
@@ -356,4 +362,19 @@ export function useProductIndex(uid: string | null): ProductIndex {
         : buildProductIndex(feed.entries, feed.nowMs, overlays),
     [feed, overlays]
   )
+}
+
+/**
+ * Run the nutrition sync while "Send food" is on, for the current profile.
+ * Mounted once at the app root; a no-op on the web and while the toggle is off.
+ */
+export function useHealthConnectSync(uid: string | null): void {
+  const { writeFood, writeSinceMs } = useHealthPrefs()
+  React.useEffect(() => {
+    if (!uid || !writeFood || !isHealthConnectPlatform()) return
+    return startNutritionSync(db, uid, {
+      sinceMs: writeSinceMs,
+      onRevoked: () => disableHealthToggle("writeNutrition", "revoked"),
+    })
+  }, [uid, writeFood, writeSinceMs])
 }

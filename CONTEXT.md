@@ -84,5 +84,9 @@ _Avoid_: unsure value, estimate
 **Source**:
 How an Entry's numbers came to be: manual, history (a Suggestion), or ai (an AI fill).
 
+**Health Connect mirror**:
+The Android app's one-way copy of Entries into Health Connect, one NutritionRecord per Entry keyed by its id, kept in step by diffing the Entry history against a device-local ledger of what was last written (ADR 0014). Its counterpart is reading weigh-ins from Health Connect into Statistics; both are per-device toggles, off by default.
+_Avoid_: Google Fit, health sync
+
 **Meal type**:
-Breakfast/lunch/dinner/snack/unknown, attached silently to each Entry (clock-derived when logging on today, unknown on Backfill). Invisible in V2's UI; exists for Health Connect export in V3.
+Breakfast/lunch/dinner/snack/unknown, attached silently to each Entry (clock-derived when logging on today, unknown on Backfill). Invisible in the UI; it becomes the NutritionRecord's meal type when food is sent to Health Connect.
