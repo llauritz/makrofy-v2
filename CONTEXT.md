@@ -38,6 +38,10 @@ What happens when a Guest signs into an account that already has data: both sets
 The last-rendered launch state — uid, Goal, today's Entries — kept in localStorage so a returning launch paints instantly instead of waiting out Firebase Auth's online round-trip (ADR 0011). Never the source of truth: live listeners replace it the moment the SDK settles, and any doubt (new day, changed uid, corrupt state) reads as "nothing mirrored".
 _Avoid_: offline cache (that's the Firestore SDK's job, ADR 0001)
 
+**Widget snapshot**:
+The finished picture of today the app hands the Android home screen widget: today's ring, Remaining/Over and macro totals, already formatted and translated, plus the empty face of the next Day so the widget turns over at midnight on its own (ADR 0015). The widget paints only this; never the source of truth.
+_Avoid_: widget cache, widget data
+
 **Suggestion**:
 A typeahead result derived from the user's own Entry history. Tapping one fills the add card — it never commits. Holding one (~½ s) opens its Product's curation card inline — the same card the Glossary opens; there is no keyboard equivalent for the hold in v1, so keyboard and screen-reader users curate in the Glossary. A Product's competing Readings appear as adjacent Suggestions, never collapsed into one winning row; while its curation card is open they collapse into it. When the typed text carries a Quantity, the Suggestion is *scaled*: its numbers are recomputed from its Reading's rate to the typed Quantity, a minimal hint shows the base portion it scaled from, and tapping fills the Product's label beside the typed Quantity — on whichever side it was typed ("150g chick" → "150g Chicken breast") — along with the scaled numbers.
 _Avoid_: favorite (V1 concept, superseded), autofill

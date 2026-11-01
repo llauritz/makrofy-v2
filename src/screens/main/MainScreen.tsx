@@ -26,6 +26,7 @@ import { refreshIdentity } from "@/data/identity"
 import { localDay, stepDay } from "@/lib/day"
 import { auth, db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
+import { handleWidgetTaps, type WidgetAction } from "@/native/widget"
 import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
 import { CalendarSheet } from "./CalendarSheet"
@@ -61,6 +62,8 @@ export function MainScreen({
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [calendarOpen, setCalendarOpen] = React.useState(false)
+  // Bumped to put the cursor in the add card's label (the widget's "+").
+  const [addFocusRequest, setAddFocusRequest] = React.useState(0)
   // The Entry awaiting a deferred delete — hidden from the log while its undo
   // snackbar is up; the real delete fires only when the window lapses.
   const [pending, setPending] = React.useState<Entry | null>(null)
@@ -147,6 +150,17 @@ export function MainScreen({
     setPending(null)
   }
 
+  // A home screen widget tap (Android): back to today with nothing in the
+  // way — sheets closed, the editor shut — and for "+", the cursor in the add
+  // card's label.
+  const onWidgetTap = React.useEffectEvent((action: WidgetAction) => {
+    setSettingsOpen(false)
+    setCalendarOpen(false)
+    goToDay(localDay(new Date()))
+    if (action === "add") setAddFocusRequest((k) => k + 1)
+  })
+  React.useEffect(() => handleWidgetTaps(onWidgetTap), [])
+
   const openSettings = () => setSettingsOpen(true)
   const reauth = () => void refreshIdentity(auth)
 
@@ -171,7 +185,12 @@ export function MainScreen({
             gap below the log swipes too, not just the content itself. The Day
             strip owns its own horizontal scroll, so it stays outside. */}
         <div {...swipe} className="flex flex-1 flex-col touch-pan-y">
-          <AddCard onAdd={handleAdd} index={productIndex} uid={uid} />
+          <AddCard
+            onAdd={handleAdd}
+            index={productIndex}
+            uid={uid}
+            focusRequest={addFocusRequest}
+          />
           <EntryList
             entries={newestFirst}
             editingId={editingId}

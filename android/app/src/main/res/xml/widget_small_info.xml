@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The 2×2 ring widget. Resizable; past a wide aspect it lays out like the
+     4×2 one (widget/WidgetRenderer.kt picks the layout from the real size). -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_small_description"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:minWidth="110dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="90dp"
+    android:minResizeHeight="90dp"
+    android:previewImage="@drawable/widget_preview_ring"
+    android:previewLayout="@layout/widget_preview_small"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

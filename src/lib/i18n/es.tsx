@@ -280,6 +280,12 @@ export const es: Dictionary = {
     tomorrow: "Mañana",
   },
 
+  widget: {
+    add: "Añadir comida",
+    description: (consumed, goal, headline, macros) =>
+      `${consumed} de ${goal} kcal consumidas hoy. ${headline}. ${macros}.`,
+  },
+
   calendar: {
     openCalendar: "Abrir calendario",
     openCalendarOn: (date) => `Abrir calendario, ${date}`,

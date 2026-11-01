@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The home screen widget's palette: the Warm Market tokens of src/index.css,
+     named after the CSS variables they copy. values-night holds the dark
+     theme, so the widget follows the phone's light/dark setting live. -->
+<resources>
+    <!-- CSS card -->
+    <color name="widget_card">#FFFDF7</color>
+    <!-- CSS border: the card outline and hairlines -->
+    <color name="widget_border">#EEE5D2</color>
+    <!-- CSS foreground: ring meter, figures, the "+" button -->
+    <color name="widget_ink">#2B2015</color>
+    <!-- CSS primary-foreground: the "+" glyph on ink -->
+    <color name="widget_on_ink">#F6F1E6</color>
+    <!-- CSS muted-foreground -->
+    <color name="widget_muted">#7D7060</color>
+    <!-- CSS input: the macro capsule -->
+    <color name="widget_input">#F3ECDD</color>
+    <!-- The ring's track (SummaryCard's light-dark() pair) -->
+    <color name="widget_ring_track">#EFE6D4</color>
+    <!-- CSS macro-p/f/c-text: P/F/C letters -->
+    <color name="widget_macro_p">#2F6BC4</color>
+    <color name="widget_macro_f">#96690A</color>
+    <color name="widget_macro_c">#C03B2E</color>
+</resources>

@@ -19,6 +19,7 @@ import {
 } from "@/lib/suggestions"
 import { useLongPress } from "@/lib/useLongPress"
 import { useOnline } from "@/lib/useOnline"
+import { showSoftKeyboard } from "@/native/widget"
 import { ProductDetail } from "@/screens/glossary/ProductDetail"
 import { AiZone } from "./AiZone"
 import { FadeSwap } from "./FadeSwap"
@@ -56,8 +57,11 @@ export function AddCard({
   onAdd,
   index = EMPTY_INDEX,
   uid = null,
+  focusRequest = 0,
 }: {
   onAdd: (draft: EntryDraft, source: EntrySource) => void
+  /** Bumping it puts the cursor in the label, keyboard up (the widget's "+"). */
+  focusRequest?: number
   index?: ProductIndex
   /** The identity behind the card. The AI button requires one (Guests count,
    * spec § AI macro-fill); null disables the whole card, as before. */
@@ -96,6 +100,13 @@ export function AddCard({
   })
   const online = useOnline()
   const labelRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    if (focusRequest === 0) return
+    labelRef.current?.focus()
+    // A WebView keeps the keyboard down for a focus() it didn't see a tap for.
+    showSoftKeyboard()
+  }, [focusRequest])
 
   // A curation write from the long-press card (#73) — or a remote device —
   // re-derives the index while rows are on screen; refresh them in place so

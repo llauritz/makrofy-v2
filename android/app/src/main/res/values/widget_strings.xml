@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Native copy for the home screen widget. Everything the widget shows about
+     a Day comes translated from the app (src/native/widget-snapshot.ts); these
+     are only the picker texts and the face shown before the app has run. -->
+<resources>
+    <string name="widget_small_label">Yaffle ring</string>
+    <string name="widget_small_description">Today\'s calories at a glance</string>
+    <string name="widget_wide_label">Yaffle today</string>
+    <string name="widget_wide_description">Today\'s calories and macros</string>
+    <string name="widget_placeholder">Open Yaffle to start</string>
+    <string name="widget_add">Add food</string>
+</resources>
