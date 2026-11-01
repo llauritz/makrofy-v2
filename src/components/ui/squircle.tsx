@@ -85,7 +85,9 @@ export function squircleD({
   corners = "all",
   pill = false,
   cornerSmoothing = pill ? PILL_SMOOTHING : CORNER_SMOOTHING,
-}: Shape & { width: number; height: number }) {
+  x = 0,
+  y = 0,
+}: Shape & { width: number; height: number; x?: number; y?: number }) {
   if (width <= 0 || height <= 0) return undefined
   const r = pill ? Math.min(width, height) / 2 : px(radius)
   const bottom = corners === "top" ? 0 : r
@@ -94,6 +96,8 @@ export function squircleD({
     height,
     radii: { tl: r, tr: r, br: bottom, bl: bottom },
     smoothing: cornerSmoothing,
+    x,
+    y,
   })
 }
 
@@ -144,6 +148,9 @@ function useBox<T extends HTMLElement>() {
   return [setEl, size] as const
 }
 
+/** How far a solid ring's box overhangs its shape — see Stroke. */
+const RING_BLEED = 2
+
 type StrokeProps = Shape & {
   dashed?: boolean
   strokeWidth?: number
@@ -154,10 +161,21 @@ type StrokeProps = Shape & {
  * The squircle of a `width` × `height` box, stroked so the line's outer edge
  * sits on the box's own clip.
  *
- * The stroke straddles its path, and the <svg> clips its own overflow, so the
- * path runs half a stroke inside the box — and at half a stroke less radius,
- * which keeps it concentric with the clip. At the full radius the line drifts
- * up to 0.2px inward through the corners.
+ * A solid line is not an SVG stroke but a ring: a box filled with
+ * `currentColor` and clipped, even-odd, to the squircle minus the same
+ * squircle inset by the line's width (at that much less radius, so the two
+ * stay concentric). An <svg> is a replaced element, and the browser snaps its
+ * box to whole device pixels while the clip-path it sits under stays where
+ * layout put it — so wherever a box lands on a fractional pixel (a centred
+ * pill, a 16.5px line-height above it) the stroke slid against the clip and
+ * one side was shaved: a 1px outline came out heavy on the top and left and
+ * faint at the bottom. The ring is a plain box clipped by the same path
+ * maths as the surface itself, so line and clip rasterize together and the
+ * outline is even on every side, at any offset.
+ *
+ * Dashes can't be a ring, so a dashed line stays an SVG stroke — the path
+ * runs half a stroke inside the box, at half a stroke less radius. Dashed
+ * outlines are the low-contrast placeholders, where the snap doesn't show.
  */
 function Stroke({
   width,
@@ -166,14 +184,43 @@ function Stroke({
   strokeWidth = 1,
   className,
   style,
-  svgRef,
   ...shape
 }: StrokeProps & {
   width: number
   height: number
   style?: React.CSSProperties
-  svgRef?: React.Ref<SVGSVGElement>
 }) {
+  const classes = cn("pointer-events-none absolute", className)
+  if (!dashed) {
+    // The ring's box overhangs the shape by RING_BLEED on every side, with
+    // the paths shifted in to match: a box's background is snapped to device
+    // pixels while its clip-path is not, so a box exactly the shape's size
+    // could snap inward and leave a sliver of the ring unpainted.
+    const b = RING_BLEED
+    const outer = squircleD({ ...shape, width, height, x: b, y: b })
+    const inner = squircleD({
+      ...shape,
+      radius: px(shape.radius ?? "lg") - strokeWidth,
+      width: width - 2 * strokeWidth,
+      height: height - 2 * strokeWidth,
+      x: b + strokeWidth,
+      y: b + strokeWidth,
+    })
+    return (
+      <span
+        aria-hidden
+        className={cn("block bg-current", classes)}
+        style={{
+          top: (Number(style?.top) || 0) - b,
+          left: (Number(style?.left) || 0) - b,
+          width: width + 2 * b,
+          height: height + 2 * b,
+          clipPath: outer && inner && `path(evenodd, '${outer} ${inner}')`,
+          visibility: outer && inner ? undefined : "hidden",
+        }}
+      />
+    )
+  }
   const inset = strokeWidth / 2
   const d = squircleD({
     ...shape,
@@ -182,12 +229,7 @@ function Stroke({
     height: height - strokeWidth,
   })
   return (
-    <svg
-      ref={svgRef}
-      aria-hidden
-      className={cn("pointer-events-none absolute", className)}
-      style={style}
-    >
+    <svg aria-hidden className={classes} style={style}>
       {d && (
         <path
           d={d}
@@ -195,7 +237,7 @@ function Stroke({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          strokeDasharray={dashed ? "4 3" : undefined}
+          strokeDasharray="4 3"
         />
       )}
     </svg>
@@ -210,7 +252,7 @@ function Stroke({
  * outlined takes `outline` instead.
  */
 export function SquircleOutline({ className, ...props }: StrokeProps) {
-  const [el, setEl] = React.useState<SVGSVGElement | null>(null)
+  const [el, setEl] = React.useState<HTMLSpanElement | null>(null)
   const [size, setSize] = React.useState({ w: 0, h: 0 })
 
   React.useLayoutEffect(() => {
@@ -225,14 +267,22 @@ export function SquircleOutline({ className, ...props }: StrokeProps) {
     return () => ro.disconnect()
   }, [el])
 
+  // A measuring frame filling the parent; the stroke sits in it at the
+  // frame's measured size (a solid ring overhangs it — see Stroke).
   return (
-    <Stroke
-      {...props}
-      svgRef={setEl}
-      width={size.w}
-      height={size.h}
-      className={cn("inset-0 h-full w-full", className)}
-    />
+    <span
+      ref={setEl}
+      aria-hidden
+      className="pointer-events-none absolute inset-0 block"
+    >
+      <Stroke
+        {...props}
+        width={size.w}
+        height={size.h}
+        className={className}
+        style={{ top: 0, left: 0, width: size.w, height: size.h }}
+      />
+    </span>
   )
 }
 

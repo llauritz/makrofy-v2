@@ -20,6 +20,7 @@ import {
 import { useLongPress } from "@/lib/useLongPress"
 import { useOnline } from "@/lib/useOnline"
 import { ProductDetail } from "@/screens/glossary/ProductDetail"
+import { UsageNote } from "@/screens/paywall/UsageMeter"
 import { AiZone } from "./AiZone"
 import { FadeSwap } from "./FadeSwap"
 import { SPRING } from "./anim"
@@ -345,6 +346,10 @@ export function AddCard({
           attribution={ai.attribution}
           onAnswer={answerQuestion}
           onDismiss={clearAi}
+        />
+        <UsageNote
+          zoneActive={zoneState.kind !== "empty"}
+          refusalShowing={zoneState.kind === "hint" && !!zoneState.upgrade}
         />
       </Squircle>
     </div>

@@ -20,6 +20,7 @@ import type { Language } from "@/lib/language"
 import { cn } from "@/lib/utils"
 import { InstallAppEntry } from "@/pwa/InstallApp"
 import { ExportImport } from "@/screens/settings/ExportImport"
+import { PlanSetting } from "@/screens/settings/PlanSetting"
 import { SignInSetting } from "@/screens/settings/SignInSetting"
 
 // The real settings surface (#17): goal · glossary · theme · language, then the
@@ -66,6 +67,7 @@ export function SettingsSheet({
         <LanguageSetting />
 
         <div className="flex flex-col gap-1 border-t pt-4">
+          <PlanSetting onOpen={() => onOpenChange(false)} />
           <SignInSetting />
           <InstallAppEntry />
           <ExportImport />
