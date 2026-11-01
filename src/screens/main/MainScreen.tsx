@@ -150,10 +150,7 @@ export function MainScreen({
 
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col">
-      <Header
-        onOpenSettings={openSettings}
-        syncStatus={syncStatus}
-      />
+      <Header onOpenSettings={openSettings} syncStatus={syncStatus} />
       <main className="flex flex-1 flex-col">
         <DayStrip
           selectedDay={selectedDay}
@@ -167,7 +164,7 @@ export function MainScreen({
             grows to fill the column (flex-1 + an inner spacer) so the empty
             gap below the log swipes too, not just the content itself. The Day
             strip owns its own horizontal scroll, so it stays outside. */}
-        <div {...swipe} className="flex flex-1 flex-col touch-pan-y">
+        <div {...swipe} className="flex flex-1 touch-pan-y flex-col">
           <AddCard onAdd={handleAdd} index={productIndex} uid={uid} />
           <EntryList
             entries={newestFirst}
@@ -192,11 +189,23 @@ export function MainScreen({
             {pending && <UndoSnackbar key="undo" onUndo={undo} />}
           </AnimatePresence>
           <MorningStrip uid={uid} goalKcal={goalKcal} />
-          <SummaryCard
-            summary={summary}
-            onOpenSettings={openSettings}
-            onOpenStats={onOpenStats}
-          />
+          {/* Logged rows slide behind the card, never out below it: a page-
+              coloured backdrop sits under the card from just below its top
+              edge down to the screen's bottom edge, side gutters included.
+              Its top fades in over 2rem, so rows passing the card's sides
+              dissolve instead of meeting a hard line. It is a static layer
+              (no animation, no scroll listener), so nothing can flicker. */}
+          <div className="relative isolate">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-x-3 top-4 -bottom-3 -z-10 bg-[linear-gradient(to_bottom,transparent,var(--background)_2rem)]"
+            />
+            <SummaryCard
+              summary={summary}
+              onOpenSettings={openSettings}
+              onOpenStats={onOpenStats}
+            />
+          </div>
         </div>
       </main>
       <CalendarSheet
