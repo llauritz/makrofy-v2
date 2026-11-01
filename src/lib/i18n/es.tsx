@@ -209,8 +209,8 @@ export const es: Dictionary = {
         Toca <span className="font-medium text-foreground">Añadir</span>.
       </>
     ),
-    cardTitle: "Añadir a pantalla de inicio",
-    cardBody: "Se abre a pantalla completa, como una app.",
+    cardTitle: "Añadir al inicio",
+    cardBody: "Abre en pantalla completa.",
     cardInstall: "Instalar",
     cardShowHow: "Ver cómo",
     cardDismiss: "Descartar",

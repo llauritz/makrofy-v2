@@ -236,7 +236,7 @@ export const en = {
       </>
     ),
     cardTitle: "Add to home screen",
-    cardBody: "It then opens full screen, like a regular app.",
+    cardBody: "Opens full screen.",
     cardInstall: "Install",
     cardShowHow: "Show how",
     cardDismiss: "Dismiss",

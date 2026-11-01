@@ -76,12 +76,12 @@ export function InstallCard() {
               <Squircle
                 radius="3xl"
                 outline="solid"
-                className="flex items-center gap-3 bg-card py-3 pr-2 pl-3"
+                className="flex items-center gap-2.5 bg-card py-3 pr-2 pl-3"
               >
                 <Squircle
-                  radius={10}
+                  radius={9}
                   outline="solid"
-                  className="h-10 w-10 shrink-0 overflow-hidden"
+                  className="h-9 w-9 shrink-0 overflow-hidden"
                 >
                   <img
                     src="/icons/apple-touch-icon.png"
@@ -91,10 +91,12 @@ export function InstallCard() {
                   />
                 </Squircle>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[14px] leading-tight font-semibold">
+                  {/* One line each, always: a long translation is cut with
+                      an ellipsis rather than growing the card. */}
+                  <div className="truncate text-[14px] leading-tight font-semibold">
                     {t.install.cardTitle}
                   </div>
-                  <div className="mt-0.5 text-[12px] leading-snug text-muted-foreground">
+                  <div className="mt-0.5 truncate text-[12px] leading-snug text-muted-foreground">
                     {t.install.cardBody}
                   </div>
                 </div>
@@ -103,7 +105,7 @@ export function InstallCard() {
                     type="button"
                     onClick={() => void onInstall()}
                     whileTap={{ scale: 0.95 }}
-                    className="shrink-0 rounded-full px-3 py-1 text-xs font-medium"
+                    className="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium"
                   >
                     {affordance === "ios-guide"
                       ? t.install.cardShowHow
@@ -115,7 +117,7 @@ export function InstallCard() {
                   aria-label={t.install.cardDismiss}
                   onClick={dismiss}
                   whileTap={{ scale: 0.9 }}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground"
+                  className="-ml-0.5 flex h-7 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground"
                 >
                   <X className="h-3.5 w-3.5" />
                 </motion.button>
