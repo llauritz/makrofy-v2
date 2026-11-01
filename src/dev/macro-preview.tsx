@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 // TEMPORARY — macro color preview for the vibrancy PR; drop before merge.
 // A small switcher pinned to the top of the screen swaps the P/F/C tokens
-// between the shipped set (A) and the alternatives in macro-preview.css.
-// ?macros=current|a|b|c picks one from a link; the choice sticks per device.
+// between the shipped set (Y2) and the alternatives in macro-preview.css.
+// ?macros=current|y1|y2|y3 picks one from a link; the choice sticks per device.
 import { createRoot } from "react-dom/client"
 import * as React from "react"
 
@@ -11,9 +11,9 @@ import "../macro-preview.css"
 
 const OPTIONS = [
   ["current", "Now"],
-  ["a", "A"],
-  ["b", "B"],
-  ["c", "C"],
+  ["y1", "Y1"],
+  ["y2", "Y2"],
+  ["y3", "Y3"],
 ] as const
 type Option = (typeof OPTIONS)[number][0]
 const KEY = "macro-preview"
@@ -27,11 +27,11 @@ function read(): Option {
   } catch {
     /* storage blocked: the link param alone still works */
   }
-  return OPTIONS.some(([k]) => k === v) ? (v as Option) : "a"
+  return OPTIONS.some(([k]) => k === v) ? (v as Option) : "y2"
 }
 
 function apply(v: Option) {
-  if (v === "a") document.documentElement.removeAttribute("data-macros")
+  if (v === "y2") document.documentElement.removeAttribute("data-macros")
   else document.documentElement.setAttribute("data-macros", v)
 }
 
