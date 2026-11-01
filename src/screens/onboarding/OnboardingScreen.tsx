@@ -170,16 +170,16 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
             {t.onboarding.getStarted}
           </PrimaryButton>
         </div>
-        <p className="mt-1 py-3 text-center text-sm text-muted-foreground">
-          {t.onboarding.haveAccount}{" "}
-          <button
-            type="button"
-            onClick={() => void startGoogleSignIn(auth)}
-            className="font-semibold text-foreground underline-offset-4 hover:underline"
-          >
-            {t.onboarding.signIn}
-          </button>
-        </p>
+        {/* The same wording as the Settings sign-in row. It links onto this
+            Guest (ADR 0002); a returning user's synced Goal then arrives
+            and the gate moves on to the main screen. */}
+        <button
+          type="button"
+          onClick={() => void startGoogleSignIn(auth)}
+          className="mt-1 w-full py-3 text-center text-sm leading-5 font-semibold underline-offset-4 hover:underline"
+        >
+          {t.signIn.signInWithGoogle}
+        </button>
       </div>
     </Page>
   )

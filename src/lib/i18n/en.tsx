@@ -247,7 +247,7 @@ export const en = {
   },
 
   onboarding: {
-    headline: "Calorie tracking the way you want it",
+    headline: "Track calories the way you want",
     points: [
       {
         title: "Type what you know",
@@ -266,8 +266,6 @@ export const en = {
     exampleLabel: "100g aldi greek yogurt",
     exampleAria: "Example: 100 g greek yogurt, 120 kcal, filled in by Yaffle",
     getStarted: "Get started",
-    haveAccount: "Already have an account?",
-    signIn: "Sign in",
 
     back: "Back",
     goalTitle: "Daily goal",

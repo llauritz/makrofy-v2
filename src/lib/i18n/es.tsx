@@ -222,7 +222,7 @@ export const es: Dictionary = {
   },
 
   onboarding: {
-    headline: "Contar calorías a tu manera",
+    headline: "Cuenta calorías a tu manera",
     points: [
       {
         title: "Escribe lo que sabes",
@@ -240,8 +240,6 @@ export const es: Dictionary = {
     exampleLabel: "100g yogur griego aldi",
     exampleAria: "Ejemplo: 100 g de yogur griego, 120 kcal, completado por Yaffle",
     getStarted: "Empezar",
-    haveAccount: "¿Ya tienes cuenta?",
-    signIn: "Iniciar sesión",
 
     back: "Atrás",
     goalTitle: "Objetivo diario",
