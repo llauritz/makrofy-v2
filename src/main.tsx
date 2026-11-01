@@ -29,9 +29,6 @@ refreshOnResume(db)
 // Precache the app shell and keep it silently up to date (spec § PWA & offline).
 registerServiceWorker()
 
-// TEMPORARY: macro color preview switcher (vibrancy PR) — drop before merge.
-void import("@/dev/macro-preview").then((m) => m.mountMacroPreview())
-
 if (import.meta.env.DEV) {
   void import("@/lib/dev-console").then(({ exposeDevConsole }) =>
     exposeDevConsole(auth, db),
