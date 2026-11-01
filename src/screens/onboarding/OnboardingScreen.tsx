@@ -1,12 +1,5 @@
 import * as React from "react"
-import {
-  animate,
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useMotionValueEvent,
-  useReducedMotion,
-} from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 import {
   BookText,
   Calculator,
@@ -25,37 +18,17 @@ import { clampGoalKcal, parseGoalKcal } from "@/lib/goal-input"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { FADE_IN, FADE_OUT } from "@/screens/main/anim"
 import { AddCard } from "@/screens/main/AddCard"
-import { IntroPattern } from "./IntroPattern"
+import { AnimatedWordmark } from "@/screens/main/AnimatedWordmark"
 import { NeedSheet } from "./NeedSheet"
 
-// First run (#35): an intro animation, then two steps. Welcome says what the
-// app does, with the real add card as the example; Goal sets the daily kcal
+// First run (#35): two steps. Welcome opens with the app's animated wordmark
+// and says what the app does, with the real add card as the example; Goal sets the daily kcal
 // target, optionally from the daily-need calculator. Only "Start tracking"
 // writes anything (the Goal), and the gate in ./gate.ts then switches the app
 // to the main screen. A returning user on a new device signs in from Welcome
 // instead; their synced Goal arriving does the same switch.
 
 const STEP = 50
-
-// The intro plays once per browser session, so coming back from the Google
-// sign-in redirect (or a reload mid-onboarding) doesn't replay it.
-const INTRO_SEEN_KEY = "yaffle.introSeen"
-
-function introSeen(): boolean {
-  try {
-    return sessionStorage.getItem(INTRO_SEEN_KEY) === "1"
-  } catch {
-    return false
-  }
-}
-
-function markIntroSeen() {
-  try {
-    sessionStorage.setItem(INTRO_SEEN_KEY, "1")
-  } catch {
-    // Best-effort: worst case the intro plays again.
-  }
-}
 
 type Step = "welcome" | "goal"
 
@@ -64,41 +37,31 @@ export function OnboardingScreen({
 }: {
   onSubmit: (kcal: number) => void
 }) {
-  const reducedMotion = useReducedMotion()
-  const [intro, setIntro] = React.useState(() => !introSeen())
   const [step, setStep] = React.useState<Step>("welcome")
   // Lives here, not in the goal step, so stepping back keeps the figure.
   const [kcal, setKcal] = React.useState(DEFAULT_GOAL_KCAL)
 
-  const finishIntro = React.useCallback(() => {
-    markIntroSeen()
-    setIntro(false)
-  }, [])
-
   return (
-    <>
-      {/* Step swap is a fade-through: out fast, in calmly (spec § Motion). */}
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={step}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: FADE_IN }}
-          exit={{ opacity: 0, transition: FADE_OUT }}
-        >
-          {step === "welcome" ? (
-            <WelcomeStep onNext={() => setStep("goal")} />
-          ) : (
-            <GoalStep
-              kcal={kcal}
-              onChange={setKcal}
-              onBack={() => setStep("welcome")}
-              onSubmit={() => onSubmit(kcal)}
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
-      {intro && !reducedMotion && <IntroPattern onDone={finishIntro} />}
-    </>
+    // Step swap is a fade-through: out fast, in calmly (spec § Motion).
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={step}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, transition: FADE_IN }}
+        exit={{ opacity: 0, transition: FADE_OUT }}
+      >
+        {step === "welcome" ? (
+          <WelcomeStep onNext={() => setStep("goal")} />
+        ) : (
+          <GoalStep
+            kcal={kcal}
+            onChange={setKcal}
+            onBack={() => setStep("welcome")}
+            onSubmit={() => onSubmit(kcal)}
+          />
+        )}
+      </motion.div>
+    </AnimatePresence>
   )
 }
 
@@ -153,9 +116,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
   const { t } = useI18n()
   return (
     <Page>
-      <div className="font-wordmark text-[40px] leading-none font-semibold">
-        {t.app.name}
-      </div>
+      <AnimatedWordmark height={40} />
       <h1 className="mt-5 text-2xl leading-snug font-medium text-balance">
         {t.onboarding.headline}
       </h1>
@@ -237,11 +198,9 @@ function GoalStep({
 }) {
   const { t, n } = useI18n()
   const [needOpen, setNeedOpen] = React.useState(false)
-  // While typing, the field holds the typed digits (still shown grouped, so
-  // focusing doesn't change how the number looks); otherwise it shows the
-  // goal, counting to each new value rather than jumping.
+  // While typing, the field holds the typed digits, still shown grouped so
+  // focusing doesn't change how the number looks.
   const [draft, setDraft] = React.useState<string | null>(null)
-  const shown = useCountTo(kcal)
 
   const commitDraft = () => {
     if (draft !== null) onChange(parseGoalKcal(draft) ?? kcal)
@@ -279,7 +238,7 @@ function GoalStep({
         <div className="flex w-40 flex-col items-center">
           <input
             value={
-              draft === null ? n(shown) : draft === "" ? "" : n(Number(draft))
+              draft === null ? n(kcal) : draft === "" ? "" : n(Number(draft))
             }
             onChange={(e) =>
               setDraft(e.target.value.replace(/\D/g, "").slice(0, 5))
@@ -367,21 +326,4 @@ function Stepper({
       </motion.button>
     </Squircle>
   )
-}
-
-// A displayed number that counts to each new target instead of jumping (a
-// stepper tap, a calculator pick). Snaps under reduced motion.
-function useCountTo(target: number): number {
-  const reduce = useReducedMotion()
-  const value = useMotionValue(target)
-  const [shown, setShown] = React.useState(target)
-  useMotionValueEvent(value, "change", (v) => setShown(Math.round(v)))
-  React.useEffect(() => {
-    const controls = animate(value, target, {
-      duration: reduce ? 0 : 0.35,
-      ease: "easeOut",
-    })
-    return () => controls.stop()
-  }, [value, target, reduce])
-  return shown
 }

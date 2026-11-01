@@ -25,7 +25,7 @@ const SEX_CONSTANT: Record<Sex, number> = {
   other: -78,
 }
 
-/** Mostly sitting · active · very active. */
+/** Lightly active · active · very active. */
 const ACTIVITY_FACTOR: Record<Activity, number> = {
   low: 1.2,
   moderate: 1.55,

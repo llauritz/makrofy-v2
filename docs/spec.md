@@ -11,7 +11,7 @@ A one-person calorie/macro tracker. Screens:
 - **Main**: header (Fraunces wordmark, sync indicator, settings) · Day strip · add card · entry list · floating summary card (ink progress ring, Remaining, macro pills, stats button).
 - **Statistics dashboard** (from the stats button) with a **week report subpage**; a **morning glance strip** appears on the main screen once per morning.
 - **Food glossary** (from Settings): the browsable, alphabetical Product index and the home of all curation — correct/pin/delete Readings, merge/delete Products (#40).
-- **Onboarding**: a short intro animation, a welcome screen, then a goal screen (prefilled, with an optional daily-need calculator).
+- **Onboarding**: a welcome screen, then a goal screen (prefilled, with an optional daily-need calculator).
 - **Settings**: goal, theme, language, sign-in, food glossary, install app, export/import.
 
 ## Stack
@@ -120,7 +120,7 @@ Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10) + `docs/resea
 
 ## Onboarding & settings
 
-First run ([#35](https://github.com/llauritz/makrofy-v2/issues/35)): an intro animation (the wordmark's food illustrations as a full-screen pattern; skipped under reduced motion), a **welcome** screen (what the app does, the real add card as a read-only example, Google sign-in for returning users), then a **goal** screen **prefilled 2000 kcal** with ± steps and an optional daily-need calculator (Mifflin–St Jeor × activity, weekly paces; the inputs are never stored). Two taps into the app. Profiles that logged Entries before onboarding existed skip it. Settings: goal edit · theme (system default, device-local) · language (device-local) · sign-in · food glossary (#40) · install app · export/import.
+First run ([#35](https://github.com/llauritz/makrofy-v2/issues/35)): a **welcome** screen (the animated wordmark, what the app does, the real add card as a read-only example, Google sign-in for returning users), then a **goal** screen **prefilled 2000 kcal** with ± steps and an optional daily-need calculator (Mifflin–St Jeor × activity, weekly paces; the inputs are never stored). Two taps into the app. Profiles that logged Entries before onboarding existed skip it. Settings: goal edit · theme (system default, device-local) · language (device-local) · sign-in · food glossary (#40) · install app · export/import.
 
 ## Export / import
 

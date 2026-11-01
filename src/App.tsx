@@ -62,7 +62,7 @@ export function App() {
   // flashes the fallback goal before the synced value arrives.
   if (view === "loading") return <Splash />
 
-  // First run (#35): intro, welcome, goal. Writing the Goal flips the gate to
+  // First run (#35): welcome, then goal. Writing the Goal flips the gate to
   // "main" through the Goal listener; nothing here switches by hand.
   if (view === "onboarding") {
     return (

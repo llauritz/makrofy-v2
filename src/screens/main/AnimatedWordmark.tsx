@@ -27,7 +27,11 @@ const INTRO_SEGMENT: [number, number] = [0, 26]
 
 type Player = { lottie: LottiePlayer; animationData: unknown }
 
-export function AnimatedWordmark() {
+// The comp is 1000 × 200: the wordmark is five times as wide as it is tall.
+const ASPECT = 5
+
+/** `height` in px: 30 in the header, larger on the welcome screen (#35). */
+export function AnimatedWordmark({ height = 30 }: { height?: number }) {
   const { t } = useI18n()
   const containerRef = React.useRef<HTMLDivElement>(null)
   const animRef = React.useRef<AnimationItem | null>(null)
@@ -125,7 +129,10 @@ export function AnimatedWordmark() {
   // wordmark stays the same plain div the header always had.
   if (!player) {
     return (
-      <div className="font-wordmark text-[30px] leading-none font-semibold">
+      <div
+        className="font-wordmark leading-none font-semibold"
+        style={{ fontSize: height }}
+      >
         {t.app.name}
       </div>
     )
@@ -143,7 +150,8 @@ export function AnimatedWordmark() {
       <div
         ref={containerRef}
         aria-hidden
-        className="-ml-[2px] h-[30px] w-[150px]"
+        className="-ml-[2px]"
+        style={{ height, width: height * ASPECT }}
       />
     </button>
   )

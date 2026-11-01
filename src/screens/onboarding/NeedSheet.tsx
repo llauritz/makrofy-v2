@@ -29,21 +29,23 @@ import { FadeSwap } from "@/screens/main/FadeSwap"
 // which still waits for "Start tracking" to commit it.
 
 interface Form {
-  sex: Sex | null
+  sex: Sex
   age: string
   height: string
   weight: string
-  activity: Activity | null
-  aim: Aim | null
+  activity: Activity
+  aim: Aim
 }
 
-const EMPTY_FORM: Form = {
-  sex: null,
+// The choices start filled (the first sex option, the middle activity level,
+// losing), so only the three numbers need typing.
+const INITIAL_FORM: Form = {
+  sex: "female",
   age: "",
   height: "",
   weight: "",
-  activity: null,
-  aim: null,
+  activity: "moderate",
+  aim: "lose",
 }
 
 export function NeedSheet({
@@ -56,14 +58,14 @@ export function NeedSheet({
   onPick: (kcal: number) => void
 }) {
   const { t } = useI18n()
-  const [form, setForm] = React.useState<Form>(EMPTY_FORM)
+  const [form, setForm] = React.useState<Form>(INITIAL_FORM)
   // The body and aim the result was calculated from; null shows the form.
   const [result, setResult] = React.useState<{ body: Body; aim: Aim } | null>(
     null
   )
 
   const body = bodyFrom(form)
-  const ready = body !== null && form.aim !== null
+  const ready = body !== null
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange}>
@@ -89,9 +91,7 @@ export function NeedSheet({
                 <button
                   type="button"
                   disabled={!ready}
-                  onClick={() =>
-                    body && form.aim && setResult({ body, aim: form.aim })
-                  }
+                  onClick={() => body && setResult({ body, aim: form.aim })}
                   className="mt-6 w-full rounded-full bg-primary py-3.5 text-[15px] font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
                 >
                   {t.onboarding.calculateButton}
@@ -177,7 +177,7 @@ function NeedForm({
       />
       {/* What the chosen level means. The line can wrap differently per
           choice, so its box springs to the new height as the text fades. */}
-      <FadeSwap swapKey={form.activity ?? "none"}>
+      <FadeSwap swapKey={form.activity}>
         <p className="px-1 pt-2 text-[13px] leading-snug text-muted-foreground">
           {activityHint(t, form.activity)}
         </p>
@@ -300,7 +300,7 @@ function NeedResult({
   )
 }
 
-function activityHint(t: Dictionary, activity: Activity | null): string {
+function activityHint(t: Dictionary, activity: Activity): string {
   switch (activity) {
     case "low":
       return t.onboarding.activityHintLow
@@ -308,8 +308,6 @@ function activityHint(t: Dictionary, activity: Activity | null): string {
       return t.onboarding.activityHintModerate
     case "high":
       return t.onboarding.activityHintHigh
-    default:
-      return t.onboarding.activityHintNone
   }
 }
 
@@ -362,14 +360,6 @@ function bodyFrom(form: Form): Body | null {
   const age = parseInRange(form.age, LIMITS.age)
   const heightCm = parseInRange(form.height, LIMITS.heightCm)
   const weightKg = parseInRange(form.weight, LIMITS.weightKg)
-  if (
-    !form.sex ||
-    !form.activity ||
-    age === null ||
-    heightCm === null ||
-    weightKg === null
-  ) {
-    return null
-  }
+  if (age === null || heightCm === null || weightKg === null) return null
   return { sex: form.sex, age, heightCm, weightKg, activity: form.activity }
 }
