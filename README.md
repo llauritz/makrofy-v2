@@ -1,21 +1,9 @@
-# React + TypeScript + Vite + shadcn/ui
+# Yaffle
 
-This is a template for a new Vite project with React, TypeScript, and shadcn/ui.
+A mobile-first, easy-above-all calorie and macro tracker. The domain language
+is in `CONTEXT.md`, decisions in `docs/adr/`.
 
-## Adding components
-
-To add components to your app, run the following command:
-
-```bash
-npx shadcn@latest add button
-```
-
-This will place the ui components in the `src/components` directory.
-
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button"
-```
+- Web app: Vite + React, deployed to Firebase Hosting. `pnpm dev` runs it
+  against the local emulators.
+- Android app: the same web app in a Capacitor shell, built by GitHub Actions.
+  See `docs/android.md`.

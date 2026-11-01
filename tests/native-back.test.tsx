@@ -6,7 +6,6 @@
 // listener that calls it is a one-liner.
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render } from "@testing-library/react"
-import * as React from "react"
 
 import { handleBack, useBackHandler } from "@/native/back"
 
