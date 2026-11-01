@@ -3,10 +3,12 @@ import { motion, MotionConfig } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
 import { Spinner } from "@/components/ui/spinner"
+import { YaffleLogo } from "@/components/ui/yaffle-logo"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useEntriesStatus, useGoalStatus, useIdentity } from "@/data/hooks"
 import { db } from "@/lib/firebase"
-import { useAssetsReady, useFontReady, WORDMARK_FONT } from "@/lib/preload"
+import { bootSplashShowing, dismissBootSplash } from "@/lib/boot-splash"
+import { useAssetsReady } from "@/lib/preload"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { GlossaryScreen } from "@/screens/glossary/GlossaryScreen"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
@@ -67,9 +69,14 @@ export function App() {
   // holds it until the fonts and the wordmark animation have loaded
   // (src/lib/preload.ts, capped), so the welcome screen appears in its final
   // form: no font swap reflowing it, no static logo before the animation.
-  if (view === "loading" || (view === "onboarding" && !assetsReady)) {
-    return <Splash />
-  }
+  const showSplash =
+    view === "loading" || (view === "onboarding" && !assetsReady)
+  // index.html's static splash covers everything until the first real screen
+  // commits; a layout effect removes it in that same frame.
+  React.useLayoutEffect(() => {
+    if (!showSplash) dismissBootSplash()
+  }, [showSplash])
+  if (showSplash) return <Splash />
 
   // First run (#35): welcome, then goal. Writing the Goal flips the gate to
   // "main" through the Goal listener; nothing here switches by hand.
@@ -143,50 +150,25 @@ export function App() {
   )
 }
 
-// A wait shorter than this never shows the spinner: on a good connection the
-// splash is gone before it would appear, and one that blinks on and off reads
-// as a glitch (as in DaySyncSpinner).
-const SPLASH_SPINNER_AFTER_MS = 600
-
-// A quiet launch screen in the app's own colours while identity and the first
-// Goal snapshot settle. It carries the resolved theme's background, so the
-// hand-off is continuous — the main screen takes over without a flash of
-// unstyled or wrong-theme content. The wordmark stays hidden until its own
-// font has loaded, then fades in, rather than painting in a fallback face and
-// jumping when Fraunces arrives. A wait that outlasts SPLASH_SPINNER_AFTER_MS
-// adds the log's spinner below it, placed from the screen's centre so neither
-// ever moves the other.
+// The launch splash: the logo, and the log's spinner below it once the wait
+// outlasts 0.6 s (both styled by .splash in src/index.css). It carries the
+// resolved theme's background, so the hand-off is continuous — the next screen
+// takes over without a flash of unstyled or wrong-theme content. On a first
+// run index.html's static copy is already showing this (painted before any
+// script ran), so while it is up this renders only the background beneath
+// it: a second copy would restart the fades and the spin. When the app has to
+// splash on its own (a returning launch whose mirror didn't apply, an account
+// switch), it draws the same thing itself.
 function Splash() {
   const { t } = useI18n()
-  const fontReady = useFontReady(WORDMARK_FONT)
-  const [slow, setSlow] = React.useState(false)
-  React.useEffect(() => {
-    const id = setTimeout(() => setSlow(true), SPLASH_SPINNER_AFTER_MS)
-    return () => clearTimeout(id)
-  }, [])
+  const [covered] = React.useState(bootSplashShowing)
+  if (covered) return <div className="min-h-svh bg-background" />
   return (
-    <div className="relative flex min-h-svh items-center justify-center bg-background text-muted-foreground">
-      <motion.div
-        initial={false}
-        animate={{ opacity: fontReady ? 1 : 0 }}
-        transition={FADE_IN}
-        style={{ visibility: fontReady ? "visible" : "hidden" }}
-        className="font-wordmark text-3xl font-semibold"
-      >
-        {t.app.name}
-      </motion.div>
-      {/* 50% + half the wordmark's 36 px line + a 20 px gap. */}
-      {slow && (
-        <motion.div
-          aria-hidden
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="absolute inset-x-0 top-[calc(50%+38px)] flex justify-center"
-        >
-          <Spinner />
-        </motion.div>
-      )}
+    <div className="splash" role="img" aria-label={t.app.name}>
+      <YaffleLogo height={36} className="splash-logo" />
+      <div className="splash-spinner" aria-hidden>
+        <Spinner />
+      </div>
     </div>
   )
 }

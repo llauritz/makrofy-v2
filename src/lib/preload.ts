@@ -12,18 +12,15 @@ import { loadWordmarkPlayer } from "@/screens/main/wordmark-player"
 
 // Variable fonts keep every weight in one file, so one face per family would
 // do; listing the weights the first screens use keeps that true if a family is
-// ever split into static weights.
+// ever split into static weights. Fraunces isn't here: the splash logo is an
+// inline SVG, and the welcome screen's wordmark is the animation.
 const FONTS = [
   '400 16px "Public Sans Variable"',
   '500 16px "Public Sans Variable"',
   '600 16px "Public Sans Variable"',
   '700 16px "Public Sans Variable"',
-  '600 16px "Fraunces Variable"',
   '900 16px "Nunito Variable"',
 ]
-
-/** The wordmark face the splash paints. */
-export const WORDMARK_FONT = '600 16px "Fraunces Variable"'
 
 // Counted from boot. A stuck download must never hold the splash for long:
 // past this the welcome screen shows anyway, at worst with a late font swap.
@@ -68,27 +65,5 @@ export function useAssetsReady(): boolean {
       live = false
     }
   }, [done])
-  return done
-}
-
-/** Whether a font face can paint without a fallback swap; tracks its load. */
-export function useFontReady(font: string): boolean {
-  const [done, setDone] = React.useState(() => {
-    try {
-      return document.fonts.check(font)
-    } catch {
-      return true
-    }
-  })
-  React.useEffect(() => {
-    if (done) return
-    let live = true
-    void loadFont(font).then(() => {
-      if (live) setDone(true)
-    })
-    return () => {
-      live = false
-    }
-  }, [done, font])
   return done
 }
