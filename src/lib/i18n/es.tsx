@@ -127,7 +127,8 @@ export const es: Dictionary = {
     use: (label) => `Usar ${label}`,
     aiOffline: "El relleno con IA necesita conexión.",
     aiLimit: "Límite diario de IA alcanzado — más mañana.",
-    aiError: "No se pudo contactar con la IA — inténtalo de nuevo en un momento.",
+    aiError:
+      "No se pudo contactar con la IA — inténtalo de nuevo en un momento.",
     aiNoEstimate: "No se pudo estimar eso — prueba a reformularlo.",
     aiHopeless: (hint) => `No se puede estimar esto. ${hint}`,
   },
@@ -214,13 +215,15 @@ export const es: Dictionary = {
     previewBody:
       "Restaura tu objetivo, la cobertura de días y el glosario de alimentos, y añade las entradas que aún no estén en tu registro.",
     newEntries: (count: string) => `${count} entradas por añadir`,
-    duplicatesSkipped: (count: string) => `${count} ya en el registro — omitidas`,
+    duplicatesSkipped: (count: string) =>
+      `${count} ya en el registro — omitidas`,
     confirm: "Importar",
     cancel: "Cancelar",
     invalidFile: "Ese archivo no es una copia de Yaffle.",
     importing: "Importando…",
     doneTitle: "Importación completa",
-    doneBody: (count: string) => `Se añadieron ${count} entradas a tu registro.`,
+    doneBody: (count: string) =>
+      `Se añadieron ${count} entradas a tu registro.`,
     done: "Listo",
   },
 
@@ -236,7 +239,8 @@ export const es: Dictionary = {
     title: "Glosario de alimentos",
     search: "Buscar alimentos",
     emptyTitle: "Aún no hay alimentos",
-    emptyBody: "Los alimentos que registres aparecen aquí cuando añadas algunos.",
+    emptyBody:
+      "Los alimentos que registres aparecen aquí cuando añadas algunos.",
     noMatchesTitle: "Sin coincidencias",
     noMatchesBody: "Ningún alimento coincide con esa búsqueda.",
     mergedInto: (label) => `Fusionado en ${label}`,
@@ -245,7 +249,9 @@ export const es: Dictionary = {
     basis: (kind) => BASIS[kind],
     rateNone: "—",
     rateLine: (kcal, kind) =>
-      kind === "count" ? `${kcal} kcal por unidad` : `${kcal} kcal / ${BASIS[kind]}`,
+      kind === "count"
+        ? `${kcal} kcal por unidad`
+        : `${kcal} kcal / ${BASIS[kind]}`,
     kcalBasis: (kind) =>
       kind === "count" ? "kcal por unidad" : `kcal / ${BASIS[kind]}`,
   },
@@ -270,6 +276,61 @@ export const es: Dictionary = {
     caloriesPer: (basis) => `Calorías por ${basis}`,
     gramsPer: (macro, basis) => `Gramos de ${macro.toLowerCase()} por ${basis}`,
     saveReading: "Guardar lectura",
+  },
+
+  paywall: {
+    planFree: "Gratis",
+    planPremium: "Premium",
+    planPro: "Pro",
+    titleExhaustedFree: "Ese fue tu último intento gratis",
+    bodyExhaustedFree:
+      "El relleno con IA lee lo que comiste y completa los números por ti. Elige un plan para seguir usándolo. Todo lo demás en Yaffle sigue siendo gratis.",
+    titleExhaustedPremium: "Usaste los rellenos de este ciclo",
+    bodyExhaustedPremium: (date) =>
+      `Premium se recarga el ${date}. ¿Necesitas más antes? Pro tiene mucho más margen.`,
+    titleBrowseFree: "Sigue usando el relleno con IA",
+    bodyBrowseFree: (left, limit) =>
+      `Te quedan ${left} de ${limit} intentos gratis. Todo lo demás en Yaffle sigue siendo gratis.`,
+    titleBrowsePaid: "Tu plan",
+    bodyBrowsePaid: (date) => `Tus rellenos con IA se recargan el ${date}.`,
+    billing: "Facturación",
+    billingAnnual: "Anual",
+    billingMonthly: "Mensual",
+    save: (pct) => `Ahorra un ${pct}%`,
+    freeLine: (limit) => `Prueba el relleno con IA ${limit} veces`,
+    premiumLine: (limit) => `${limit} rellenos con IA cada 30 días`,
+    proLine: "Más rellenos con IA de los que nadie registra",
+    bestValue: "Mejor valor",
+    currentPlan: "Tu plan",
+    perMonth: (price) => `${price}/mes`,
+    billedYearly: (price) => `${price} al año`,
+    billedMonthly: "facturado cada mes",
+    continueWith: (plan) => `Continuar con ${plan}`,
+    signInToSubscribe: "Inicia sesión con Google para suscribirte",
+    signInNote:
+      "Al iniciar sesión conservas todo lo que registraste. Solo se vincula a tu cuenta de Google.",
+    checkoutStub: "El pago aún no está conectado. Esto es un prototipo.",
+    footnote: (fairUse) =>
+      `Precios con impuestos incluidos. Cancela cuando quieras. Uso razonable: Pro incluye ${fairUse} rellenos con IA cada 30 días.`,
+    exhaustedFree: (limit) => `Usaste tus ${limit} intentos de relleno con IA.`,
+    exhaustedPremium: (limit, date) =>
+      `Usaste los ${limit} rellenos con IA de este ciclo. Más el ${date}.`,
+    exhaustedPro: (limit, date) =>
+      `Llegaste al límite de uso razonable de ${limit} rellenos con IA. Más el ${date}.`,
+    seePlans: "Ver planes",
+    getPro: "Obtener Pro",
+    aiFill: "Relleno con IA",
+    freeStatus: (left, limit) => `Te quedan ${left} de ${limit} intentos`,
+    premiumStatus: (left, limit, date) =>
+      `Te quedan ${left} de ${limit} · se recarga el ${date}`,
+    proStatus: (used, date) =>
+      `${used} rellenos este ciclo · se recarga el ${date}`,
+    upgrade: "Mejorar",
+    manage: "Gestionar",
+    noticeTitle: "El relleno con IA ahora tiene planes",
+    noticeBody: (limit) =>
+      `Todos tienen ${limit} intentos gratis de relleno con IA. Premium y Pro lo mantienen mientras sigas registrando. Todo lo demás en Yaffle sigue siendo gratis, como siempre.`,
+    noticeDismiss: "Entendido",
   },
 
   day: {

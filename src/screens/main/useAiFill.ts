@@ -4,6 +4,7 @@ import { AI_DAILY_LIMIT, consumeAiUse, readAiUsage } from "@/data/ai-quota"
 import { fillMacros, type AiFillReply } from "@/lib/ai"
 import { localDay } from "@/lib/day"
 import { db } from "@/lib/firebase"
+import { formatShortDate } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
 import {
   capFinalRoundTrip,
@@ -14,6 +15,7 @@ import {
   type FormFlag,
 } from "@/lib/macro-fill"
 import { useOnline } from "@/lib/useOnline"
+import { usePaywall } from "@/screens/paywall/Paywall"
 import type { AiZoneState } from "./AiZone"
 
 // The AI fill choreography every ✨ surface shares (spec § AI macro-fill,
@@ -31,7 +33,7 @@ export type AiPhase =
   | { kind: "idle" }
   | { kind: "thinking" }
   | { kind: "question"; question: string; chips: string[]; description: string }
-  | { kind: "hint"; hint: string }
+  | { kind: "hint"; hint: string; upgrade?: boolean }
 
 const AI_IDLE: AiPhase = { kind: "idle" }
 
@@ -53,8 +55,9 @@ export function useAiFill({
   /** Land a fill on the surface: write its values and stand up its flags. */
   apply: (food: AiFood, flags: ReadonlySet<FormFlag>) => void
 }) {
-  const { t } = useI18n()
+  const { t, n, language } = useI18n()
   const online = useOnline()
+  const paywall = usePaywall()
   const [phase, setPhase] = React.useState<AiPhase>(AI_IDLE)
   const [interpretation, setInterpretation] = React.useState<string | null>(
     null
@@ -93,6 +96,25 @@ export function useAiFill({
     const runId = ++run.current
     setInterpretation(null)
     setAttribution(null)
+    // The paywall prototype's cycle gate (#64/#65): an exhausted cycle refuses
+    // with a typed, per-plan line — read from the local counter, so it answers
+    // offline too. Free and Premium carry the way up; Pro's fair-use line
+    // doesn't sell anything. Without ?paywall this is skipped entirely.
+    if (paywall !== null && paywall.cycle.remaining === 0) {
+      const { plan, limit, resetsOn } = paywall.cycle
+      const date = formatShortDate(resetsOn, language)
+      setPhase({
+        kind: "hint",
+        hint:
+          plan === "free"
+            ? t.paywall.exhaustedFree(n(limit))
+            : plan === "premium"
+              ? t.paywall.exhaustedPremium(n(limit), date)
+              : t.paywall.exhaustedPro(n(limit), date),
+        upgrade: plan !== "pro",
+      })
+      return
+    }
     if (!online) {
       // The offline contract: the dimmed button stays tappable and answers
       // with this quiet note in the zone (spec § AI macro-fill).

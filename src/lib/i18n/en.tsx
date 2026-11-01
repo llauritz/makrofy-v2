@@ -214,12 +214,12 @@ export const en = {
     howTo: "How to",
     addToHomeScreen: "Add to home screen",
     iosTitle: "Install Yaffle",
-    iosBody: "Add Yaffle to your home screen for a full-screen, offline-ready app.",
+    iosBody:
+      "Add Yaffle to your home screen for a full-screen, offline-ready app.",
     iosStep1: (
       <>
-        Tap the{" "}
-        <span className="font-medium text-foreground">Share</span> button in
-        Safari&rsquo;s toolbar.
+        Tap the <span className="font-medium text-foreground">Share</span>{" "}
+        button in Safari&rsquo;s toolbar.
       </>
     ),
     iosStep2: (
@@ -300,6 +300,68 @@ export const en = {
     caloriesPer: (basis: string) => `Calories per ${basis}`,
     gramsPer: (macro: string, basis: string) => `${macro} grams per ${basis}`,
     saveReading: "Save reading",
+  },
+
+  // The subscription paywall prototype (#65). Plan names are proper nouns
+  // (the same in both languages); allowances and prices arrive formatted.
+  paywall: {
+    planFree: "Free",
+    planPremium: "Premium",
+    planPro: "Pro",
+    titleExhaustedFree: "That was your last free try",
+    bodyExhaustedFree:
+      "AI fill reads what you ate and fills in the numbers for you. Pick a plan to keep it going. Everything else in Yaffle stays free.",
+    titleExhaustedPremium: "You’ve used this cycle’s fills",
+    bodyExhaustedPremium: (date: string) =>
+      `Premium refills on ${date}. Need more before then? Pro has room for far more.`,
+    titleBrowseFree: "Keep AI fill going",
+    bodyBrowseFree: (left: string, limit: string) =>
+      `${left} of ${limit} free tries left. Everything else in Yaffle stays free.`,
+    titleBrowsePaid: "Your plan",
+    bodyBrowsePaid: (date: string) => `Your AI fills refill on ${date}.`,
+    billing: "Billing",
+    billingAnnual: "Yearly",
+    billingMonthly: "Monthly",
+    save: (pct: string) => `Save ${pct}%`,
+    freeLine: (limit: string) => `Try AI fill ${limit} times`,
+    premiumLine: (limit: string) => `${limit} AI fills every 30 days`,
+    proLine: "More AI fills than anyone logs",
+    bestValue: "Best value",
+    currentPlan: "Your plan",
+    perMonth: (price: string) => `${price}/mo`,
+    billedYearly: (price: string) => `${price} billed yearly`,
+    billedMonthly: "billed monthly",
+    continueWith: (plan: string) => `Continue with ${plan}`,
+    signInToSubscribe: "Sign in with Google to subscribe",
+    signInNote:
+      "Signing in keeps everything you’ve logged. It just links it to your Google account.",
+    checkoutStub: "Checkout isn’t connected yet. This is a prototype.",
+    footnote: (fairUse: string) =>
+      `Prices include tax. Cancel anytime. Fair use: Pro includes ${fairUse} AI fills every 30 days.`,
+    // The ✨ refusal at cycle exhaustion — the paywall's front door (#64).
+    exhaustedFree: (limit: string) =>
+      `You’ve used your ${limit} AI fill tries.`,
+    exhaustedPremium: (limit: string, date: string) =>
+      `You’ve used this cycle’s ${limit} AI fills. More on ${date}.`,
+    exhaustedPro: (limit: string, date: string) =>
+      `You’ve reached the fair-use limit of ${limit} AI fills. More on ${date}.`,
+    seePlans: "See plans",
+    getPro: "Get Pro",
+    // The Settings row: where the plan, the counter and the reset date live.
+    aiFill: "AI fill",
+    freeStatus: (left: string, limit: string) =>
+      `${left} of ${limit} tries left`,
+    premiumStatus: (left: string, limit: string, date: string) =>
+      `${left} of ${limit} fills left · refills ${date}`,
+    proStatus: (used: string, date: string) =>
+      `${used} fills this cycle · refills ${date}`,
+    upgrade: "Upgrade",
+    manage: "Manage",
+    // The one-time notice to existing users (no grandfathering, #59).
+    noticeTitle: "AI fill has plans now",
+    noticeBody: (limit: string) =>
+      `Everyone gets ${limit} free AI fill tries. Premium and Pro keep it going for as long as you log. Everything else in Yaffle stays free, as it always was.`,
+    noticeDismiss: "Got it",
   },
 
   day: {

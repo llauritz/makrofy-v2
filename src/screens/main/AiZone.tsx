@@ -1,11 +1,12 @@
 import * as React from "react"
-import { X } from "lucide-react"
+import { Sparkles, X } from "lucide-react"
 import { motion } from "motion/react"
 
 import { useTheme } from "@/components/theme-provider"
 import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { bindAttributionToTheme } from "@/lib/macro-fill"
+import { usePaywall } from "@/screens/paywall/Paywall"
 import { FadeSwap } from "./FadeSwap"
 
 // The AI's half of the add card's response zone (spec § Add flow: one zone
@@ -31,8 +32,11 @@ export type AiZoneState =
     }
   /** The ambiguous tier: exactly one question; a chip answer is the final round trip. */
   | { kind: "question"; question: string; chips: string[] }
-  /** Hopeless refusals, offline / quota / failed-call notes — one quiet line. */
-  | { kind: "hint"; hint: string }
+  /**
+   * Hopeless refusals, offline / quota / failed-call notes — one quiet line.
+   * `upgrade` adds the paywall's front door (#65) under a cycle-exhausted line.
+   */
+  | { kind: "hint"; hint: string; upgrade?: boolean }
 
 export function AiZone({
   state,
@@ -68,7 +72,7 @@ function swapKeyOf(state: AiZoneState): string {
     case "question":
       return `question:${state.question}`
     case "hint":
-      return `hint:${state.hint}`
+      return `hint:${state.hint}:${state.upgrade ?? false}`
     default:
       return state.kind
   }
@@ -143,12 +147,38 @@ function ZoneContent({
             radius="2xl"
             className="flex items-start justify-between gap-2 bg-input px-4 py-3"
           >
-            <span className="text-sm text-muted-foreground">{state.hint}</span>
+            <div className="flex flex-col items-start gap-2.5">
+              <span className="text-sm text-muted-foreground">
+                {state.hint}
+              </span>
+              {state.upgrade && <UpgradeButton />}
+            </div>
             <DismissButton label={t.aiZone.dismissHint} onDismiss={onDismiss} />
           </Squircle>
         </div>
       )
   }
+}
+
+// The exhausted-cycle hint's way up: Free sees the plans, Premium is offered
+// Pro. Opens the paywall sheet over the card (the paywall prototype, #65).
+function UpgradeButton() {
+  const { t } = useI18n()
+  const paywall = usePaywall()
+  if (paywall === null) return null
+  return (
+    <Squircle asChild pill>
+      <motion.button
+        type="button"
+        onClick={() => paywall.open("exhausted")}
+        whileTap={{ scale: 0.95 }}
+        className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        {paywall.cycle.plan === "free" ? t.paywall.seePlans : t.paywall.getPro}
+      </motion.button>
+    </Squircle>
+  )
 }
 
 // The quiet one-liner under the pills (thinking, interpretation, flag help).
