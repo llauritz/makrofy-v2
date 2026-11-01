@@ -22,9 +22,8 @@ import {
   useProductIndex,
   useSyncStatus,
 } from "@/data/hooks"
-import { refreshIdentity } from "@/data/identity"
 import { localDay, stepDay } from "@/lib/day"
-import { auth, db } from "@/lib/firebase"
+import { db } from "@/lib/firebase"
 import { useDaySwipe } from "@/lib/useDaySwipe"
 import { SettingsSheet } from "@/screens/settings/SettingsSheet"
 import { AddCard } from "./AddCard"
@@ -148,14 +147,12 @@ export function MainScreen({
   }
 
   const openSettings = () => setSettingsOpen(true)
-  const reauth = () => void refreshIdentity(auth)
 
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col">
       <Header
         onOpenSettings={openSettings}
         syncStatus={syncStatus}
-        onReauth={reauth}
       />
       <main className="flex flex-1 flex-col">
         <DayStrip

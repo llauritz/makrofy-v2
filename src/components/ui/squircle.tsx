@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
+import { flushSync } from "react-dom"
 import { squircleOutline } from "@/lib/squircle-path"
 import { cn } from "@/lib/utils"
 
@@ -130,7 +131,12 @@ function useBox<T extends HTMLElement>() {
       })
     }
     measure()
-    const ro = new ResizeObserver(measure)
+    // A resize is flushed synchronously: the observer fires after layout and
+    // before paint, so the new path lands in the same frame as the new size.
+    // Left to React's batching it would paint a frame late, and a box whose
+    // width is animating (the header cloud pill) would show its far edge
+    // sliced off by the previous frame's clip on the way out.
+    const ro = new ResizeObserver(() => flushSync(measure))
     ro.observe(el)
     return () => ro.disconnect()
   }, [el])

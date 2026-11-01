@@ -130,8 +130,10 @@ export async function bootstrapIdentity(
  * completeGoogleRedirect on the next load.
  */
 export async function startGoogleSignIn(auth: Auth): Promise<void> {
-  const user = auth.currentUser
-  if (!user) throw new Error("startGoogleSignIn: no identity to link onto")
+  // A lapsed Google session can leave no identity at all until the next launch
+  // mints one; mint the Guest now so there is something to link onto (a
+  // collision then union-merges it into the old account, as above).
+  const user = auth.currentUser ?? (await ensureIdentity(auth))
   await linkWithRedirect(user, new GoogleAuthProvider())
 }
 
@@ -203,19 +205,4 @@ export async function unionMergeInto(
 export async function signOutToGuest(auth: Auth): Promise<User> {
   await signOut(auth)
   return ensureIdentity(auth)
-}
-
-/**
- * Re-establish the identity for the sync indicator's attention state (#19).
- * After a long offline stretch a write can pause on an expired token; forcing a
- * refresh lets a resumed-online session flush its queued writes. Falls back to
- * minting a Guest if the session is somehow gone.
- */
-export async function refreshIdentity(auth: Auth): Promise<void> {
-  const user = auth.currentUser
-  if (user) {
-    await user.getIdToken(true)
-  } else {
-    await ensureIdentity(auth)
-  }
 }

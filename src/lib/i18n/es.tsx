@@ -147,12 +147,11 @@ export const es: Dictionary = {
     grams: (macro) => `Gramos de ${macro.toLowerCase()}`,
   },
 
-  sync: {
-    attention: "Necesitas iniciar sesión para sincronizar tus cambios",
-    pending: "Sin sincronizar — los cambios se guardan en este dispositivo",
-    savedTitle: "Guardado en este dispositivo",
-    savedBody:
-      "Tus cambios se guardan en este dispositivo y se sincronizan automáticamente en cuanto vuelvas a estar en línea — no se pierde nada mientras estás sin conexión.",
+  cloud: {
+    syncData: "Sincronizar",
+    loginAgain: "Iniciar sesión",
+    offAria: "Sincronización desactivada. Abrir ajustes",
+    offlineAria: "Sin conexión, los cambios se guardan en este dispositivo. Abrir ajustes",
   },
 
   settings: {
