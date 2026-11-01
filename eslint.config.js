@@ -10,8 +10,9 @@ export default defineConfig([
   // own tsconfigs); never lint them, or typescript-eslint sees multiple roots.
   // `makrofy-v1` (the git-ignored V1 snapshot) and `.remember` (session notes)
   // are local-only dirs CI never checks out — ignoring them keeps a local
-  // `pnpm lint` equal to the CI run.
-  globalIgnores(['dist', '.claude', 'makrofy-v1', '.remember']),
+  // `pnpm lint` equal to the CI run. `android` holds the Capacitor project,
+  // whose assets are a copy of the web build.
+  globalIgnores(['dist', 'android', '.claude', 'makrofy-v1', '.remember']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

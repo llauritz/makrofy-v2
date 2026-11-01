@@ -18,6 +18,7 @@ import { readAllOverlays, setPin } from "@/data/products"
 import {
   ensureIdentity,
   isCredentialInUseError,
+  linkGoogleIdToken,
   signOutToGuest,
   unionMergeInto,
 } from "@/data/identity"
@@ -283,5 +284,71 @@ describe("Google sign-in — second-device collision, union merge", () => {
       source: "ai",
       flagged: ["protein"],
     })
+  })
+})
+
+// The Android app's in-place twin of the redirect flow (ADR 0012): the native
+// account picker hands back a Google ID token and linkGoogleIdToken applies the
+// same rules — link onto the Guest UID, or union-merge on a collision.
+describe("Google sign-in from the Android account picker", () => {
+  let existingApp: EmulatorApp
+  let guestApp: EmulatorApp
+
+  afterEach(async () => {
+    if (existingApp) await destroyEmulatorApp(existingApp)
+    if (guestApp) await destroyEmulatorApp(guestApp)
+  })
+
+  it("links onto the same Guest UID when the account is new", async () => {
+    await clearFirestoreData()
+    guestApp = createEmulatorApp()
+    const guest = await ensureIdentity(guestApp.auth)
+
+    const outcome = await linkGoogleIdToken(
+      guestApp.auth,
+      guestApp.db,
+      '{"sub":"android-solo","email":"android-solo@example.com","email_verified":true}'
+    )
+
+    expect(outcome).toEqual({ kind: "linked", uid: guest.uid })
+    expect(guestApp.auth.currentUser?.isAnonymous).toBe(false)
+  })
+
+  it("union-merges the Guest into an account that already exists", async () => {
+    await clearFirestoreData()
+    existingApp = createEmulatorApp()
+    const existing = (
+      await signInWithCredential(existingApp.auth, googleCred())
+    ).user
+    addEntry(existingApp.db, existing.uid, {
+      date: "2026-07-10",
+      label: "oats",
+      kcal: 300,
+      source: "manual",
+    })
+    await waitForPendingWrites(existingApp.db)
+
+    guestApp = createEmulatorApp()
+    const guest = await ensureIdentity(guestApp.auth)
+    addEntry(guestApp.db, guest.uid, {
+      date: "2026-07-11",
+      label: "toast",
+      kcal: 150,
+      source: "manual",
+    })
+    await waitForPendingWrites(guestApp.db)
+
+    const outcome = await linkGoogleIdToken(
+      guestApp.auth,
+      guestApp.db,
+      SECOND_DEVICE
+    )
+
+    expect(outcome).toEqual({ kind: "merged", uid: existing.uid, merged: 1 })
+    expect(guestApp.auth.currentUser?.uid).toBe(existing.uid)
+    const labels = (await readAllEntries(guestApp.db, existing.uid))
+      .map((e) => e.label)
+      .sort()
+    expect(labels).toEqual(["oats", "toast"])
   })
 })

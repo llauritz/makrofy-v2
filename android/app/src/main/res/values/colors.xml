@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Yaffle's own palette (src/index.css), so the splash, the system bars and
+     the WebView's first frame are already the app's colours. values-night
+     holds the dark theme. -->
+<resources>
+    <!-- The "flour" background (CSS variable background) -->
+    <color name="yaffle_background">#F6F1E6</color>
+    <!-- The "ink" foreground (CSS variable foreground) -->
+    <color name="yaffle_ink">#2B2015</color>
+    <!-- The launcher icon keeps the light brand colours in both themes, like the
+         PWA icon; Android's themed icons use the monochrome layer instead. -->
+    <color name="yaffle_icon_background">#F6F1E6</color>
+    <color name="yaffle_icon_ink">#2B2015</color>
+</resources>

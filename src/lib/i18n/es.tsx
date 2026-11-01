@@ -179,6 +179,7 @@ export const es: Dictionary = {
     signOut: "Cerrar sesión",
     signInWithGoogle: "Iniciar sesión con Google",
     signInSubtitle: "Haz copia de seguridad y sincroniza entre dispositivos",
+    signInFailed: "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
   },
 
   install: {

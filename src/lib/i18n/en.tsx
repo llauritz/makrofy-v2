@@ -208,6 +208,7 @@ export const en = {
     signOut: "Sign out",
     signInWithGoogle: "Sign in with Google",
     signInSubtitle: "Back up and sync across devices",
+    signInFailed: "Couldn't sign in with Google. Try again.",
   },
 
   install: {

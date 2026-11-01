@@ -1,0 +1,66 @@
+# Manual release build: a signed Android App Bundle (.aab) for the Play Console
+# and a signed APK for direct installs. Run it from the Actions tab
+# ("Android release" → Run workflow). It needs four repository secrets
+# (docs/android.md § Release signing):
+#   ANDROID_UPLOAD_KEYSTORE_BASE64  the upload keystore, base64-encoded
+#   ANDROID_KEYSTORE_PASSWORD       its store password
+#   ANDROID_KEY_ALIAS               the key alias inside it
+#   ANDROID_KEY_PASSWORD            the key password
+
+name: Android release
+on:
+  workflow_dispatch:
+jobs:
+  release-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec cap sync android
+      - name: Decode upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_UPLOAD_KEYSTORE_BASE64 is not set (docs/android.md § Release signing)"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+      - name: Build signed bundle and APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # Play needs a strictly increasing versionCode: this workflow's run number.
+          YAFFLE_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          export YAFFLE_VERSION_NAME="$(node -p "require('../package.json').version")"
+          ./gradlew bundleRelease assembleRelease --no-daemon
+      - name: Collect outputs
+        run: |
+          mkdir release
+          mv android/app/build/outputs/bundle/release/app-release.aab release/yaffle-release.aab
+          mv android/app/build/outputs/apk/release/app-release.apk release/yaffle-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yaffle-release
+          path: release/
+          retention-days: 90
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"

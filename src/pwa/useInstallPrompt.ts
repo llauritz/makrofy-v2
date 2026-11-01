@@ -1,5 +1,7 @@
 import * as React from "react"
 
+import { isNativeApp } from "@/native/platform"
+
 import { resolveInstallAffordance, type InstallAffordance } from "./install"
 
 // The non-standard event Chromium fires when the app is installable. Capturing
@@ -13,6 +15,10 @@ type BeforeInstallPromptEvent = Event & {
 const STANDALONE_QUERY = "(display-mode: standalone)"
 
 function detectStandalone(): boolean {
+  // The Android app is as installed as it gets.
+  if (isNativeApp()) {
+    return true
+  }
   if (window.matchMedia(STANDALONE_QUERY).matches) {
     return true
   }

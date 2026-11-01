@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pre-Android-12 launch window: the theme background with the brand Y in
+     the middle. Android 12+ draws its own splash from styles.xml instead. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/yaffle_background" />
+    <item
+        android:width="96dp"
+        android:height="96dp"
+        android:drawable="@drawable/splash_icon"
+        android:gravity="center" />
+</layer-list>
