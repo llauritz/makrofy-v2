@@ -258,7 +258,7 @@ export const en = {
       },
       {
         title: "AI fills in the rest",
-        body: "Missing calories and macros get estimated.",
+        body: "Ask AI to look up or estimate calories and macros.",
       },
       {
         title: "Remembers your foods",
