@@ -43,7 +43,12 @@ export function FadeSwap({
       // and the first swap then jumps instead of springing.
       animate={{ height: height ?? "auto" }}
       transition={reduce ? { duration: 0 } : SPRING}
-      className={"overflow-hidden " + (className ?? "")}
+      // `clip`, not `hidden`: a hidden box is still a scroll container, so
+      // focusing something at its edge (the tapped row's button, an input)
+      // scrolls it a few px. As the box then grows past its content the
+      // browser clamps that scroll back to 0 and the content drops by those
+      // px near the end of the spring. A clip box can't scroll at all.
+      className={"overflow-clip " + (className ?? "")}
     >
       <div ref={ref}>
         <AnimatePresence mode="wait" initial={false}>
