@@ -25,7 +25,7 @@ const SEX_CONSTANT: Record<Sex, number> = {
   other: -78,
 }
 
-/** Mostly sitting · on your feet · very active. */
+/** Mostly sitting · active · very active. */
 const ACTIVITY_FACTOR: Record<Activity, number> = {
   low: 1.2,
   moderate: 1.55,
@@ -34,11 +34,11 @@ const ACTIVITY_FACTOR: Record<Activity, number> = {
 
 export const KCAL_PER_KG = 7700
 
-/** Weekly paces offered per aim, in kg per week. */
-export const PACES: Record<Exclude<Aim, "maintain">, readonly number[]> = {
-  lose: [0.25, 0.5, 0.75],
-  gain: [0.25, 0.5],
-}
+/**
+ * Weekly paces offered when losing or gaining, in kg per week: deliberately
+ * gentle. The first (smallest) starts selected.
+ */
+export const PACES: readonly number[] = [0.2, 0.35, 0.5]
 
 /** No suggested Goal goes below this, whatever the pace. */
 export const MIN_SUGGESTED_KCAL = 1200
@@ -82,7 +82,7 @@ export function paceOptions(maintenance: number, aim: Aim): PaceOption[] {
     return [{ kgPerWeek: 0, kcal: roundTo50(maintenance) }]
   const sign = aim === "lose" ? -1 : 1
   const options: PaceOption[] = []
-  for (const kg of PACES[aim]) {
+  for (const kg of PACES) {
     const daily = (kg * KCAL_PER_KG) / 7
     const kcal = Math.max(
       MIN_SUGGESTED_KCAL,
@@ -92,11 +92,6 @@ export function paceOptions(maintenance: number, aim: Aim): PaceOption[] {
     options.push({ kgPerWeek: kg, kcal })
   }
   return options
-}
-
-/** Which option starts selected: the middle pace when there are three. */
-export function defaultPaceIndex(options: readonly PaceOption[]): number {
-  return options.length >= 3 ? 1 : 0
 }
 
 /** Parse a form number within [lo, hi]; null when blank or out of range. */

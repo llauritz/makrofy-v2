@@ -1,5 +1,12 @@
 import * as React from "react"
-import { AnimatePresence, motion, useReducedMotion } from "motion/react"
+import {
+  animate,
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+} from "motion/react"
 import {
   BookText,
   Calculator,
@@ -149,7 +156,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
       <div className="font-wordmark text-[40px] leading-none font-semibold">
         {t.app.name}
       </div>
-      <h1 className="mt-5 text-[28px] leading-[1.15] font-bold tracking-tight text-balance">
+      <h1 className="mt-5 text-2xl leading-snug font-medium text-balance">
         {t.onboarding.headline}
       </h1>
 
@@ -170,7 +177,9 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         />
       </div>
 
-      <ul className="mt-8 flex flex-col gap-5">
+      {/* auto-rows-fr: every point is as tall as the tallest, so the icons
+          sit at an even rhythm whatever the line count. */}
+      <ul className="mt-8 grid auto-rows-fr gap-5">
         {t.onboarding.points.map((point, i) => {
           const Icon = POINT_ICONS[i]
           return (
@@ -228,8 +237,11 @@ function GoalStep({
 }) {
   const { t, n } = useI18n()
   const [needOpen, setNeedOpen] = React.useState(false)
-  // While typing, the field shows the raw draft; otherwise the formatted goal.
+  // While typing, the field holds the typed digits (still shown grouped, so
+  // focusing doesn't change how the number looks); otherwise it shows the
+  // goal, counting to each new value rather than jumping.
   const [draft, setDraft] = React.useState<string | null>(null)
+  const shown = useCountTo(kcal)
 
   const commitDraft = () => {
     if (draft !== null) onChange(parseGoalKcal(draft) ?? kcal)
@@ -266,8 +278,12 @@ function GoalStep({
         </Stepper>
         <div className="flex w-40 flex-col items-center">
           <input
-            value={draft ?? n(kcal)}
-            onChange={(e) => setDraft(e.target.value)}
+            value={
+              draft === null ? n(shown) : draft === "" ? "" : n(Number(draft))
+            }
+            onChange={(e) =>
+              setDraft(e.target.value.replace(/\D/g, "").slice(0, 5))
+            }
             onFocus={(e) => {
               setDraft(String(kcal))
               requestAnimationFrame(() => e.target.select())
@@ -279,9 +295,9 @@ function GoalStep({
             inputMode="numeric"
             autoComplete="off"
             aria-label={t.onboarding.dailyGoalAria}
-            className="w-full bg-transparent text-center text-[44px] leading-tight font-bold tracking-tight tabular-nums outline-none"
+            className="w-full border-b-2 border-border bg-transparent pb-1 text-center text-[44px] leading-tight font-bold tracking-tight tabular-nums transition-colors outline-none focus:border-foreground"
           />
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="mt-1.5 text-sm font-medium text-muted-foreground">
             {t.units.kcal}
           </span>
         </div>
@@ -304,9 +320,6 @@ function GoalStep({
             {t.onboarding.calculate}
           </button>
         </Squircle>
-        <p className="mt-3 text-[13px] text-muted-foreground">
-          {t.onboarding.calculateNote}
-        </p>
       </div>
 
       <div className="mt-auto pt-10">
@@ -354,4 +367,21 @@ function Stepper({
       </motion.button>
     </Squircle>
   )
+}
+
+// A displayed number that counts to each new target instead of jumping (a
+// stepper tap, a calculator pick). Snaps under reduced motion.
+function useCountTo(target: number): number {
+  const reduce = useReducedMotion()
+  const value = useMotionValue(target)
+  const [shown, setShown] = React.useState(target)
+  useMotionValueEvent(value, "change", (v) => setShown(Math.round(v)))
+  React.useEffect(() => {
+    const controls = animate(value, target, {
+      duration: reduce ? 0 : 0.35,
+      ease: "easeOut",
+    })
+    return () => controls.stop()
+  }, [value, target, reduce])
+  return shown
 }

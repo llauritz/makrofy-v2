@@ -16,7 +16,7 @@ export type AppView = "loading" | "onboarding" | "main"
 export function resolveAppView(
   uid: string | null,
   goalStatus: GoalStatus,
-  entriesStatus: EntriesStatus,
+  entriesStatus: EntriesStatus
 ): AppView {
   // Nothing is decidable without an identity — and we must never offer
   // onboarding before there is a uid to write the Goal against.

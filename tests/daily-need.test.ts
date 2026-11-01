@@ -4,7 +4,6 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  defaultPaceIndex,
   LIMITS,
   maintenanceKcal,
   paceOptions,
@@ -48,32 +47,28 @@ describe("paceOptions", () => {
     ])
   })
 
-  it("offers three losing paces, a 275 kcal/day step each", () => {
+  it("offers three gentle losing paces: 220, 385 and 550 kcal a day under", () => {
     expect(paceOptions(2203.3, "lose")).toEqual([
-      { kgPerWeek: 0.25, kcal: 1950 },
+      { kgPerWeek: 0.2, kcal: 2000 },
+      { kgPerWeek: 0.35, kcal: 1800 },
       { kgPerWeek: 0.5, kcal: 1650 },
-      { kgPerWeek: 0.75, kcal: 1400 },
     ])
   })
 
-  it("offers two gaining paces", () => {
+  it("offers the same three paces for gaining", () => {
     expect(paceOptions(2203.3, "gain")).toEqual([
-      { kgPerWeek: 0.25, kcal: 2500 },
+      { kgPerWeek: 0.2, kcal: 2400 },
+      { kgPerWeek: 0.35, kcal: 2600 },
       { kgPerWeek: 0.5, kcal: 2750 },
     ])
   })
 
   it("never suggests below 1,200 kcal, and collapses paces stuck on the floor", () => {
-    expect(paceOptions(1400, "lose")).toEqual([{ kgPerWeek: 0.25, kcal: 1200 }])
-    expect(paceOptions(1700, "lose")).toEqual([
-      { kgPerWeek: 0.25, kcal: 1450 },
-      { kgPerWeek: 0.5, kcal: 1200 },
+    expect(paceOptions(1400, "lose")).toEqual([{ kgPerWeek: 0.2, kcal: 1200 }])
+    expect(paceOptions(1550, "lose")).toEqual([
+      { kgPerWeek: 0.2, kcal: 1350 },
+      { kgPerWeek: 0.35, kcal: 1200 },
     ])
-  })
-
-  it("starts on the middle pace when there are three", () => {
-    expect(defaultPaceIndex(paceOptions(2203.3, "lose"))).toBe(1)
-    expect(defaultPaceIndex(paceOptions(2203.3, "gain"))).toBe(0)
   })
 })
 

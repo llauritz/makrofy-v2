@@ -1,10 +1,18 @@
+import * as React from "react"
+import { motion } from "motion/react"
+
 import { Squircle } from "@/components/ui/squircle"
 import { cn } from "@/lib/utils"
+import { FADE_IN, SPRING } from "@/screens/main/anim"
 
 // A pill segmented control (radiogroup), shared by Settings and the onboarding
-// daily-need sheet; `value` may be null while nothing is chosen yet. The active
-// segment is marked by fill, not motion — nothing moves, so there is no layout
-// jump between choices.
+// daily-need sheet; `value` may be null while nothing is chosen yet.
+//
+// The selection is one pill that slides between the segments. It is an
+// indicator, so travel is its message (spec § Motion), and the segments are
+// equal-width so it only ever moves between same-size anchors. The very
+// first choice (from nothing) fades the pill in where it lands instead, since
+// nothing may move and fade at once.
 export function Segmented<T extends string>({
   value,
   onChange,
@@ -19,43 +27,62 @@ export function Segmented<T extends string>({
   /** `sm` for Settings rows; `md` is the roomier form control (onboarding). */
   size?: "sm" | "md"
 }) {
+  const index = options.findIndex((option) => option.value === value)
+  const chosen = index >= 0
+
+  // Travel only when moving from one choice to another; appearing from no
+  // choice snaps into place. State-adjust-during-render, no effect needed.
+  const [prevIndex, setPrevIndex] = React.useState(index)
+  const [travels, setTravels] = React.useState(false)
+  if (prevIndex !== index) {
+    setPrevIndex(index)
+    setTravels(prevIndex >= 0)
+  }
+
   return (
     <Squircle asChild pill>
       <div
         role="radiogroup"
         aria-label={ariaLabel}
-        className="flex gap-1 rounded-full bg-input p-1"
+        className="relative flex rounded-full bg-input p-1"
       >
+        {/* The squircle's clip would erase a box-shadow, so the pill's shadow
+            hangs on its wrapper as a drop-shadow instead. */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-1 left-1 drop-shadow-[0_1px_1px_rgba(43,32,21,0.12)]"
+          style={{ width: `calc((100% - 0.5rem) / ${options.length})` }}
+          initial={false}
+          animate={{
+            x: `${Math.max(index, 0) * 100}%`,
+            opacity: chosen ? 1 : 0,
+          }}
+          transition={{
+            x: travels ? SPRING : { duration: 0 },
+            opacity: FADE_IN,
+          }}
+        >
+          <Squircle pill className="h-full w-full bg-card" />
+        </motion.div>
         {options.map((option) => {
           const active = option.value === value
-          // The squircle's clip would erase the active segment's box-shadow,
-          // so it hangs on a wrapper as a drop-shadow instead.
           return (
-            <div
+            <button
               key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(option.value)}
               className={cn(
-                "flex flex-1",
-                active && "drop-shadow-[0_1px_1px_rgba(43,32,21,0.12)]"
+                "relative flex-1 basis-0 rounded-full text-[13px] font-medium transition-colors duration-200",
+                size === "md" ? "px-2 py-2.5" : "px-3 py-1.5",
+                active
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Squircle asChild pill>
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => onChange(option.value)}
-                  className={cn(
-                    "flex-1 rounded-full px-3 text-[13px] font-medium transition-colors",
-                    size === "md" ? "px-2 py-2.5" : "py-1.5",
-                    active
-                      ? "bg-card text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {option.label}
-                </button>
-              </Squircle>
-            </div>
+              {option.label}
+            </button>
           )
         })}
       </div>

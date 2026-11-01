@@ -1,5 +1,4 @@
 import * as React from "react"
-import { AnimatePresence, motion } from "motion/react"
 
 import {
   BottomSheet,
@@ -10,7 +9,6 @@ import {
 import { Segmented } from "@/components/ui/segmented"
 import { Squircle } from "@/components/ui/squircle"
 import {
-  defaultPaceIndex,
   LIMITS,
   maintenanceKcal,
   paceOptions,
@@ -20,9 +18,10 @@ import {
   type Body,
   type Sex,
 } from "@/lib/daily-need"
+import type { Dictionary } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { cn } from "@/lib/utils"
-import { FADE_IN, FADE_OUT } from "@/screens/main/anim"
+import { FadeSwap } from "@/screens/main/FadeSwap"
 
 // "Calculate my daily need" (#35): a short form, then a result to pick from.
 // The details stay in this sheet's memory only. Nothing here is written
@@ -76,15 +75,15 @@ export function NeedSheet({
           <BottomSheetClose />
         </div>
 
-        {/* Form ⇄ result is a fade-through in place (spec § Motion). */}
-        <AnimatePresence mode="wait" initial={false}>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          {t.onboarding.detailsNote}
+        </p>
+
+        {/* Form ⇄ result: the sheet springs to the new height while the
+            content fades through (spec § Motion). */}
+        <FadeSwap swapKey={result === null ? "form" : "result"}>
           {result === null ? (
-            <motion.div
-              key="form"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: FADE_IN }}
-              exit={{ opacity: 0, transition: FADE_OUT }}
-            >
+            <>
               <NeedForm form={form} onChange={setForm} />
               <Squircle asChild pill>
                 <button
@@ -98,26 +97,19 @@ export function NeedSheet({
                   {t.onboarding.calculateButton}
                 </button>
               </Squircle>
-            </motion.div>
+            </>
           ) : (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, transition: FADE_IN }}
-              exit={{ opacity: 0, transition: FADE_OUT }}
-            >
-              <NeedResult
-                body={result.body}
-                aim={result.aim}
-                onUse={(kcal) => {
-                  onPick(kcal)
-                  onOpenChange(false)
-                }}
-                onEdit={() => setResult(null)}
-              />
-            </motion.div>
+            <NeedResult
+              body={result.body}
+              aim={result.aim}
+              onUse={(kcal) => {
+                onPick(kcal)
+                onOpenChange(false)
+              }}
+              onEdit={() => setResult(null)}
+            />
           )}
-        </AnimatePresence>
+        </FadeSwap>
       </BottomSheetContent>
     </BottomSheet>
   )
@@ -183,6 +175,13 @@ function NeedForm({
           { value: "high", label: t.onboarding.activityHigh },
         ]}
       />
+      {/* What the chosen level means. The line can wrap differently per
+          choice, so its box springs to the new height as the text fades. */}
+      <FadeSwap swapKey={form.activity ?? "none"}>
+        <p className="px-1 pt-2 text-[13px] leading-snug text-muted-foreground">
+          {activityHint(t, form.activity)}
+        </p>
+      </FadeSwap>
 
       <Label>{t.onboarding.aim}</Label>
       <Segmented<Aim>
@@ -214,7 +213,7 @@ function NeedResult({
   const { t, n } = useI18n()
   const maintenance = maintenanceKcal(body)
   const options = paceOptions(maintenance, aim)
-  const [picked, setPicked] = React.useState(() => defaultPaceIndex(options))
+  const [picked, setPicked] = React.useState(0)
   const choice = options[Math.min(picked, options.length - 1)]
 
   return (
@@ -241,7 +240,10 @@ function NeedResult({
                   asChild
                   radius="2xl"
                   outline="solid"
-                  outlineClassName={active ? "text-foreground" : "text-border"}
+                  outlineClassName={cn(
+                    "transition-colors duration-200",
+                    active ? "text-foreground" : "text-border"
+                  )}
                 >
                   <button
                     type="button"
@@ -296,6 +298,19 @@ function NeedResult({
       </button>
     </div>
   )
+}
+
+function activityHint(t: Dictionary, activity: Activity | null): string {
+  switch (activity) {
+    case "low":
+      return t.onboarding.activityHintLow
+    case "moderate":
+      return t.onboarding.activityHintModerate
+    case "high":
+      return t.onboarding.activityHintHigh
+    default:
+      return t.onboarding.activityHintNone
+  }
 }
 
 function Label({ children }: { children: React.ReactNode }) {
