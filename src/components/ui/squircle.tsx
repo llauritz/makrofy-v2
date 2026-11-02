@@ -257,9 +257,13 @@ export function SquircleOutline({ className, ...props }: StrokeProps) {
 
   React.useLayoutEffect(() => {
     if (!el) return
+    // Computed style, like useBox: getBoundingClientRect includes transforms,
+    // so a ring that mounts while its card is pressed (whileTap's scale-down)
+    // would freeze the shrunken size, and a transform ends without a resize
+    // to correct it — the ring then sat inside the card's edges.
     const measure = () => {
-      const b = el.getBoundingClientRect()
-      setSize({ w: b.width, h: b.height })
+      const cs = getComputedStyle(el)
+      setSize({ w: parseFloat(cs.width) || 0, h: parseFloat(cs.height) || 0 })
     }
     measure()
     const ro = new ResizeObserver(measure)
