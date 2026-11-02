@@ -6,6 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Yaffle</title>
   <meta name="description" content="A calm calorie and macro tracker." />
+  <link rel="canonical" href="https://yaffleapp.com/" />
+
+  <!-- yaffleapp.com is the primary domain (ADR 0015). Firebase still serves
+       goyaffle.web.app and goyaffle.firebaseapp.com, which send every visit,
+       the installed app included, to the same page on yaffleapp.com before
+       anything paints. -->
+  <script>
+    if (/^goyaffle\.(web\.app|firebaseapp\.com)$/.test(location.hostname)) {
+      location.replace("https://yaffleapp.com" + location.pathname + location.search + location.hash)
+    }
+  </script>
 
   <!-- Warm Market flour as the browser/OS chrome colour. ThemeProvider keeps
        this single meta in sync with the resolved theme (light #f6f1e6 / dark

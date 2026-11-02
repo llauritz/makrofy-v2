@@ -126,7 +126,7 @@ Normative: [#58](https://github.com/llauritz/makrofy-v2/issues/58) map + ADR 001
 
 Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10) + `docs/research/firebase-backend-validation.md`.
 
-- Canonical domain **`<project>.web.app`**; `authDomain` = serving domain with `/__/auth/handler` authorized (custom domain can layer on later).
+- Primary domain **`yaffleapp.com`** (ADR 0015); `goyaffle.web.app` and `goyaffle.firebaseapp.com` forward every visit there. `authDomain` = the serving domain (`goyaffle.web.app` on preview channels), each with its `/__/auth/handler` authorized. Console setup: `docs/runbooks/domain.md`.
 - **GitHub Actions**: live channel on merge to `main`; preview channel per PR. `firebase.json`: SPA rewrite, immutable hashed assets, `no-cache` for `sw.js`/`manifest.webmanifest`/`index.html`.
 - **One Firebase project**; local dev on the Emulator Suite (Auth + Firestore, never real data); AI calls gated by App Check debug tokens in dev; previews hit prod as throwaway guest UIDs.
 
