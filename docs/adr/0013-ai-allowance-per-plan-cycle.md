@@ -15,7 +15,9 @@ lowered from 100 to 20 RPM in the Google Cloud console) are the only enforced co
 real backstop.
 
 > **The cycle doc** `/users/{uid}/aiCycles/{cycle start, ISO}`:
-> `{ fills, calls, grounded, updatedAt }`, one write per round trip.
+> `{ fills, calls, grounded, updatedAt }`. `fills` and `calls` count as a
+> round trip starts, so the counter moves with the tap; `grounded` once its
+> reply is in.
 
 ## Decisions
 

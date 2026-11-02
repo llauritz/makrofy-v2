@@ -14,7 +14,7 @@ import { loadWordmarkPlayer } from "@/screens/main/wordmark-player"
 // do; listing the weights the first screens use keeps that true if a family is
 // ever split into static weights. Fraunces isn't here: the splash logo is an
 // inline SVG, and the welcome screen's wordmark is the animation.
-const FONTS = [
+export const FONTS = [
   '400 16px "Public Sans Variable"',
   '500 16px "Public Sans Variable"',
   '600 16px "Public Sans Variable"',

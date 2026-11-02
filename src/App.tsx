@@ -4,9 +4,10 @@ import { motion, MotionConfig } from "motion/react"
 import { useTheme } from "@/components/theme-provider"
 import { Spinner } from "@/components/ui/spinner"
 import { YaffleLogo } from "@/components/ui/yaffle-logo"
+import { readBootMirror } from "@/data/boot-mirror"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useEntriesStatus, useGoalStatus, useIdentity } from "@/data/hooks"
-import { db } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { bootSplashShowing, dismissBootSplash } from "@/lib/boot-splash"
 import { useAssetsReady } from "@/lib/preload"
 import { useI18n } from "@/lib/i18n/useI18n"
@@ -41,7 +42,10 @@ export function App() {
   const goalStatus = useGoalStatus(uid)
   // Only asked while the Goal is unset: has this profile logged before?
   const entriesStatus = useEntriesStatus(goalStatus === "unset" ? uid : null)
-  const view = resolveAppView(uid, goalStatus, entriesStatus)
+  // Read once: has this device ever held a profile? If not, the welcome
+  // screen needn't wait on the Guest sign-in or the server (see gate.ts).
+  const [freshDevice] = React.useState(() => readBootMirror() === null)
+  const view = resolveAppView(uid, goalStatus, entriesStatus, freshDevice)
   const assetsReady = useAssetsReady()
 
   // A profile that logged while onboarding was parked but never set a Goal
@@ -53,6 +57,22 @@ export function App() {
   React.useEffect(() => {
     if (needsDefaultGoal && uid) setGoal(db, uid, { kcal: DEFAULT_GOAL_KCAL })
   }, [needsDefaultGoal, uid])
+  // On a fresh device the welcome can show before the Guest sign-in lands, so
+  // a goal confirmed in that gap waits here and is written the moment there is
+  // a uid to write it against; the Goal listener then moves on to main.
+  const pendingGoal = React.useRef<number | null>(null)
+  React.useEffect(() => {
+    if (uid && pendingGoal.current !== null) {
+      setGoal(db, uid, { kcal: pendingGoal.current })
+      pendingGoal.current = null
+    }
+  }, [uid])
+  const submitGoal = (kcal: number) => {
+    const target = uid ?? auth.currentUser?.uid
+    if (target) setGoal(db, target, { kcal })
+    else pendingGoal.current = kcal
+  }
+
   // App-level view state: which full screen is showing. The screens swap by a
   // plain conditional below — only one is mounted at a time. The Glossary
   // remembers its opener (Settings on Main, or the stats dashboard) so its
@@ -89,9 +109,7 @@ export function App() {
           animate={{ opacity: 1 }}
           transition={FADE_IN}
         >
-          <OnboardingScreen
-            onSubmit={(kcal) => uid && setGoal(db, uid, { kcal })}
-          />
+          <OnboardingScreen onSubmit={submitGoal} />
         </motion.div>
       </MotionConfig>
     )

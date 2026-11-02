@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Check, Trash2, X } from "lucide-react"
-import { motion } from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 
 import type { Entry, EntryEdit } from "@/data/entries"
 import { useI18n } from "@/lib/i18n/useI18n"
@@ -118,9 +118,13 @@ export function EntryEditor({
     }
   }
 
-  // Nothing blank means nothing to fill: the ✨ disables rather than spend a
+  // Nothing blank means nothing to fill: the ✨ hides rather than spend a
   // round trip writing nothing. Blanking a field is the re-estimate gesture.
   const canFill = fillable.size > 0
+  // The editor usually opens on a complete Entry, so a dimmed ✨ there would
+  // just be a dead control. It shows only while a tap can fill something (or
+  // while it spins); blanking a field brings it back. Offline still shows it.
+  const showAi = ai.thinking || (uid !== null && canFill && label.trim() !== "")
 
   const startAi = () => {
     const description = label.trim()
@@ -161,26 +165,34 @@ export function EntryEditor({
             />
           </Squircle>
           <div className="absolute inset-y-0 right-1.5 flex items-center">
-            <motion.button
-              type="button"
-              onClick={startAi}
-              disabled={
-                uid === null || ai.thinking || !canFill || label.trim() === ""
-              }
-              whileTap={{ scale: 0.9 }}
-              aria-label={t.addCard.fillWithAi}
-              className={
-                "flex h-7 w-7 items-center justify-center rounded-full transition-opacity" +
-                // The spinning star is the wait itself, so it keeps full strength
-                // while the button is disabled for the round trip.
-                (ai.thinking ? "" : " disabled:opacity-40") +
-                // Offline the button dims in place but stays tappable — the
-                // tap answers with the quiet connection note in the zone.
-                (online ? "" : " opacity-40")
-              }
-            >
-              <AiSparkle spinning={ai.thinking} className="h-[18px] w-[18px]" />
-            </motion.button>
+            <AnimatePresence initial={false}>
+              {showAi && (
+                <motion.button
+                  key="ai"
+                  type="button"
+                  onClick={startAi}
+                  disabled={ai.thinking}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  // Offline the button dims in place but stays tappable — the
+                  // tap answers with the quiet connection note in the zone. (The
+                  // dim lives here: motion's inline opacity would beat a class.)
+                  animate={{
+                    opacity: online || ai.thinking ? 1 : 0.4,
+                    scale: 1,
+                  }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label={t.addCard.fillWithAi}
+                  className="flex h-7 w-7 items-center justify-center rounded-full"
+                >
+                  <AiSparkle
+                    spinning={ai.thinking}
+                    className="h-[18px] w-[18px]"
+                  />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         <Squircle asChild pill>

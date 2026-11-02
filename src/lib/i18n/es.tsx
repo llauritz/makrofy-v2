@@ -183,28 +183,35 @@ export const es: Dictionary = {
   },
 
   install: {
-    installApp: "Instalar app",
-    howTo: "Cómo",
-    addToHomeScreen: "Añadir a inicio",
     iosTitle: "Instala Yaffle",
     iosBody:
       "Añade Yaffle a tu pantalla de inicio para una app a pantalla completa y lista sin conexión.",
     iosStep1: (
       <>
-        Toca el botón{" "}
-        <span className="font-medium text-foreground">Compartir</span> en la
-        barra de herramientas de Safari.
+        Toca <span className="font-medium text-foreground">Compartir</span> en
+        la barra del navegador. En Safari con iOS 26, abre primero el menú{" "}
+        <span className="font-medium text-foreground">&middot;&middot;&middot;</span>.
       </>
     ),
     iosStep2: (
       <>
-        Elige{" "}
+        Desliza hacia abajo y elige{" "}
         <span className="font-medium text-foreground">
           Añadir a pantalla de inicio
         </span>
         .
       </>
     ),
+    iosStep3: (
+      <>
+        Toca <span className="font-medium text-foreground">Añadir</span>.
+      </>
+    ),
+    cardTitle: "Añadir al inicio",
+    cardBody: "Abre en pantalla completa.",
+    cardInstall: "Instalar",
+    cardShowHow: "Ver cómo",
+    cardDismiss: "Descartar",
   },
 
   backup: {
@@ -365,7 +372,7 @@ export const es: Dictionary = {
     continueWith: (plan) => `Continuar con ${plan}`,
     checkoutStub: "El pago aún no está configurado.",
     billingError: "No funcionó. Revisa tu conexión y vuelve a intentarlo.",
-    footnote: "Cancela cuando quieras",
+    footnote: "Impuestos incluidos · Cancela cuando quieras",
     usageMeter: (used, limit) =>
       `${used}/${limit} rellenos con IA gratis usados`,
     exhaustedFree: (limit) => `Usaste los ${limit} rellenos con IA gratis.`,

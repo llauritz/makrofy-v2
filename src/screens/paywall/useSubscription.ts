@@ -11,6 +11,7 @@ import {
   listenToEntitlement,
   type Entitlement,
 } from "@/data/entitlement"
+import { readPlanMirror, writePlanMirror } from "@/data/plan-mirror"
 import { aiCycle, cycleWindow, type AiCycle } from "@/data/plans"
 import { auth, db } from "@/lib/firebase"
 
@@ -19,6 +20,11 @@ import { auth, db } from "@/lib/firebase"
 // timer that rolls the cycle over at its end. The anchor is the entitlement's
 // planStartedAt, or — for someone who has never bought — when the account was
 // created; neither can be moved from the client.
+//
+// A returning launch seeds all three from the plan mirror (src/data/plan
+// -mirror.ts), so the fill counter and a used-up allowance are on screen from
+// the first frame instead of arriving once Firebase Auth has settled. The live
+// listeners take over the moment they answer.
 
 export interface SubscriptionState {
   /** The webhook-written doc, or null for someone who never subscribed. */
@@ -34,11 +40,14 @@ export interface SubscriptionState {
 export function useSubscriptionState(
   uid: string | null
 ): SubscriptionState | null {
-  const created = useAccountCreated(uid)
+  // Read once, for the launch's identity; the uid checks below keep it from
+  // ever standing in for another profile.
+  const [seed] = React.useState(() => readPlanMirror(uid))
+  const created = useAccountCreated(uid, seed?.createdMs ?? null)
   const [entitlement, setEntitlement] = React.useState<{
     uid: string
     value: Entitlement | null
-  } | null>(null)
+  } | null>(() => (seed ? { uid: seed.uid, value: seed.entitlement } : null))
   React.useEffect(() => {
     if (uid === null) return
     return listenToEntitlement(db, uid, (value) =>
@@ -78,7 +87,9 @@ export function useSubscriptionState(
   const [usage, setUsage] = React.useState<{
     key: string
     value: CycleUsage
-  } | null>(null)
+  } | null>(() =>
+    seed ? { key: `${seed.uid}/${seed.cycleId}`, value: seed.usage } : null
+  )
   const usageKey = uid && cycleId ? `${uid}/${cycleId}` : null
   React.useEffect(() => {
     if (uid === null || cycleId === null) return
@@ -88,7 +99,7 @@ export function useSubscriptionState(
     )
   }, [uid, cycleId])
 
-  return React.useMemo(() => {
+  const state = React.useMemo(() => {
     if (!loaded || !span || !cycleId || usage?.key !== usageKey) return null
     return {
       entitlement: ent,
@@ -97,14 +108,36 @@ export function useSubscriptionState(
       usage: usage.value,
     }
   }, [loaded, ent, now, span, cycleId, usage, usageKey])
+
+  const createdMs = created?.getTime() ?? null
+  React.useEffect(() => {
+    if (uid === null || state === null) return
+    writePlanMirror({
+      uid,
+      createdMs,
+      entitlement: state.entitlement,
+      cycleId: state.cycleId,
+      usage: state.usage,
+    })
+  }, [uid, createdMs, state])
+
+  return state
 }
 
-/** When the signed-in account was created — Free's cycle anchor. */
-function useAccountCreated(uid: string | null): Date | null {
+/**
+ * When the signed-in account was created — Free's cycle anchor. `seedMs` is
+ * the mirrored value, used until Auth reports the account itself.
+ */
+function useAccountCreated(
+  uid: string | null,
+  seedMs: number | null
+): Date | null {
   const [created, setCreated] = React.useState<{
     uid: string
     at: Date
-  } | null>(null)
+  } | null>(() =>
+    uid !== null && seedMs !== null ? { uid, at: new Date(seedMs) } : null
+  )
   React.useEffect(
     () =>
       onAuthStateChanged(auth, (user) => {

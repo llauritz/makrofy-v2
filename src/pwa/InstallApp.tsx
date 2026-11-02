@@ -1,4 +1,4 @@
-import { Download, Share, SquarePlus } from "lucide-react"
+import { Check, Share, SquarePlus } from "lucide-react"
 import * as React from "react"
 
 import {
@@ -11,13 +11,13 @@ import {
 import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
 
+import { AppIcon } from "./AppIcon"
 import { useInstallPrompt } from "./useInstallPrompt"
 
-// The quiet "Install app" entry (spec § PWA & offline): no banners, no nudges.
-// It only renders where it can act — a captured native prompt on Chromium, or
-// the Add-to-Home-Screen guide on iOS — and disappears once installed.
-//
-// Belongs in Settings; #17 builds that surface and re-homes this component.
+// The quiet "Install app" entry in Settings (spec § PWA & offline). It only
+// renders where it can act — a captured native prompt on Chromium, or the
+// Add-to-Home-Screen guide on iOS — and disappears once installed. The main
+// screen's InstallCard offers the same once, on phones.
 export function InstallAppEntry() {
   const { t } = useI18n()
   const { affordance, promptInstall } = useInstallPrompt()
@@ -35,23 +35,36 @@ export function InstallAppEntry() {
     }
   }
 
+  // Laid out like the main screen's install card (icon, title over a short
+  // explanation, the action as an outlined pill), in the type of the other
+  // Settings rows (Sign in with Google). The whole row is the
+  // button, so the pill is drawn, not nested.
   return (
     <>
       <Squircle asChild radius="2xl">
         <button
           type="button"
           onClick={onClick}
-          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
+          className="flex w-full items-center gap-2.5 py-2.5 pr-4 pl-2 text-left transition-colors hover:bg-muted"
         >
-          <Download className="h-[18px] w-[18px] text-muted-foreground" />
-          <span className="flex-1 text-[15px] font-medium">
-            {t.install.installApp}
+          <AppIcon size={42} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-medium">
+              {t.install.cardTitle}
+            </span>
+            <span className="block truncate text-[13px] text-muted-foreground">
+              {t.install.cardBody}
+            </span>
           </span>
-          <span className="text-[13px] text-muted-foreground">
+          <Squircle
+            pill
+            outline="solid"
+            className="shrink-0 rounded-full px-2 py-1 text-xs font-medium"
+          >
             {affordance === "ios-guide"
-              ? t.install.howTo
-              : t.install.addToHomeScreen}
-          </span>
+              ? t.install.cardShowHow
+              : t.install.cardInstall}
+          </Squircle>
         </button>
       </Squircle>
 
@@ -60,9 +73,9 @@ export function InstallAppEntry() {
   )
 }
 
-// A short instruction sheet for iOS Safari, which never fires
-// `beforeinstallprompt` — the user installs via the Share menu by hand.
-function IosInstallGuide({
+// A short instruction sheet for iOS, which never fires `beforeinstallprompt`:
+// the user installs via the Share menu by hand. Shared with InstallCard.
+export function IosInstallGuide({
   open,
   onOpenChange,
 }: {
@@ -91,6 +104,9 @@ function IosInstallGuide({
           <IosStep icon={<SquarePlus className="h-5 w-5" />} n={2}>
             {t.install.iosStep2}
           </IosStep>
+          <IosStep icon={<Check className="h-5 w-5" />} n={3}>
+            {t.install.iosStep3}
+          </IosStep>
         </ol>
       </BottomSheetContent>
     </BottomSheet>
@@ -108,9 +124,12 @@ function IosStep({
 }) {
   return (
     <li className="flex items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-secondary text-foreground">
+      <Squircle
+        radius="lg"
+        className="flex h-10 w-10 shrink-0 items-center justify-center bg-secondary text-foreground"
+      >
         {icon}
-      </span>
+      </Squircle>
       <span className="text-[15px]">
         <span className="text-muted-foreground">{n}. </span>
         {children}

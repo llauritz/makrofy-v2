@@ -110,6 +110,30 @@ function PrimaryButton({
   )
 }
 
+// The secondary action under PrimaryButton: the same pill and type, drawn
+// as an outline (the squircle strokes its own path) instead of filled. Its
+// 1px border box takes 1px off each side of the padding, so the two match.
+function OutlineButton({
+  onClick,
+  children,
+}: {
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <Squircle asChild pill outline="solid">
+      <motion.button
+        type="button"
+        onClick={onClick}
+        whileTap={{ scale: 0.98 }}
+        className="w-full rounded-full py-[13px] text-[15px] font-semibold transition-colors hover:bg-muted"
+      >
+        {children}
+      </motion.button>
+    </Squircle>
+  )
+}
+
 // The AI point wears the app's own AI mark, as the add card above it does:
 // solid, to match the strength of the line icons beside it, and a touch
 // smaller than them, since a filled star reads heavier than an outline.
@@ -182,13 +206,11 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         {/* The same wording as the Settings sign-in row. It links onto this
             Guest (ADR 0002); a returning user's synced Goal then arrives
             and the gate moves on to the main screen. */}
-        <button
-          type="button"
-          onClick={() => void startGoogleSignIn(auth)}
-          className="mt-1 w-full py-3 text-center text-sm leading-5 font-semibold underline-offset-4 hover:underline"
-        >
-          {t.signIn.signInWithGoogle}
-        </button>
+        <div className="mt-3">
+          <OutlineButton onClick={() => void startGoogleSignIn(auth)}>
+            {t.signIn.signInWithGoogle}
+          </OutlineButton>
+        </div>
       </div>
     </Page>
   )

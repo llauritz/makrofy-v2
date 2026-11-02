@@ -210,24 +210,33 @@ export const en = {
   },
 
   install: {
-    installApp: "Install app",
-    howTo: "How to",
-    addToHomeScreen: "Add to home screen",
     iosTitle: "Install Yaffle",
     iosBody:
       "Add Yaffle to your home screen for a full-screen, offline-ready app.",
     iosStep1: (
       <>
-        Tap the <span className="font-medium text-foreground">Share</span>{" "}
-        button in Safari&rsquo;s toolbar.
+        Tap <span className="font-medium text-foreground">Share</span> in the
+        browser&rsquo;s toolbar. In Safari on iOS 26, open the{" "}
+        <span className="font-medium text-foreground">&middot;&middot;&middot;</span>{" "}
+        menu first.
       </>
     ),
     iosStep2: (
       <>
-        Choose{" "}
+        Scroll down and choose{" "}
         <span className="font-medium text-foreground">Add to Home Screen</span>.
       </>
     ),
+    iosStep3: (
+      <>
+        Tap <span className="font-medium text-foreground">Add</span>.
+      </>
+    ),
+    cardTitle: "Add to home screen",
+    cardBody: "Opens full screen.",
+    cardInstall: "Install",
+    cardShowHow: "Show how",
+    cardDismiss: "Dismiss",
   },
 
   backup: {
@@ -391,7 +400,7 @@ export const en = {
     checkoutStub: "Checkout isn’t set up yet.",
     // Checkout, plan change or the Paddle portal didn't open.
     billingError: "That didn’t work. Check your connection and try again.",
-    footnote: "Cancel anytime",
+    footnote: "Includes tax · Cancel anytime",
     // The free counter under the add card's macros, after an AI use.
     usageMeter: (used: string, limit: string) =>
       `${used}/${limit} free AI fills used`,

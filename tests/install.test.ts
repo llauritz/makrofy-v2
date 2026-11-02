@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { resolveInstallAffordance, type InstallEnv } from "@/pwa/install"
+import {
+  resolveInstallAffordance,
+  showInstallCard,
+  type InstallEnv,
+} from "@/pwa/install"
 
 // The install entry is quiet (spec § PWA & offline): it only appears where it
 // can actually do something, and never once the app is already installed.
@@ -61,5 +65,30 @@ describe("resolveInstallAffordance", () => {
         isIOS: true,
       }),
     ).toBe("prompt")
+  })
+})
+
+describe("showInstallCard", () => {
+  const card = { affordance: "prompt" as const, isTouch: true, dismissed: false }
+
+  it("shows on a phone where the native prompt is ready", () => {
+    expect(showInstallCard(card)).toBe(true)
+  })
+
+  it("shows on iOS, where it opens the Add-to-Home-Screen guide", () => {
+    expect(showInstallCard({ ...card, affordance: "ios-guide" })).toBe(true)
+  })
+
+  it("never shows once installed or where installing isn't possible", () => {
+    expect(showInstallCard({ ...card, affordance: "installed" })).toBe(false)
+    expect(showInstallCard({ ...card, affordance: "none" })).toBe(false)
+  })
+
+  it("stays away for good once dismissed", () => {
+    expect(showInstallCard({ ...card, dismissed: true })).toBe(false)
+  })
+
+  it("leaves desktop browsers to the Settings row", () => {
+    expect(showInstallCard({ ...card, isTouch: false })).toBe(false)
   })
 })

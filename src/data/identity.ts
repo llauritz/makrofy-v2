@@ -33,6 +33,12 @@ const RETRYABLE = new Set([
   "auth/too-many-requests",
 ])
 
+// The Guest sign-in in flight per Auth instance, so overlapping callers share
+// one mint instead of racing two anonymous accounts into existence — e.g. the
+// launch's bootstrap and a Google sign-in tapped on a welcome screen that
+// showed before the bootstrap finished.
+const minting = new WeakMap<Auth, Promise<User>>()
+
 /**
  * Resolve with the app's Firebase identity, minting a silent Guest
  * (anonymous) identity when none exists — ADR 0002. Whenever the app opens
@@ -42,6 +48,15 @@ const RETRYABLE = new Set([
 export async function ensureIdentity(auth: Auth): Promise<User> {
   await auth.authStateReady()
   if (auth.currentUser) return auth.currentUser
+  let mint = minting.get(auth)
+  if (!mint) {
+    mint = mintGuest(auth).finally(() => minting.delete(auth))
+    minting.set(auth, mint)
+  }
+  return mint
+}
+
+async function mintGuest(auth: Auth): Promise<User> {
   for (let attempt = 0; ; attempt++) {
     try {
       const { user } = await signInAnonymously(auth)

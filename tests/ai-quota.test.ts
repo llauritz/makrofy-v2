@@ -13,6 +13,7 @@ import {
   listenToCycleUsage,
   readAiUsage,
   recordAiCall,
+  recordGrounded,
   type CycleUsage,
 } from "@/data/ai-quota"
 import { ensureIdentity } from "@/data/identity"
@@ -65,7 +66,7 @@ describe("ai quota", () => {
   })
 })
 
-// ADR 0013: the plan cycle counter — fills, calls and grounded in one write.
+// ADR 0013: the plan cycle counter — fills, calls and grounded.
 describe("ai cycle counter", () => {
   let ctx: EmulatorApp
   let uid: string
@@ -87,9 +88,10 @@ describe("ai cycle counter", () => {
     await waitFor(() => usage)
     expect(usage).toEqual({ fills: 0, calls: 0, grounded: 0 })
 
-    recordAiCall(ctx.db, uid, CYCLE, { fill: true, grounded: true })
-    recordAiCall(ctx.db, uid, CYCLE, { fill: false, grounded: false })
-    recordAiCall(ctx.db, uid, CYCLE, { fill: true, grounded: false })
+    recordAiCall(ctx.db, uid, CYCLE, { fill: true })
+    recordGrounded(ctx.db, uid, CYCLE)
+    recordAiCall(ctx.db, uid, CYCLE, { fill: false })
+    recordAiCall(ctx.db, uid, CYCLE, { fill: true })
     await waitForPendingWrites(ctx.db)
 
     await waitFor(() => (usage?.calls === 3 ? usage : undefined))
@@ -98,7 +100,7 @@ describe("ai cycle counter", () => {
   })
 
   it("keeps each cycle's counts apart", async () => {
-    recordAiCall(ctx.db, uid, CYCLE, { fill: true, grounded: false })
+    recordAiCall(ctx.db, uid, CYCLE, { fill: true })
     await waitForPendingWrites(ctx.db)
     let next: CycleUsage | undefined
     const stop = listenToCycleUsage(
