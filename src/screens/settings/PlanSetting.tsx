@@ -50,8 +50,10 @@ export function PlanSetting({ onOpen }: { onOpen: () => void }) {
             : t.paywall.unlimitedStatus(n(cycle.used), date)
 
   return (
-    <Squircle radius="2xl" className="flex items-center gap-3 px-4 py-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
+    // 32px badge hung into the left padding, matching the account photo and
+    // the Export / Import icon slots below (one icon centre, one text edge).
+    <Squircle radius="2xl" className="flex items-center gap-2.5 py-3 pr-4 pl-1">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
         <AiSparkle className="h-[18px] w-[18px]" />
       </span>
       <div className="min-w-0 flex-1">

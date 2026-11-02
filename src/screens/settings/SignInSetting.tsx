@@ -24,9 +24,9 @@ export function SignInSetting({ highlight = false }: { highlight?: boolean }) {
 
   if (signedIn) {
     return (
-      // The avatar hangs left into the row's padding so the name lines up
-      // with the labels of the rows below (Export / Import data): 4px + 32px
-      // + 10px = the 16px + 18px icon + 12px of a plain row.
+      // The avatar hangs left into the row's padding: 4px + 32px + 10px, the
+      // same icon slot as the plan badge and Export / Import, so icons share
+      // one centre line and labels one left edge.
       <Squircle
         radius="2xl"
         className="relative isolate flex items-center gap-2.5 py-3 pr-4 pl-1"
@@ -63,10 +63,12 @@ export function SignInSetting({ highlight = false }: { highlight?: boolean }) {
         type="button"
         disabled={user === null}
         onClick={() => void startGoogleSignIn(auth)}
-        className="relative isolate flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-45"
+        className="relative isolate flex w-full items-center gap-2.5 py-3 pr-4 pl-1 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-45"
       >
         <RowBlink active={highlight} />
-        <LogIn className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
+        <span className="flex w-8 shrink-0 justify-center text-muted-foreground">
+          <LogIn className="h-[18px] w-[18px]" />
+        </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-medium">
             {t.signIn.signInWithGoogle}
