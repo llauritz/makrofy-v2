@@ -150,7 +150,7 @@ export function useAiFill({
       // fill counts once, its clarifying answer only as a call (ADR 0013).
       // A failed call still hit the service, so it counts too.
       if (cycleId !== null) recordAiCall(db, uid, cycleId, { fill: !final })
-      const reply = await fillMacros(prompt)
+      const reply = await fillMacros(prompt, final)
       if (cycleId !== null && reply?.attribution != null) {
         recordGrounded(db, uid, cycleId)
       }

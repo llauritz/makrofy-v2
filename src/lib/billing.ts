@@ -1,7 +1,7 @@
 import type { Paddle, PaddleEventData } from "@paddle/paddle-js"
 
 import type { Billing } from "@/data/plans"
-import { app } from "@/lib/firebase"
+import { callable } from "@/lib/functions"
 import {
   PADDLE,
   paddleConfigured,
@@ -83,21 +83,6 @@ export async function openCheckout(req: CheckoutRequest): Promise<void> {
     },
   })
 }
-
-async function callable<Req, Res>(name: string, data: Req): Promise<Res> {
-  const { getFunctions, httpsCallable, connectFunctionsEmulator } =
-    await import("firebase/functions")
-  const functions = getFunctions(app, "us-central1")
-  // Local dev runs against the emulators (spec § Deploy & environments); the
-  // functions emulator is started separately — docs/runbooks/paddle.md.
-  if (import.meta.env.DEV && !emulatorConnected) {
-    connectFunctionsEmulator(functions, "127.0.0.1", 5001)
-    emulatorConnected = true
-  }
-  const result = await httpsCallable<Req, Res>(functions, name)(data)
-  return result.data
-}
-let emulatorConnected = false
 
 /** A short-lived link into Paddle's customer portal for this user. */
 export async function portalLink(): Promise<string> {
