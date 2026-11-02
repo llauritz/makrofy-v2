@@ -40,4 +40,23 @@ describe("resolveAppView", () => {
     // Logged while onboarding was parked (#35): past first run already.
     expect(resolveAppView("uid-1", "unset", "some")).toBe("main")
   })
+
+  describe("on a fresh device (never held a profile)", () => {
+    it("shows onboarding at once instead of waiting on sign-in and the server", () => {
+      expect(resolveAppView(null, "loading", "loading", true)).toBe("onboarding")
+      expect(resolveAppView("uid-1", "loading", "loading", true)).toBe(
+        "onboarding",
+      )
+      expect(resolveAppView("uid-1", "unset", "loading", true)).toBe(
+        "onboarding",
+      )
+    })
+
+    it("still lets the real answer win once it arrives", () => {
+      // e.g. a Google sign-in from Welcome brings a synced Goal or history.
+      expect(resolveAppView("uid-1", "set", "loading", true)).toBe("main")
+      expect(resolveAppView("uid-1", "unset", "some", true)).toBe("main")
+      expect(resolveAppView("uid-1", "unset", "none", true)).toBe("onboarding")
+    })
+  })
 })

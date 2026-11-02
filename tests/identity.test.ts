@@ -65,6 +65,18 @@ describe("ensureIdentity", () => {
     const second = await ensureIdentity(ctx.auth)
     expect(second.uid).toBe(first.uid)
   })
+
+  it("shares one Guest between overlapping first-launch calls", async () => {
+    // The launch bootstrap and a sign-in tapped on an early welcome screen can
+    // both ask before either has minted; they must not create two Guests.
+    ctx = createEmulatorApp()
+    const [a, b] = await Promise.all([
+      ensureIdentity(ctx.auth),
+      ensureIdentity(ctx.auth),
+    ])
+    expect(b.uid).toBe(a.uid)
+    expect(ctx.auth.currentUser?.uid).toBe(a.uid)
+  })
 })
 
 describe("signOutToGuest", () => {

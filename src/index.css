@@ -186,6 +186,13 @@
         animation: splash-spin 0.9s linear infinite;
     }
 }
+/* index.html's font warm-up text: laid out (so the fonts download) but never
+   seen or announced. */
+.splash-fonts {
+    position: absolute;
+    visibility: hidden;
+    pointer-events: none;
+}
 /* A returning launch never sees the static copy (index.html sets the class). */
 .boot-mirror #boot-splash {
     display: none;
