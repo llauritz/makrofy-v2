@@ -7,16 +7,14 @@ import { planForPrice, type Billing, type PaidPlan } from "./paddle-config.js"
 // write it (Admin SDK; the security rules refuse every client write). The app
 // reads it like any other doc and derives its limits from `plan`; the AI
 // allowance cycle anchors on `planStartedAt` (ADR 0013), which therefore moves
-// only when the plan itself changes: purchase, upgrade, lapse to free,
-// resubscribe. A renewal or a switch between monthly and yearly keeps it.
+// only on a purchase, an upgrade, a lapse to free or a resubscribe. A renewal,
+// a switch between monthly and yearly, a downgrade, and a pause with its
+// resume all keep it (the owner's call, Nov 2026: a downgrade must not hand
+// out a fresh allowance).
 
 export type Plan = "free" | PaidPlan
 export type SubscriptionStatus =
-  | "active"
-  | "trialing"
-  | "past_due"
-  | "paused"
-  | "canceled"
+  "active" | "trialing" | "past_due" | "paused" | "canceled"
 
 /** The part of a Paddle subscription entity we read. */
 export interface PaddleSubscription {
@@ -51,12 +49,72 @@ export interface Entitlement {
 }
 
 export type Decision =
-  | { kind: "write"; entitlement: Entitlement }
-  | { kind: "skip"; reason: string }
+  { kind: "write"; entitlement: Entitlement } | { kind: "skip"; reason: string }
 
 /** Statuses that keep a paid plan: Paddle is still collecting (or retrying). */
 export function isEntitling(status: SubscriptionStatus): boolean {
   return status === "active" || status === "trialing" || status === "past_due"
+}
+
+/** A subscription as last seen, with when that state was current. */
+export interface SeenSubscription {
+  sub: PaddleSubscription
+  occurredAt: Date
+}
+
+const RANK: Record<Plan, number> = { free: 0, pro: 1, unlimited: 2 }
+
+function rankOf(sub: PaddleSubscription): number {
+  const priceId = sub.items.find((item) => item.price?.id)?.price?.id
+  const sold = priceId ? planForPrice(priceId) : null
+  return sold ? RANK[sold.plan] : 0
+}
+
+/**
+ * The subscription the entitlement follows when a user has more than one —
+ * two checkouts on two devices, or a second plan bought instead of upgrading.
+ * Of those still entitling, the highest plan wins, then the newest; with none
+ * entitling, the one that just changed, so the doc shows its lapse. Without
+ * this, cancelling the newer of two left the user on Free while the older
+ * one was still charging them.
+ */
+export function leadSubscription(
+  changed: SeenSubscription,
+  others: SeenSubscription[]
+): SeenSubscription {
+  const live = [
+    changed,
+    ...others.filter((o) => o.sub.id !== changed.sub.id),
+  ].filter((s) => isEntitling(s.sub.status))
+  if (live.length === 0) return changed
+  return live.reduce((best, s) => {
+    const diff = rankOf(s.sub) - rankOf(best.sub)
+    return diff > 0 ||
+      (diff === 0 && s.occurredAt.getTime() > best.occurredAt.getTime())
+      ? s
+      : best
+  })
+}
+
+/** Whether the AI cycle keeps its anchor through this change. */
+function keepsCycle(
+  prev: Entitlement | null,
+  sub: PaddleSubscription,
+  plan: Plan
+): boolean {
+  if (!prev) return false
+  // Renewal, or monthly ↔ yearly.
+  if (prev.plan === plan) return true
+  // Downgrade between paid plans: the used fills carry over.
+  if (plan !== "free" && prev.plan !== "free" && RANK[plan] < RANK[prev.plan])
+    return true
+  // A pause holds the cycle, and resuming the same subscription picks it up.
+  if (sub.status === "paused") return true
+  return (
+    plan !== "free" &&
+    prev.status === "paused" &&
+    prev.subscriptionId === sub.id
+  )
 }
 
 /** The Firebase uid the checkout attached as custom data, if any. */
@@ -117,8 +175,9 @@ export function nextEntitlement(
       provider: "paddle",
       customerId: sub.customer_id,
       subscriptionId: sub.id,
-      planStartedAt:
-        prev && prev.plan === plan ? prev.planStartedAt : occurredAt,
+      planStartedAt: keepsCycle(prev, sub, plan)
+        ? prev!.planStartedAt
+        : occurredAt,
       currentPeriodEnd: sub.current_billing_period
         ? new Date(sub.current_billing_period.ends_at)
         : null,

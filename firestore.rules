@@ -17,8 +17,8 @@ service cloud.firestore {
                    && request.auth.uid == userId
                    && request.path != /databases/$(database)/documents/users/$(userId)/settings/subscription;
     }
-    // Everything outside /users — the webhook's /paddleEvents log, the AI
-    // fill /aiFailures reports and /aiHealth windows (ADR 0014) — is
-    // server-only: no rule matches, so every client request is refused.
+    // Everything outside /users — the webhook's /paddleEvents log and
+    // /paddleSubscriptions records, the AI fill /aiFailures reports and
+    // /aiHealth windows (ADR 0014) — is server-only: no rule matches, so every client request is refused.
   }
 }

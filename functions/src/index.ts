@@ -34,6 +34,16 @@ const PADDLE_API_KEY = defineSecret("PADDLE_API_KEY")
 const REGION = "us-central1"
 
 /**
+ * An error as log fields. An Error's message and stack aren't enumerable, so
+ * logging the object itself came out as {} — a failure with no reason.
+ */
+function errorFields(err: unknown): { error: string; stack?: string } {
+  return err instanceof Error
+    ? { error: err.message, stack: err.stack }
+    : { error: String(err) }
+}
+
+/**
  * Paddle notification destination:
  * https://us-central1-goyaffle.cloudfunctions.net/paddleWebhook
  * 200 tells Paddle the event is handled (or deliberately ignored); anything
@@ -76,7 +86,11 @@ export const paddleWebhook = onRequest(
       }
       res.status(200).send(outcome)
     } catch (err) {
-      logger.error("Paddle webhook failed", { eventId: event.event_id, err })
+      logger.error("Paddle webhook failed", {
+        eventId: event.event_id,
+        type: event.event_type,
+        ...errorFields(err),
+      })
       res.status(500).send("Failed")
     }
   }
@@ -112,7 +126,7 @@ export const paddlePortal = onCall(
       )
       return { url }
     } catch (err) {
-      logger.error("Paddle portal failed", { uid, err })
+      logger.error("Paddle portal failed", { uid, ...errorFields(err) })
       throw new HttpsError("unavailable", "Paddle didn't answer.")
     }
   }
@@ -147,7 +161,7 @@ export const paddleChangePlan = onCall(
         priceId
       )
     } catch (err) {
-      logger.error("Paddle plan change failed", { uid, err })
+      logger.error("Paddle plan change failed", { uid, ...errorFields(err) })
       throw new HttpsError("unavailable", "Paddle didn't answer.")
     }
     await applySubscription(

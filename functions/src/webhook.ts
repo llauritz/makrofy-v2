@@ -1,17 +1,22 @@
 import { FieldValue, Timestamp, type Firestore } from "firebase-admin/firestore"
 
 import {
+  leadSubscription,
   nextEntitlement,
   uidOf,
+  type Decision,
   type Entitlement,
   type PaddleSubscription,
+  type SeenSubscription,
 } from "./entitlement.js"
 
 // Applying Paddle events to Firestore. One transaction per event reads the
 // entitlement doc, decides with nextEntitlement, writes the doc and records the
 // event id under /paddleEvents — so a redelivered event is applied once, and
-// the log doubles as an audit trail. /paddleEvents sits outside /users and is
-// therefore closed to every client by the security rules.
+// the log doubles as an audit trail. Each subscription's latest state is kept
+// under /paddleSubscriptions, so a user with two of them keeps the plan of the
+// one still paying (leadSubscription). Both collections sit outside /users and
+// are therefore closed to every client by the security rules.
 
 /** The subscription events the notification destination subscribes to. */
 export const SUBSCRIPTION_EVENTS = new Set([
@@ -68,10 +73,39 @@ export async function applySubscription(
 ): Promise<ApplyOutcome> {
   const ref = entitlementRef(db, uid)
   const eventRef = event ? db.doc(`paddleEvents/${event.event_id}`) : null
+  const subRef = db.doc(`paddleSubscriptions/${sub.id}`)
   return db.runTransaction(async (tx) => {
     if (eventRef && (await tx.get(eventRef)).exists) return "duplicate"
     const prev = fromDoc((await tx.get(ref)).data())
-    const decision = nextEntitlement(prev, sub, occurredAt)
+    const seen = (
+      await tx.get(db.collection("paddleSubscriptions").where("uid", "==", uid))
+    ).docs
+      .map((d) => fromSeenDoc(d.data()))
+      .filter((s): s is SeenSubscription => s !== null)
+    // Staleness is per subscription: an event older than this subscription's
+    // last applied state loses. (A doc from before the per-subscription
+    // records falls back to the entitlement's own event time.)
+    const lastSeen =
+      seen.find((s) => s.sub.id === sub.id)?.occurredAt ??
+      (prev?.subscriptionId === sub.id ? prev.eventAt : null)
+    let decision: Decision
+    if (lastSeen && occurredAt.getTime() < lastSeen.getTime()) {
+      decision = { kind: "skip", reason: "older than the last applied event" }
+    } else {
+      const lead = leadSubscription({ sub, occurredAt }, seen)
+      // The doc is now derived from every subscription, so it only ever
+      // moves forward: stamp it with the later of the two times.
+      const at =
+        prev && prev.eventAt.getTime() > occurredAt.getTime()
+          ? prev.eventAt
+          : occurredAt
+      decision = nextEntitlement(prev, lead.sub, at)
+      tx.set(subRef, {
+        uid,
+        sub: trimmed(sub),
+        occurredAt: Timestamp.fromDate(occurredAt),
+      })
+    }
     if (decision.kind === "write") {
       tx.set(ref, toDoc(decision.entitlement))
     }
@@ -90,6 +124,32 @@ export async function applySubscription(
       ? "applied"
       : (`skipped: ${decision.reason}` as const)
   })
+}
+
+/** The fields of a subscription we decide on, safe for Firestore (no undefined). */
+function trimmed(sub: PaddleSubscription): PaddleSubscription {
+  return JSON.parse(
+    JSON.stringify({
+      id: sub.id,
+      status: sub.status,
+      customer_id: sub.customer_id,
+      custom_data: { uid: sub.custom_data?.uid ?? null },
+      items: sub.items.map((item) => ({
+        price: item.price?.id ? { id: item.price.id } : null,
+      })),
+      current_billing_period: sub.current_billing_period ?? null,
+      scheduled_change: sub.scheduled_change ?? null,
+    })
+  ) as PaddleSubscription
+}
+
+function fromSeenDoc(
+  data: Record<string, unknown> | undefined
+): SeenSubscription | null {
+  const occurredAt = data?.occurredAt
+  const sub = data?.sub as PaddleSubscription | undefined
+  if (!(occurredAt instanceof Timestamp) || !sub?.id) return null
+  return { sub, occurredAt: occurredAt.toDate() }
 }
 
 function toDoc(e: Entitlement): Record<string, unknown> {

@@ -360,7 +360,7 @@ export const es: Dictionary = {
     billing: "Facturación",
     billingAnnual: "Anual",
     billingMonthly: "Mensual",
-    save: (pct) => `Ahorra un ${pct}%`,
+    save: (pct) => `Ahorra hasta ${pct}%`,
     freeLine: (limit) => `${limit} rellenos con IA gratis`,
     paidLine: (limit) => `${limit} rellenos / 30 días`,
     supportsDev: "Apoya el desarrollo",

@@ -338,9 +338,9 @@ function heading(
 
 // Monthly | Yearly, monthly first and chosen by default (the owner's call,
 // Nov 2026, replacing #60's annual-first toggle; yearly cards still lead with
-// the per-month figure). The shared Segmented, so its pill slides. The saving rides on the
-// yearly segment as a quiet tag, using Pro's figure — the plan the ladder
-// steers toward.
+// the per-month figure). The shared Segmented, so its pill slides. The saving
+// rides on the yearly segment as a quiet "up to" tag: the best of the two
+// plans' savings, so it holds whichever is picked.
 function BillingToggle({
   value,
   onChange,
@@ -360,7 +360,9 @@ function BillingToggle({
         {
           value: "annual",
           label: t.paywall.billingAnnual,
-          tag: t.paywall.save(n(annualSavingPct("pro"))),
+          tag: t.paywall.save(
+            n(Math.max(annualSavingPct("pro"), annualSavingPct("unlimited")))
+          ),
         },
       ]}
     />

@@ -25,6 +25,13 @@ app still reads everything through the Firestore SDK.
   audit trail. Events older than the last applied one are ignored (Paddle
   doesn't promise order). `paddleChangePlan` applies Paddle's reply through the
   same code, so the webhook's echo is a no-op.
+- **More than one subscription.** Each subscription's latest state is kept
+  under `/paddleSubscriptions/{id}` (server-only, like `/paddleEvents`), and
+  the entitlement follows the best one still paying: highest plan, then
+  newest. Cancelling one of two (two checkouts on two devices) leaves the plan
+  of the other, which is still charging. Staleness is judged per subscription.
+  (Added Nov 2026 after the second sandbox sweep caught the user dropping to
+  Free.)
 - **Identity through checkout, never email.** The overlay checkout passes
   `customData: { uid }`; Paddle copies it onto the subscription, and the
   webhook addresses `/users/{uid}` with it. A subscription without a uid is
@@ -36,13 +43,12 @@ app still reads everything through the Firestore SDK.
   (Paddle retries a failed card for a while; cutting a payer off on the first
   decline is hostile). `canceled` and `paused` mean Free. A cancel scheduled
   for the period end keeps the plan and fills `cancelsAt`.
-- **A second subscription can't knock out the paying one.** If a non-paying
-  event arrives for a different subscription than the one on the doc while
-  that one is paying (a double purchase, a late cancel), it is skipped.
-- **`planStartedAt` moves only when the plan changes**: purchase, upgrade or
-  downgrade, lapse to free, resubscribe. Renewals and a monthly ↔ yearly
-  switch keep it. ADR 0013 anchors the AI cycle on it, and because only the
-  server writes it, a tamperer can't mint fresh cycles.
+- **`planStartedAt` moves only on a purchase, an upgrade, a lapse to free or
+  a resubscribe.** Renewals, a monthly ↔ yearly switch, a downgrade, and a
+  pause with its resume keep it (owner's call, Nov 2026: a downgrade from
+  Unlimited must not hand out a fresh Pro allowance). ADR 0013 anchors the AI
+  cycle on it, and because only the server writes it, a tamperer can't mint
+  fresh cycles.
 - **Offline grace: 7 days past `currentPeriodEnd`.** Every renewal moves the
   date forward, so the grace only bites when the app hasn't synced across a
   renewal for a week — and lifts the moment it does.
