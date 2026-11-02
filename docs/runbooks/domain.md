@@ -1,0 +1,95 @@
+# Domain: yaffleapp.com
+
+`yaffleapp.com` is the primary domain, served by Firebase Hosting;
+`goyaffle.web.app` keeps serving (ADR 0015). The domain is registered at
+Cloudflare, which also runs its DNS.
+
+Do the steps in this order: the code that sends new visitors from
+goyaffle.web.app to yaffleapp.com must not go live before yaffleapp.com works.
+
+## 1. Firebase Hosting: connect the domain
+
+Firebase console → project `goyaffle` → Hosting → **Add custom domain**.
+
+1. Domain `yaffleapp.com`. Leave "Redirect to an existing website" off.
+2. Firebase shows the DNS records to add: usually a **TXT** record (ownership)
+   and an **A** record (where the site lives), sometimes an `_acme-challenge`
+   record for the certificate. Keep the page open for step 2.
+3. Afterwards, **Add custom domain** again for `www.yaffleapp.com` with
+   "Redirect to an existing website" on, pointing at `yaffleapp.com`, and add
+   the records it shows the same way.
+
+## 2. Cloudflare: DNS records
+
+Cloudflare dashboard → yaffleapp.com → DNS → Records.
+
+- Delete any A, AAAA or CNAME record Cloudflare already made for
+  `yaffleapp.com` (`@`) or `www`.
+- Add each record exactly as Firebase shows it. For the apex, the name is `@`.
+- **Proxy status: DNS only (grey cloud)** on every record. With the orange
+  cloud, Firebase cannot verify the domain or issue its certificate.
+- If there are CAA records, add `letsencrypt.org` and `pki.goog`, or remove
+  them.
+
+Back in Firebase, the domain goes from "Needs setup" to "Pending" to
+"Connected". The certificate usually takes under an hour, at most 24 hours.
+Done when `https://yaffleapp.com` opens Yaffle with a valid certificate.
+
+## 3. Firebase Auth: authorized domain
+
+Firebase console → Authentication → Settings → **Authorized domains** → Add
+domain `yaffleapp.com`. Leave `goyaffle.web.app` and `goyaffle.firebaseapp.com`
+in place.
+
+## 4. Google OAuth client
+
+Google Cloud console → project `goyaffle` → Google Auth Platform (APIs &
+Services) → **Clients** → *Web client (auto created by Google Service)*:
+
+- Authorized JavaScript origins: add `https://yaffleapp.com`.
+- Authorized redirect URIs: add `https://yaffleapp.com/__/auth/handler`.
+- Keep the goyaffle.web.app entries. Save.
+
+Google Auth Platform → **Branding**:
+
+- Authorized domains: add `yaffleapp.com`.
+- App home page `https://yaffleapp.com`, privacy policy
+  `https://yaffleapp.com/privacy`, terms `https://yaffleapp.com/terms`.
+
+## 5. App Check (reCAPTCHA Enterprise)
+
+AI fill sends an App Check token, which reCAPTCHA Enterprise only issues on the
+key's listed domains. Google Cloud console → Security → **reCAPTCHA** → the key
+`6LcoOE4t…` (the one in `src/lib/ai.ts`) → Edit → Domains: add
+`yaffleapp.com`. Without this, AI fill fails on the new domain.
+
+## 6. API key (only if restricted)
+
+Google Cloud console → APIs & Services → Credentials → *Browser key (auto
+created by Firebase)*. If "Application restrictions" is set to Websites, add
+`https://yaffleapp.com/*`. If it is None, nothing to do.
+
+## 7. Merge and check
+
+Merge the domain PR (hosting deploys on merge). Then, in a private window:
+
+- `https://yaffleapp.com`: the welcome screen shows; Google sign-in says
+  "to continue to yaffleapp.com" and comes back signed in; an AI fill works.
+- `https://www.yaffleapp.com` lands on `https://yaffleapp.com`.
+- `https://goyaffle.web.app` lands on `https://yaffleapp.com`.
+- On a phone that already has Yaffle installed from goyaffle.web.app, the app
+  still opens as before.
+
+## 8. Paddle
+
+- Sandbox: Checkout → Checkout settings → default payment link
+  `https://yaffleapp.com/`.
+- Live: submit `yaffleapp.com` for website approval (and `goyaffle.web.app`,
+  for people who stayed there). See `docs/runbooks/paddle.md` → Go-live.
+
+## Moving your own install
+
+Your installed app and any Guest data belong to goyaffle.web.app. To move:
+sign in with Google in the old app (so the data is in your account), open
+`https://yaffleapp.com`, sign in with Google, install from there, then remove
+the old app.

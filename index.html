@@ -6,6 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Yaffle</title>
   <meta name="description" content="A calm calorie and macro tracker." />
+  <link rel="canonical" href="https://yaffleapp.com/" />
+
+  <!-- yaffleapp.com is the primary domain; goyaffle.web.app keeps serving
+       (ADR 0015). Someone new on goyaffle.web.app goes to the same page on
+       yaffleapp.com before anything paints. Anyone who already uses Yaffle
+       there stays: their Guest account and the installed app belong to that
+       origin and would not follow. "Already uses" means any Yaffle key in
+       localStorage (the boot and plan mirrors, settings, dismissals). -->
+  <script>
+    (function () {
+      try {
+        if (location.hostname !== "goyaffle.web.app") return
+        if (matchMedia("(display-mode: standalone)").matches) return
+        for (var i = 0; i < localStorage.length; i++) {
+          if (/^yaffle[:.]/.test(localStorage.key(i) || "")) return
+        }
+        location.replace("https://yaffleapp.com" + location.pathname + location.search + location.hash)
+      } catch (e) {}
+    })()
+  </script>
 
   <!-- Warm Market flour as the browser/OS chrome colour. ThemeProvider keeps
        this single meta in sync with the resolved theme (light #f6f1e6 / dark

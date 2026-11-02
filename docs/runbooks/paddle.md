@@ -37,7 +37,7 @@ functions after changing one.
      absorbed, tax-inclusive display). GBP/EUR charm prices can be added as
      price overrides later.
 4. **Checkout → Checkout settings:** default payment link
-   `https://goyaffle.web.app/`.
+   `https://yaffleapp.com/`.
 5. **Settings → Authentication** (API keys and client-side tokens):
    - a *client-side token* → `clientToken` in `paddle-config.ts`;
    - an *API key* with `subscription.read`, `subscription.write` and
@@ -60,7 +60,7 @@ functions after changing one.
 
 Billing stays dark on the live site until go-live. Add `?paywall` to the URL
 (it sticks for the tab) to switch on the plans, the fill counter and the
-sandbox checkout: `https://goyaffle.web.app/?paywall`.
+sandbox checkout: `https://yaffleapp.com/?paywall`.
 
 - Sign in with Google, open Settings → Upgrade, pick a plan, and pay with
   Paddle's test card `4242 4242 4242 4242`, any future expiry, CVC `100`.
@@ -84,8 +84,10 @@ try the callables locally, run
 Ask the owner before any of this — it starts taking real money.
 
 1. Paddle **live** account verified, payout method set, and the domain
-   `goyaffle.web.app` approved (Paddle reviews `/pricing`, `/terms`,
-   `/privacy`, `/refunds`).
+   `yaffleapp.com` approved (Paddle reviews `/pricing`, `/terms`,
+   `/privacy`, `/refunds`). Also add `goyaffle.web.app`, which still serves
+   the app for people who used it there before the move (ADR 0015); if Paddle
+   won't approve it, checkout only works on yaffleapp.com.
 2. Recreate the products and prices, the client-side token, the API key and
    the notification destination in the live account.
 3. Replace the two secrets with the live values (commands above).
