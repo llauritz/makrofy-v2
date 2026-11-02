@@ -385,7 +385,7 @@ export const en = {
     bestValue: "Best value",
     currentPlan: "Your plan",
     perMonth: (price: string) => `${price}/mo`,
-    perYear: (price: string) => `${price}/yr`,
+    billedYearly: (price: string) => `${price} billed yearly`,
     billedMonthly: "billed monthly",
     continueWith: (plan: string) => `Continue with ${plan}`,
     checkoutStub: "Checkout isn’t set up yet.",

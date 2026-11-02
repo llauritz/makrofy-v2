@@ -233,7 +233,8 @@ export const es: Dictionary = {
     points: [
       {
         title: "Escribe lo que sabes",
-        body: "Alimento y cantidad, en cualquier unidad. Sin base de datos que consultar ni mantener.",
+        body:
+          "Alimento y cantidad, en cualquier unidad. Sin base de datos que consultar ni mantener.",
       },
       {
         title: "La IA completa el resto",
@@ -245,8 +246,7 @@ export const es: Dictionary = {
       },
     ],
     exampleLabel: "100g yogur griego aldi",
-    exampleAria:
-      "Ejemplo: 100 g de yogur griego, 120 kcal, completado por Yaffle",
+    exampleAria: "Ejemplo: 100 g de yogur griego, 120 kcal, completado por Yaffle",
     getStarted: "Empezar",
 
     back: "Atrás",
@@ -275,8 +275,7 @@ export const es: Dictionary = {
     activityModerate: "Activa",
     activityHigh: "Muy activa",
     activityHintLow: "Trabajo sentado y poco ejercicio.",
-    activityHintModerate:
-      "Mucho tiempo de pie, o ejercicio 2–3 veces por semana.",
+    activityHintModerate: "Mucho tiempo de pie, o ejercicio 2–3 veces por semana.",
     activityHintHigh: "Trabajo físico, o ejercicio casi todos los días.",
     aim: "Objetivo",
     lose: "Bajar",
@@ -361,7 +360,7 @@ export const es: Dictionary = {
     bestValue: "Mejor valor",
     currentPlan: "Tu plan",
     perMonth: (price) => `${price}/mes`,
-    perYear: (price) => `${price}/año`,
+    billedYearly: (price) => `${price} al año`,
     billedMonthly: "facturado cada mes",
     continueWith: (plan) => `Continuar con ${plan}`,
     checkoutStub: "El pago aún no está configurado.",

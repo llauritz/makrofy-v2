@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/bottom-sheet"
 import { AiSparkle } from "@/components/AiSparkle"
 import { Button } from "@/components/ui/button"
+import { Segmented } from "@/components/ui/segmented"
 import { Spinner } from "@/components/ui/spinner"
 import { Squircle, SquircleOutline } from "@/components/ui/squircle"
 import { isEntitling, type Entitlement } from "@/data/entitlement"
@@ -331,7 +332,8 @@ function heading(
 }
 
 // Monthly | Yearly, monthly first and chosen by default (the owner's call,
-// Nov 2026, replacing #60's annual-first display). The saving rides on the
+// Nov 2026, replacing #60's annual-first toggle; yearly cards still lead with
+// the per-month figure). The shared Segmented, so its pill slides. The saving rides on the
 // yearly segment as a quiet tag, using Pro's figure — the plan the ladder
 // steers toward.
 function BillingToggle({
@@ -342,61 +344,21 @@ function BillingToggle({
   onChange: (value: Billing) => void
 }) {
   const { t, n } = useI18n()
-  const options: ReadonlyArray<{
-    value: Billing
-    label: string
-    tag?: string
-  }> = [
-    { value: "monthly", label: t.paywall.billingMonthly },
-    {
-      value: "annual",
-      label: t.paywall.billingAnnual,
-      tag: t.paywall.save(n(annualSavingPct("pro"))),
-    },
-  ]
   return (
-    <Squircle asChild pill>
-      <div
-        role="radiogroup"
-        aria-label={t.paywall.billing}
-        className="flex gap-1 rounded-full bg-input p-1"
-      >
-        {options.map((option) => {
-          const active = option.value === value
-          return (
-            <div
-              key={option.value}
-              className={cn(
-                "flex flex-1",
-                active && "drop-shadow-[0_1px_1px_rgba(43,32,21,0.12)]"
-              )}
-            >
-              <Squircle asChild pill>
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => onChange(option.value)}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium transition-colors",
-                    active
-                      ? "bg-card text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {option.label}
-                  {option.tag && (
-                    <span className="rounded-full bg-primary px-1.5 py-px text-[10px] font-semibold text-primary-foreground">
-                      {option.tag}
-                    </span>
-                  )}
-                </button>
-              </Squircle>
-            </div>
-          )
-        })}
-      </div>
-    </Squircle>
+    <Segmented<Billing>
+      value={value}
+      onChange={onChange}
+      ariaLabel={t.paywall.billing}
+      size="md"
+      options={[
+        { value: "monthly", label: t.paywall.billingMonthly },
+        {
+          value: "annual",
+          label: t.paywall.billingAnnual,
+          tag: t.paywall.save(n(annualSavingPct("pro"))),
+        },
+      ]}
+    />
   )
 }
 
@@ -440,15 +402,12 @@ function PaidCard({
   const { t, n, language } = useI18n()
   const price = PRICE_USD[plan]
   const money = (amount: number) => formatPrice(amount, language)
-  // Each period shows its own amount; yearly adds what that works out to a
-  // month, smaller, underneath.
-  const headline =
-    billing === "annual"
-      ? t.paywall.perYear(money(price.annual))
-      : t.paywall.perMonth(money(price.monthly))
+  const headline = t.paywall.perMonth(
+    money(billing === "annual" ? perMonth(price.annual) : price.monthly)
+  )
   const sub =
     billing === "annual"
-      ? t.paywall.perMonth(money(perMonth(price.annual)))
+      ? t.paywall.billedYearly(money(price.annual))
       : t.paywall.billedMonthly
   // Both paid cards state their allowance; Unlimited's 10,000 is its
   // fair-use cap, disclosed right on the card rather than in a footnote.

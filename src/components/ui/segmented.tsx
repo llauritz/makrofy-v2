@@ -5,8 +5,8 @@ import { Squircle } from "@/components/ui/squircle"
 import { cn } from "@/lib/utils"
 import { FADE_IN, SPRING } from "@/screens/main/anim"
 
-// A pill segmented control (radiogroup), shared by Settings and the onboarding
-// daily-need sheet; `value` may be null while nothing is chosen yet.
+// A pill segmented control (radiogroup), shared by Settings, the onboarding
+// daily-need sheet and the paywall's billing toggle; `value` may be null while nothing is chosen yet.
 //
 // The selection is one pill that slides between the segments. It is an
 // indicator, so travel is its message (spec § Motion), and the segments are
@@ -22,7 +22,8 @@ export function Segmented<T extends string>({
 }: {
   value: T | null
   onChange: (value: T) => void
-  options: ReadonlyArray<{ value: T; label: string }>
+  /** `tag` is a small badge beside the label (the paywall's saving). */
+  options: ReadonlyArray<{ value: T; label: string; tag?: string }>
   ariaLabel: string
   /** `sm` for Settings rows; `md` is the roomier form control (onboarding). */
   size?: "sm" | "md"
@@ -74,7 +75,7 @@ export function Segmented<T extends string>({
               aria-checked={active}
               onClick={() => onChange(option.value)}
               className={cn(
-                "relative flex-1 basis-0 rounded-full text-[13px] font-medium transition-colors duration-200",
+                "relative flex flex-1 basis-0 items-center justify-center gap-1.5 rounded-full text-[13px] font-medium transition-colors duration-200",
                 size === "md" ? "px-2 py-2.5" : "px-3 py-1.5",
                 active
                   ? "text-foreground"
@@ -82,6 +83,13 @@ export function Segmented<T extends string>({
               )}
             >
               {option.label}
+              {option.tag && (
+                <Squircle asChild pill>
+                  <span className="bg-primary px-1.5 py-px text-[10px] font-semibold text-primary-foreground">
+                    {option.tag}
+                  </span>
+                </Squircle>
+              )}
             </button>
           )
         })}
