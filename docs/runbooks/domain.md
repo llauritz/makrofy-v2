@@ -60,9 +60,12 @@ Google Auth Platform → **Branding**:
 ## 5. App Check (reCAPTCHA Enterprise)
 
 AI fill sends an App Check token, which reCAPTCHA Enterprise only issues on the
-key's listed domains. Google Cloud console → Security → **reCAPTCHA** → the key
-`6LcoOE4t…` (the one in `src/lib/ai.ts`) → Edit → Domains: add
-`yaffleapp.com`. Without this, AI fill fails on the new domain.
+key's listed domains. The key lives in the Google Cloud console, not the
+Firebase console (App Check there only shows it), and needs no separate
+account: <https://console.cloud.google.com/security/recaptcha?project=goyaffle>
+→ the key `6LcoOE4t…` (the one in `src/lib/ai.ts`) → **Edit key** → Domains:
+add `yaffleapp.com`, keep the others, Save. Without this, AI fill fails on the
+new domain. Not the classic admin page at google.com/recaptcha/admin.
 
 ## 6. API key (only if restricted)
 
