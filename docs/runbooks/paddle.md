@@ -85,9 +85,8 @@ Ask the owner before any of this — it starts taking real money.
 
 1. Paddle **live** account verified, payout method set, and the domain
    `yaffleapp.com` approved (Paddle reviews `/pricing`, `/terms`,
-   `/privacy`, `/refunds`). Also add `goyaffle.web.app`, which still serves
-   the app for people who used it there before the move (ADR 0015); if Paddle
-   won't approve it, checkout only works on yaffleapp.com.
+   `/privacy`, `/refunds`). goyaffle.web.app only forwards there (ADR 0015),
+   so it needs no approval of its own.
 2. Recreate the products and prices, the client-side token, the API key and
    the notification destination in the live account.
 3. Replace the two secrets with the live values (commands above).

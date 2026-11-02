@@ -8,23 +8,14 @@
   <meta name="description" content="A calm calorie and macro tracker." />
   <link rel="canonical" href="https://yaffleapp.com/" />
 
-  <!-- yaffleapp.com is the primary domain; goyaffle.web.app keeps serving
-       (ADR 0015). Someone new on goyaffle.web.app goes to the same page on
-       yaffleapp.com before anything paints. Anyone who already uses Yaffle
-       there stays: their Guest account and the installed app belong to that
-       origin and would not follow. "Already uses" means any Yaffle key in
-       localStorage (the boot and plan mirrors, settings, dismissals). -->
+  <!-- yaffleapp.com is the primary domain (ADR 0015). Firebase still serves
+       goyaffle.web.app and goyaffle.firebaseapp.com, which send every visit,
+       the installed app included, to the same page on yaffleapp.com before
+       anything paints. -->
   <script>
-    (function () {
-      try {
-        if (location.hostname !== "goyaffle.web.app") return
-        if (matchMedia("(display-mode: standalone)").matches) return
-        for (var i = 0; i < localStorage.length; i++) {
-          if (/^yaffle[:.]/.test(localStorage.key(i) || "")) return
-        }
-        location.replace("https://yaffleapp.com" + location.pathname + location.search + location.hash)
-      } catch (e) {}
-    })()
+    if (/^goyaffle\.(web\.app|firebaseapp\.com)$/.test(location.hostname)) {
+      location.replace("https://yaffleapp.com" + location.pathname + location.search + location.hash)
+    }
   </script>
 
   <!-- Warm Market flour as the browser/OS chrome colour. ThemeProvider keeps

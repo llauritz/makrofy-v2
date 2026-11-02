@@ -4,24 +4,28 @@ import { runInNewContext } from "node:vm"
 
 import { describe, expect, it } from "vitest"
 
-import { BOOT_MIRROR_KEY } from "@/data/boot-mirror"
+// The move to yaffleapp.com (ADR 0015) is an inline script in index.html and
+// in each public page, so it runs before anything paints. This runs each copy
+// against a fake page and checks where it sends the visit.
 
-// The goyaffle.web.app → yaffleapp.com move (ADR 0015) is an inline script in
-// index.html, so it runs before anything paints. This runs that script
-// against a fake page and checks who gets sent and who stays.
+const pages = [
+  "index.html",
+  ...["terms", "privacy", "refunds", "pricing"].map((p) => `public/${p}.html`),
+]
 
-const html = readFileSync(join(__dirname, "..", "index.html"), "utf8")
-const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
-  .map((m) => m[1])
-  .find((s) => s.includes("yaffleapp.com"))
+function moveScript(file: string): string {
+  const html = readFileSync(join(__dirname, "..", file), "utf8")
+  const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+    .map((m) => m[1])
+    .find((s) => s.includes("yaffleapp.com"))
+  if (!script) throw new Error(`${file} has no domain move script`)
+  return script
+}
 
-function visit(
-  url: string,
-  { keys = [] as string[], standalone = false } = {}
-): string | null {
+function visit(script: string, url: string): string | null {
   const u = new URL(url)
   let sentTo: string | null = null
-  runInNewContext(script!, {
+  runInNewContext(script, {
     location: {
       hostname: u.hostname,
       pathname: u.pathname,
@@ -31,35 +35,20 @@ function visit(
         sentTo = to
       },
     },
-    matchMedia: (q: string) => ({
-      matches: standalone && q.includes("standalone"),
-    }),
-    localStorage: { length: keys.length, key: (i: number) => keys[i] ?? null },
   })
   return sentTo
 }
 
-describe("index.html domain move", () => {
-  it("sends a new visitor on goyaffle.web.app to the same page on yaffleapp.com", () => {
-    expect(visit("https://goyaffle.web.app/?paywall#x")).toBe(
-      "https://yaffleapp.com/?paywall#x"
+describe.each(pages)("%s domain move", (file) => {
+  const script = moveScript(file)
+
+  it("sends the Firebase domains to the same page on yaffleapp.com", () => {
+    expect(visit(script, "https://goyaffle.web.app/terms?paywall#x")).toBe(
+      "https://yaffleapp.com/terms?paywall#x"
     )
-  })
-
-  it("keeps anyone who already uses Yaffle there", () => {
-    for (const key of [
-      BOOT_MIRROR_KEY,
-      "yaffle:plan-mirror:v1",
-      "yaffle.paywall",
-    ]) {
-      expect(
-        visit("https://goyaffle.web.app/", { keys: ["theme", key] })
-      ).toBeNull()
-    }
-  })
-
-  it("keeps the installed app", () => {
-    expect(visit("https://goyaffle.web.app/", { standalone: true })).toBeNull()
+    expect(visit(script, "https://goyaffle.firebaseapp.com/")).toBe(
+      "https://yaffleapp.com/"
+    )
   })
 
   it("leaves every other host alone", () => {
@@ -68,13 +57,7 @@ describe("index.html domain move", () => {
       "https://goyaffle--pr127-abc.web.app/",
       "http://localhost:5173/",
     ]) {
-      expect(visit(url)).toBeNull()
+      expect(visit(script, url)).toBeNull()
     }
-  })
-
-  it("does not count unrelated keys as a Yaffle user", () => {
-    expect(
-      visit("https://goyaffle.web.app/", { keys: ["theme", "language"] })
-    ).toBe("https://yaffleapp.com/")
   })
 })

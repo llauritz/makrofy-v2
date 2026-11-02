@@ -1,11 +1,12 @@
 # Domain: yaffleapp.com
 
 `yaffleapp.com` is the primary domain, served by Firebase Hosting;
-`goyaffle.web.app` keeps serving (ADR 0015). The domain is registered at
+`goyaffle.web.app` and `goyaffle.firebaseapp.com` forward every visit to it
+(ADR 0015). The domain is registered at
 Cloudflare, which also runs its DNS.
 
-Do the steps in this order: the code that sends new visitors from
-goyaffle.web.app to yaffleapp.com must not go live before yaffleapp.com works.
+Do the steps in this order: the code that forwards goyaffle.web.app to
+yaffleapp.com must not go live before yaffleapp.com works.
 
 ## 1. Firebase Hosting: connect the domain
 
@@ -69,7 +70,13 @@ Google Cloud console → APIs & Services → Credentials → *Browser key (auto
 created by Firebase)*. If "Application restrictions" is set to Websites, add
 `https://yaffleapp.com/*`. If it is None, nothing to do.
 
-## 7. Merge and check
+## 7. Sign in on the old domain
+
+Before merging, open Yaffle on goyaffle.web.app on every phone or browser that
+has entries, and sign in with Google (Settings). A Guest's entries stay behind
+on goyaffle.web.app once it forwards.
+
+## 8. Merge and check
 
 Merge the domain PR (hosting deploys on merge). Then, in a private window:
 
@@ -77,19 +84,18 @@ Merge the domain PR (hosting deploys on merge). Then, in a private window:
   "to continue to yaffleapp.com" and comes back signed in; an AI fill works.
 - `https://www.yaffleapp.com` lands on `https://yaffleapp.com`.
 - `https://goyaffle.web.app` lands on `https://yaffleapp.com`.
-- On a phone that already has Yaffle installed from goyaffle.web.app, the app
-  still opens as before.
+- `https://goyaffle.web.app/terms` lands on `https://yaffleapp.com/terms`.
+- Sign in with Google on yaffleapp.com: your entries are there.
 
-## 8. Paddle
+## 9. Paddle
 
 - Sandbox: Checkout → Checkout settings → default payment link
   `https://yaffleapp.com/`.
-- Live: submit `yaffleapp.com` for website approval (and `goyaffle.web.app`,
-  for people who stayed there). See `docs/runbooks/paddle.md` → Go-live.
+- Live: submit `yaffleapp.com` for website approval. See
+  `docs/runbooks/paddle.md` → Go-live.
 
 ## Moving your own install
 
-Your installed app and any Guest data belong to goyaffle.web.app. To move:
-sign in with Google in the old app (so the data is in your account), open
-`https://yaffleapp.com`, sign in with Google, install from there, then remove
-the old app.
+An app installed from goyaffle.web.app opens yaffleapp.com in a browser frame
+after the move. Remove it, open `https://yaffleapp.com`, sign in with Google
+and install from there.

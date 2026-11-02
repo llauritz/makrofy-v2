@@ -7,21 +7,15 @@ import {
   persistentMultipleTabManager,
 } from "firebase/firestore"
 
-// The domains the app is served on (ADR 0015): yaffleapp.com is the primary,
-// the two Firebase defaults keep working. Each one's /__/auth/handler is an
-// authorized Google OAuth redirect (docs/runbooks/domain.md).
-const AUTH_DOMAINS = [
-  "yaffleapp.com",
-  "goyaffle.web.app",
-  "goyaffle.firebaseapp.com",
-]
-
 // authDomain is the serving domain, not a fixed one, so the sign-in redirect
 // iframe stays same-origin under third-party-storage blocking (#10 Option 1,
-// docs/research/firebase-backend-validation.md § 5). Anywhere else (preview
-// channels, local dev) uses goyaffle.web.app, as before.
-const host = globalThis.location?.hostname ?? ""
-const authDomain = AUTH_DOMAINS.includes(host) ? host : "goyaffle.web.app"
+// docs/research/firebase-backend-validation.md § 5). The app lives on
+// yaffleapp.com (ADR 0015); preview channels and local dev keep
+// goyaffle.web.app, whose /__/auth/handler is authorized too.
+const authDomain =
+  globalThis.location?.hostname === "yaffleapp.com"
+    ? "yaffleapp.com"
+    : "goyaffle.web.app"
 
 // Public by design — this ships in the bundle (provisioned in #12).
 const firebaseConfig = {
