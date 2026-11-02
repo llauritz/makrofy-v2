@@ -54,8 +54,13 @@ type Motion =
  * The spin as a pure function of the flag, driven per frame. Returns the
  * angle (relative to rest) for a motion value — no React render per frame.
  */
-function useSpin(spinning: boolean, enabled: boolean) {
+function useSpin(spinning: boolean, enabled: boolean, pace: number) {
   const angle = useMotionValue(REST)
+  // Read per frame, so a change of pace never restarts the motion.
+  const k = React.useRef(pace)
+  React.useLayoutEffect(() => {
+    k.current = pace
+  }, [pace])
   const state = React.useRef<Motion>({ kind: "rest" })
   const turned = React.useRef(0)
   const speed = React.useRef(0)
@@ -68,10 +73,10 @@ function useSpin(spinning: boolean, enabled: boolean) {
       // wind-up where its speed matches, so nothing jumps.
       state.current = {
         kind: "spin",
-        t: s.kind === "rest" ? 0 : resumeAt(speed.current),
+        t: s.kind === "rest" ? 0 : resumeAt(speed.current / k.current),
       }
     } else if (!spinning && s.kind === "spin") {
-      const v0 = Math.max(speed.current, 60)
+      const v0 = Math.max(speed.current, 60 * k.current)
       const a0 = turned.current
       const target = Math.ceil((a0 + v0 * MIN_COAST) / QUARTER) * QUARTER
       const dist = target - a0
@@ -95,8 +100,10 @@ function useSpin(spinning: boolean, enabled: boolean) {
       last = now
       const m = state.current
       if (m.kind === "spin") {
-        m.t += dt
-        speed.current = speedAt(m.t)
+        // The whole curve runs on a stretched clock: wind-up, breathing and
+        // speed all scale together, so a slower star moves the same way.
+        m.t += dt * k.current
+        speed.current = k.current * speedAt(m.t)
         turned.current += speed.current * dt
       } else if (m.kind === "land") {
         m.u = Math.min(m.u + dt / m.dur, 1)
@@ -144,10 +151,13 @@ function resumeAt(v: number) {
 export function AiSparkle({
   spinning = false,
   solid = false,
+  speed = 1,
   className,
   ...rest
 }: {
   spinning?: boolean
+  /** Pace of the spin against a fill's (1); below 1 is slower. */
+  speed?: number
   /** Full strength, for a star beside text on a filled button. */
   solid?: boolean
 } & Omit<
@@ -155,7 +165,7 @@ export function AiSparkle({
   "children" | "viewBox" | "style"
 >) {
   const reduce = useReducedMotion() ?? false
-  const rotate = useSpin(spinning, !reduce)
+  const rotate = useSpin(spinning, !reduce, speed)
   return (
     <motion.svg
       viewBox="0 0 18 18"
@@ -165,8 +175,9 @@ export function AiSparkle({
       {...rest}
       className={cn(
         "shrink-0",
-        // With reduced motion the wait shows as the old quiet pulse instead.
-        reduce && spinning && "animate-pulse",
+        // With reduced motion a fill's wait shows as the old quiet pulse
+        // instead; a slowed, decorative spin simply rests.
+        reduce && spinning && speed >= 1 && "animate-pulse",
         className
       )}
       style={{ rotate }}

@@ -61,8 +61,8 @@ function usageDoc(db: Firestore, uid: string, day: string) {
 // billing is switched on. One doc per 30-day cycle at
 // /users/{uid}/aiCycles/{cycle start as ISO}, written by the client — the
 // limit is advisory, honest-user UX and not security; App Check and the
-// per-user RPM cap are the enforced controls. Three numbers, one write per
-// round trip:
+// per-user RPM cap are the enforced controls. Three numbers, counted as each
+// round trip starts (grounded once its reply is in):
 //   fills    — ✨ interactions, the allowance unit (a clarifying answer rides free)
 //   calls    — round trips, fills plus clarifying answers
 //   grounded — round trips where Google Search informed the answer
@@ -103,24 +103,41 @@ export function listenToCycleUsage(
 }
 
 /**
- * Count one round trip. `fill` is false for the answer to a clarifying
- * question; `grounded` is whether Search attribution came back. Queued, not
- * awaited (ADR 0001) — the listener sees the new count at once, offline too.
+ * Count one round trip the moment it starts, so the counter moves with the
+ * tap rather than when the reply lands. `fill` is false for the answer to a
+ * clarifying question. Queued, not awaited (ADR 0001) — the listener sees the
+ * new count at once, offline too.
  */
 export function recordAiCall(
   db: Firestore,
   uid: string,
   cycleId: string,
-  { fill, grounded }: { fill: boolean; grounded: boolean }
+  { fill }: { fill: boolean }
+): void {
+  bump(db, uid, cycleId, {
+    fills: increment(fill ? 1 : 0),
+    calls: increment(1),
+  })
+}
+
+/** Count a round trip whose reply came back with Search attribution. */
+export function recordGrounded(
+  db: Firestore,
+  uid: string,
+  cycleId: string
+): void {
+  bump(db, uid, cycleId, { grounded: increment(1) })
+}
+
+function bump(
+  db: Firestore,
+  uid: string,
+  cycleId: string,
+  counts: Record<string, ReturnType<typeof increment>>
 ): void {
   setDoc(
     cycleDoc(db, uid, cycleId),
-    {
-      fills: increment(fill ? 1 : 0),
-      calls: increment(1),
-      grounded: increment(grounded ? 1 : 0),
-      updatedAt: serverTimestamp(),
-    },
+    { ...counts, updatedAt: serverTimestamp() },
     { merge: true }
   ).catch((err) => {
     console.error("AI cycle write failed", cycleId, err)

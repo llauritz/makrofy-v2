@@ -372,7 +372,7 @@ export const es: Dictionary = {
     continueWith: (plan) => `Continuar con ${plan}`,
     checkoutStub: "El pago aún no está configurado.",
     billingError: "No funcionó. Revisa tu conexión y vuelve a intentarlo.",
-    footnote: "Cancela cuando quieras",
+    footnote: "Impuestos incluidos · Cancela cuando quieras",
     usageMeter: (used, limit) =>
       `${used}/${limit} rellenos con IA gratis usados`,
     exhaustedFree: (limit) => `Usaste los ${limit} rellenos con IA gratis.`,

@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Check, Heart } from "lucide-react"
-import { motion } from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 import * as React from "react"
 
 import {
@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/bottom-sheet"
 import { AiSparkle } from "@/components/AiSparkle"
 import { Button } from "@/components/ui/button"
+import { Segmented } from "@/components/ui/segmented"
+import { Spinner } from "@/components/ui/spinner"
 import { Squircle, SquircleOutline } from "@/components/ui/squircle"
 import { isEntitling, type Entitlement } from "@/data/entitlement"
 import { useAuthUser, useIdentity } from "@/data/hooks"
@@ -25,12 +27,7 @@ import {
   type Billing,
   type Plan,
 } from "@/data/plans"
-import {
-  changePlan,
-  loadPaddle,
-  openCheckout,
-  paddleConfigured,
-} from "@/lib/billing"
+import { changePlan, openCheckout, paddleConfigured } from "@/lib/billing"
 import { auth } from "@/lib/firebase"
 import { formatPrice, formatShortDate } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
@@ -124,6 +121,13 @@ export function PaywallProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+// The sheets' AI mark turns the way a fill's does while it estimates, at a
+// third of the pace: a calm sign of what the plans are about, not a wait.
+const HEADER_SPIN = 0.35
+
+// How long the sheet waits for Paddle's overlay to report it has drawn.
+const CHECKOUT_WAIT_MS = 12_000
+
 function PaywallSheet({
   cycle,
   entitlement,
@@ -140,7 +144,7 @@ function PaywallSheet({
   const guest = user === null || user.isAnonymous
   // Someone already paying keeps their billing period on the toggle.
   const [billing, setBilling] = React.useState<Billing>(
-    entitlement?.billing ?? "annual"
+    entitlement?.billing ?? "monthly"
   )
   // A paid user is offered the plan above theirs; everyone else Pro.
   const [chosen, setChosen] = React.useState<PaidPlan>(
@@ -154,7 +158,7 @@ function PaywallSheet({
     isEntitling(entitlement.status)
 
   const proceed = async () => {
-    if (user === null) return
+    if (user === null || busy) return
     if (guest) {
       void startGoogleSignIn(auth)
       return
@@ -170,18 +174,33 @@ function PaywallSheet({
         await changePlan(chosen, billing)
         onOpenChange(false)
       } else {
-        // Load Paddle first, then close this sheet: the modal sheet makes the
-        // page inert, which would swallow taps on Paddle's overlay.
-        await loadPaddle()
-        onOpenChange(false)
-        await openCheckout({
-          plan: chosen,
-          billing,
-          uid: user.uid,
-          email: user.email,
-          language,
-          dark: document.documentElement.classList.contains("dark"),
+        // Open Paddle's overlay over this sheet and keep the button's spinner
+        // going until it has drawn (loading it takes a second or two). Only
+        // then close the sheet: the modal sheet makes the page inert, which
+        // would swallow taps on the overlay. Should Paddle never say so, the
+        // sheet still steps aside after a while.
+        await new Promise<void>((resolve, reject) => {
+          const fallback = window.setTimeout(resolve, CHECKOUT_WAIT_MS)
+          const done = () => {
+            window.clearTimeout(fallback)
+            resolve()
+          }
+          openCheckout({
+            plan: chosen,
+            billing,
+            uid: user.uid,
+            email: user.email,
+            language,
+            dark: document.documentElement.classList.contains("dark"),
+            onLoaded: done,
+            // Paddle shows its own message in the overlay; get out of its way.
+            onError: done,
+          }).catch((err: unknown) => {
+            window.clearTimeout(fallback)
+            reject(err)
+          })
         })
+        onOpenChange(false)
       }
     } catch (err) {
       console.error("Checkout failed", err)
@@ -211,7 +230,7 @@ function PaywallSheet({
       <BottomSheetContent className="max-h-[92svh] gap-5 overflow-y-auto">
         <div className="flex items-start justify-between gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary">
-            <AiSparkle solid className="h-5 w-5" />
+            <AiSparkle solid spinning speed={HEADER_SPIN} className="h-5 w-5" />
           </span>
           <BottomSheetClose />
         </div>
@@ -248,10 +267,28 @@ function PaywallSheet({
           <Button
             size="lg"
             className="h-12 w-full text-[15px]"
-            disabled={user === null || !canChoose || busy}
+            disabled={user === null || !canChoose}
+            aria-busy={busy}
             onClick={() => void proceed()}
           >
-            {t.paywall.continueWith(planName[chosen])}
+            {/* The label and the spinner share one cell and cross-fade, so
+                the button keeps its size and nothing jumps. */}
+            <span className="grid place-items-center">
+              <span
+                className={cn(
+                  "col-start-1 row-start-1 transition-opacity duration-200",
+                  busy && "opacity-0"
+                )}
+              >
+                {t.paywall.continueWith(planName[chosen])}
+              </span>
+              <Spinner
+                className={cn(
+                  "col-start-1 row-start-1 opacity-0 transition-opacity duration-200",
+                  busy && "opacity-90"
+                )}
+              />
+            </span>
           </Button>
           {problem && (
             <p className="text-center text-[13px] text-muted-foreground">
@@ -294,9 +331,11 @@ function heading(
     : { title: t.paywall.titleBrowsePaid, body: t.paywall.bodyBrowsePaid(date) }
 }
 
-// Yearly | Monthly, yearly first (#60: annual-first display). The saving rides
-// on the yearly segment as a quiet tag, using Pro's figure — the plan the
-// ladder steers toward.
+// Monthly | Yearly, monthly first and chosen by default (the owner's call,
+// Nov 2026, replacing #60's annual-first toggle; yearly cards still lead with
+// the per-month figure). The shared Segmented, so its pill slides. The saving rides on the
+// yearly segment as a quiet tag, using Pro's figure — the plan the ladder
+// steers toward.
 function BillingToggle({
   value,
   onChange,
@@ -305,61 +344,21 @@ function BillingToggle({
   onChange: (value: Billing) => void
 }) {
   const { t, n } = useI18n()
-  const options: ReadonlyArray<{
-    value: Billing
-    label: string
-    tag?: string
-  }> = [
-    {
-      value: "annual",
-      label: t.paywall.billingAnnual,
-      tag: t.paywall.save(n(annualSavingPct("pro"))),
-    },
-    { value: "monthly", label: t.paywall.billingMonthly },
-  ]
   return (
-    <Squircle asChild pill>
-      <div
-        role="radiogroup"
-        aria-label={t.paywall.billing}
-        className="flex gap-1 rounded-full bg-input p-1"
-      >
-        {options.map((option) => {
-          const active = option.value === value
-          return (
-            <div
-              key={option.value}
-              className={cn(
-                "flex flex-1",
-                active && "drop-shadow-[0_1px_1px_rgba(43,32,21,0.12)]"
-              )}
-            >
-              <Squircle asChild pill>
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => onChange(option.value)}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium transition-colors",
-                    active
-                      ? "bg-card text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {option.label}
-                  {option.tag && (
-                    <span className="rounded-full bg-primary px-1.5 py-px text-[10px] font-semibold text-primary-foreground">
-                      {option.tag}
-                    </span>
-                  )}
-                </button>
-              </Squircle>
-            </div>
-          )
-        })}
-      </div>
-    </Squircle>
+    <Segmented<Billing>
+      value={value}
+      onChange={onChange}
+      ariaLabel={t.paywall.billing}
+      size="md"
+      options={[
+        { value: "monthly", label: t.paywall.billingMonthly },
+        {
+          value: "annual",
+          label: t.paywall.billingAnnual,
+          tag: t.paywall.save(n(annualSavingPct("pro"))),
+        },
+      ]}
+    />
   )
 }
 
@@ -403,7 +402,9 @@ function PaidCard({
   const { t, n, language } = useI18n()
   const price = PRICE_USD[plan]
   const money = (amount: number) => formatPrice(amount, language)
-  const headline = billing === "annual" ? perMonth(price.annual) : price.monthly
+  const headline = t.paywall.perMonth(
+    money(billing === "annual" ? perMonth(price.annual) : price.monthly)
+  )
   const sub =
     billing === "annual"
       ? t.paywall.billedYearly(money(price.annual))
@@ -463,14 +464,23 @@ function PaidCard({
             {t.paywall.supportsDev}
           </div>
         </div>
-        <div className="shrink-0 text-right">
-          <div className="text-[15px] font-bold tabular-nums">
-            {t.paywall.perMonth(money(headline))}
-          </div>
-          <div className="text-[11px] text-muted-foreground tabular-nums">
-            {sub}
-          </div>
-        </div>
+        {/* The figures cross-fade when the period changes, so the switch
+            reads as one movement rather than a jump. */}
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={billing}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="shrink-0 text-right"
+          >
+            <div className="text-[15px] font-bold tabular-nums">{headline}</div>
+            <div className="text-[11px] text-muted-foreground tabular-nums">
+              {sub}
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </motion.button>
     </Squircle>
   )
@@ -515,7 +525,7 @@ function PlansNotice({
     <BottomSheet open={open} onOpenChange={onOpenChange}>
       <BottomSheetContent className="gap-4">
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary">
-          <AiSparkle solid className="h-5 w-5" />
+          <AiSparkle solid spinning speed={HEADER_SPIN} className="h-5 w-5" />
         </span>
         <BottomSheetTitle className="text-[22px] leading-tight font-semibold">
           {t.paywall.noticeTitle}

@@ -5,6 +5,7 @@ import {
   consumeAiUse,
   readAiUsage,
   recordAiCall,
+  recordGrounded,
 } from "@/data/ai-quota"
 import { fillMacros, type AiFillReply } from "@/lib/ai"
 import { localDay } from "@/lib/day"
@@ -133,8 +134,6 @@ export function useAiFill({
     // The cycle this trip counts against, fixed before the call so a reply
     // landing after a rollover still counts where it started.
     const cycleId = cycleState?.cycleId ?? null
-    let called = false
-    let grounded = false
     try {
       if (paywall === null) {
         // Until billing is on, the old daily brake still applies.
@@ -147,21 +146,19 @@ export function useAiFill({
         }
         consumeAiUse(db, uid, day)
       }
-      called = true
+      // Count the trip as it starts, so the counter moves with the tap: a
+      // fill counts once, its clarifying answer only as a call (ADR 0013).
+      // A failed call still hit the service, so it counts too.
+      if (cycleId !== null) recordAiCall(db, uid, cycleId, { fill: !final })
       const reply = await fillMacros(prompt)
-      grounded = reply?.attribution != null
+      if (cycleId !== null && reply?.attribution != null) {
+        recordGrounded(db, uid, cycleId)
+      }
       if (runId !== run.current) return
       applyReply(reply, description, final)
     } catch {
       if (runId !== run.current) return
       setPhase({ kind: "hint", hint: t.addCard.aiError })
-    } finally {
-      // One write per round trip, after it: a fill counts once, its
-      // clarifying answer only as a call (ADR 0013). A failed call still hit
-      // the service, so it counts too.
-      if (called && cycleId !== null) {
-        recordAiCall(db, uid, cycleId, { fill: !final, grounded })
-      }
     }
   }
 
