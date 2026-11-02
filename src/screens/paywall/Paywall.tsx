@@ -93,29 +93,34 @@ export function PaywallProvider({ children }: { children: React.ReactNode }) {
     [billing.enabled, state]
   )
 
-  if (api === null) {
-    return (
-      <CycleContext.Provider value={state}>{children}</CycleContext.Provider>
-    )
-  }
+  // One tree shape whether or not the plans are on: `children` must keep the
+  // same place in it. Wrapping them in an extra provider only once the plan
+  // and the fill count had loaded made React unmount and remount the whole
+  // main screen about a second into every launch: the wordmark intro played
+  // twice and it looked like the app had reloaded. The sheets are siblings
+  // after `children`, so adding them leaves the screen where it is.
   return (
     <CycleContext.Provider value={state}>
       <PaywallContext.Provider value={api}>
         {children}
-        <PaywallSheet
-          cycle={api.cycle}
-          entitlement={api.entitlement}
-          reason={reason}
-          onOpenChange={(open) => !open && setReason(null)}
-        />
-        <PlansNotice
-          open={noticeOpen}
-          onOpenChange={setNoticeOpen}
-          onSeePlans={() => {
-            setNoticeOpen(false)
-            setReason("browse")
-          }}
-        />
+        {api && (
+          <>
+            <PaywallSheet
+              cycle={api.cycle}
+              entitlement={api.entitlement}
+              reason={reason}
+              onOpenChange={(open) => !open && setReason(null)}
+            />
+            <PlansNotice
+              open={noticeOpen}
+              onOpenChange={setNoticeOpen}
+              onSeePlans={() => {
+                setNoticeOpen(false)
+                setReason("browse")
+              }}
+            />
+          </>
+        )}
       </PaywallContext.Provider>
     </CycleContext.Provider>
   )
