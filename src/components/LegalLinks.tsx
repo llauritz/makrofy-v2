@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 // The pricing and legal pages are static documents outside the app
 // (public/*.html), so Paddle's domain review and signed-out visitors can reach
 // them. The row sits at the foot of Settings and of the welcome screen, the
-// first thing a visitor to goyaffle.web.app sees. The links open in a new tab
+// first thing a visitor to yaffleapp.com sees. The links open in a new tab
 // so an installed PWA keeps its own window.
 export function LegalLinks({ className }: { className?: string }) {
   const { t } = useI18n()
