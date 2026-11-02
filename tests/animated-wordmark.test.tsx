@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
-// Seam: AnimatedWordmark's observable contract (#79) — the static Fraunces
-// wordmark paints synchronously (the boot mirror's instant first frame must
-// never wait on the player), the Lottie swaps in and plays the intro once
-// loaded, a tap replays from the start, and reduced motion or a failed load
+// Seam: AnimatedWordmark's observable contract (#79) — the first frame never
+// waits on the player (the slot is laid out, empty, until it arrives), the
+// Lottie then plays the intro, a tap replays from the start, and reduced motion or a failed load
 // keep the static text. The player module and animation JSON are mocked, so
 // these tests pin the component's behavior, not lottie-web's rendering.
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
@@ -55,9 +54,11 @@ function setup() {
 }
 
 describe("AnimatedWordmark", () => {
-  it("paints the static wordmark synchronously", () => {
+  it("holds an empty, laid-out slot until the player arrives", () => {
     setup()
-    expect(screen.getByText("Yaffle")).toBeTruthy()
+    // The text keeps the header's layout but stays invisible, so the intro
+    // is the first thing seen rather than following a static wordmark.
+    expect(screen.getByText("Yaffle").style.visibility).toBe("hidden")
   })
 
   it("swaps to the player and plays the intro once loaded", async () => {
@@ -98,7 +99,7 @@ describe("AnimatedWordmark", () => {
     // Give a pending dynamic import a tick to (wrongly) land.
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(loadAnimation).not.toHaveBeenCalled()
-    expect(screen.getByText("Yaffle")).toBeTruthy()
+    expect(screen.getByText("Yaffle").style.visibility).toBe("")
     // With no player to replay, no button reaches the accessibility tree.
     expect(screen.queryByRole("button")).toBeNull()
   })
