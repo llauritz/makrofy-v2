@@ -68,8 +68,12 @@ sandbox checkout: `https://goyaffle.web.app/?paywall`.
   Firebase console (Functions → `paddleWebhook` → Logs) and every event is
   recorded under `/paddleEvents` in Firestore, with each subscription's
   latest state under `/paddleSubscriptions`.
-- *Manage* opens Paddle's customer portal: cancel there and the plan shows
-  "ends …"; cancel immediately from the Paddle dashboard and it drops to Free.
+- *Manage* opens the plans sheet on your own plan: pick another plan or
+  period and the line under the button shows what Paddle will charge or
+  credit now, then *Switch to …* changes it in place. *Payment and
+  cancellation* opens Paddle's customer portal: cancel there and the plan
+  shows "ends …"; cancel immediately from the Paddle dashboard and it drops to
+  Free.
 - From Pro, run out of fills (or use *Get Unlimited*) to test the in-place
   plan change.
 - Paddle's dashboard can replay any event (Notifications → the event →

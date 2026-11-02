@@ -8,7 +8,11 @@ import { logger } from "firebase-functions/v2"
 import { classifyAiFailure, sanitizeReport } from "./ai-failure.js"
 import { ALERT_MESSAGE, runAiHealthCheck } from "./ai-health.js"
 import { isEntitling, type PaddleSubscription } from "./entitlement.js"
-import { changeSubscriptionPrice, createPortalLink } from "./paddle-api.js"
+import {
+  changeSubscriptionPrice,
+  createPortalLink,
+  previewSubscriptionPrice,
+} from "./paddle-api.js"
 import { PADDLE, type Billing, type PaidPlan } from "./paddle-config.js"
 import { verifyPaddleSignature } from "./signature.js"
 import {
@@ -132,6 +136,50 @@ export const paddlePortal = onCall(
   }
 )
 
+/** The price a plan-change request names, or a refusal. */
+function requestedPrice(data: unknown): { plan: PaidPlan; priceId: string } {
+  const { plan, billing } = (data ?? {}) as {
+    plan?: PaidPlan
+    billing?: Billing
+  }
+  const priceId = plan && billing ? PADDLE.prices[plan]?.[billing] : undefined
+  if (!plan || !priceId)
+    throw new HttpsError("invalid-argument", "Unknown plan.")
+  return { plan, priceId }
+}
+
+/** The caller's running subscription, or a refusal. */
+async function runningSubscription(uid: string) {
+  const entitlement = fromDoc((await entitlementRef(db, uid).get()).data())
+  if (!entitlement || !isEntitling(entitlement.status)) {
+    throw new HttpsError("failed-precondition", "No running subscription.")
+  }
+  return entitlement
+}
+
+/**
+ * What moving the caller's subscription to another plan or billing period
+ * would charge or credit now — shown on the plans sheet before they confirm.
+ */
+export const paddlePreviewChange = onCall(
+  { region: REGION, secrets: [PADDLE_API_KEY] },
+  async (req) => {
+    const uid = memberUid(req.auth)
+    const { priceId } = requestedPrice(req.data)
+    const entitlement = await runningSubscription(uid)
+    try {
+      return await previewSubscriptionPrice(
+        PADDLE_API_KEY.value(),
+        entitlement.subscriptionId,
+        priceId
+      )
+    } catch (err) {
+      logger.error("Paddle change preview failed", { uid, ...errorFields(err) })
+      throw new HttpsError("unavailable", "Paddle didn't answer.")
+    }
+  }
+)
+
 /**
  * Move the caller's running subscription to another plan or billing period.
  * A new checkout would open a second subscription, so a paying user changes
@@ -142,17 +190,8 @@ export const paddleChangePlan = onCall(
   { region: REGION, secrets: [PADDLE_API_KEY] },
   async (req) => {
     const uid = memberUid(req.auth)
-    const { plan, billing } = (req.data ?? {}) as {
-      plan?: PaidPlan
-      billing?: Billing
-    }
-    const priceId = plan && billing ? PADDLE.prices[plan]?.[billing] : undefined
-    if (!priceId) throw new HttpsError("invalid-argument", "Unknown plan.")
-
-    const entitlement = fromDoc((await entitlementRef(db, uid).get()).data())
-    if (!entitlement || !isEntitling(entitlement.status)) {
-      throw new HttpsError("failed-precondition", "No running subscription.")
-    }
+    const { plan, priceId } = requestedPrice(req.data)
+    const entitlement = await runningSubscription(uid)
     let sub: PaddleSubscription
     try {
       sub = await changeSubscriptionPrice<PaddleSubscription>(

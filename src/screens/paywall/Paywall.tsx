@@ -27,7 +27,15 @@ import {
   type Billing,
   type Plan,
 } from "@/data/plans"
-import { changePlan, openCheckout, paddleConfigured } from "@/lib/billing"
+import {
+  changePlan,
+  openCheckout,
+  openExternal,
+  paddleConfigured,
+  portalLink,
+  previewChange,
+  type ChangePreview,
+} from "@/lib/billing"
 import { auth } from "@/lib/firebase"
 import { formatPrice, formatShortDate } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
@@ -54,7 +62,8 @@ import { useSubscriptionState, type SubscriptionState } from "./useSubscription"
 type PaidPlan = Exclude<Plan, "free">
 
 /** Why the sheet opened — it picks the heading. */
-export type PaywallReason = "exhausted" | "browse"
+/** Why the sheet opened: a refusal, a look at the plans, or Settings → Manage. */
+export type PaywallReason = "exhausted" | "browse" | "manage"
 
 type PaywallApi = {
   cycle: AiCycle
@@ -147,20 +156,71 @@ function PaywallSheet({
   const { t, n, language } = useI18n()
   const user = useAuthUser()
   const guest = user === null || user.isAnonymous
-  // Someone already paying keeps their billing period on the toggle.
-  const [billing, setBilling] = React.useState<Billing>(
-    entitlement?.billing ?? "monthly"
-  )
-  // A paid user is offered the plan above theirs; everyone else Pro.
-  const [chosen, setChosen] = React.useState<PaidPlan>(
-    cycle.plan === "free" ? "pro" : "unlimited"
-  )
-  const [busy, setBusy] = React.useState(false)
-  const [problem, setProblem] = React.useState<string | null>(null)
   const paying =
     entitlement !== null &&
     entitlement.plan !== "free" &&
     isEntitling(entitlement.status)
+  // Where the toggle and the selection start each time the sheet opens: a
+  // subscriber on their own plan and period (a Pro out of fills on
+  // Unlimited, the way up), everyone else on Pro, monthly.
+  const startBilling: Billing = (paying && entitlement.billing) || "monthly"
+  const startPlan: PaidPlan = paying
+    ? reason === "exhausted" && entitlement.plan === "pro"
+      ? "unlimited"
+      : (entitlement.plan as PaidPlan)
+    : "pro"
+  const [billing, setBilling] = React.useState<Billing>(startBilling)
+  const [chosen, setChosen] = React.useState<PaidPlan>(startPlan)
+  const [busy, setBusy] = React.useState(false)
+  const [problem, setProblem] = React.useState<string | null>(null)
+  // The sheet stays mounted between openings; start fresh on each one.
+  // State-adjust-during-render, so the first open frame is already right.
+  const open = reason !== null
+  const [wasOpen, setWasOpen] = React.useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
+      setBilling(startBilling)
+      setChosen(startPlan)
+      setProblem(null)
+    }
+  }
+  // A subscriber's own plan and period: selecting it again changes nothing.
+  const isCurrent = (plan: PaidPlan, period: Billing) =>
+    paying
+      ? plan === entitlement.plan && period === entitlement.billing
+      : plan === cycle.plan
+  const same = isCurrent(chosen, billing)
+
+  // What switching would charge or credit now, from Paddle, shown under the
+  // button before the subscriber confirms. Keyed to the selection, so a
+  // stale answer never shows against a newer choice.
+  const previewKey = `${chosen}/${billing}`
+  const [preview, setPreview] = React.useState<{
+    key: string
+    value: ChangePreview | null
+  } | null>(null)
+  const wantsPreview = open && paying && !same && !guest && paddleConfigured()
+  React.useEffect(() => {
+    if (!wantsPreview) return
+    let live = true
+    previewChange(chosen, billing)
+      .then((value) => live && setPreview({ key: previewKey, value }))
+      .catch((err: unknown) => {
+        console.error("Plan change preview failed", err)
+        if (live) setPreview({ key: previewKey, value: null })
+      })
+    return () => {
+      live = false
+    }
+  }, [wantsPreview, chosen, billing, previewKey])
+  const shown = preview?.key === previewKey ? preview.value : null
+  const previewText =
+    shown && shown.amount > 0 && shown.action
+      ? (shown.action === "charge" ? t.paywall.chargeNow : t.paywall.creditNow)(
+          formatPrice(shown.amount / 100, language, shown.currency)
+        )
+      : null
 
   const proceed = async () => {
     if (user === null || busy) return
@@ -222,7 +282,6 @@ function PaywallSheet({
     pro: t.paywall.planPro,
     unlimited: t.paywall.planUnlimited,
   }
-  const canChoose = chosen !== cycle.plan
 
   return (
     <BottomSheet
@@ -259,7 +318,7 @@ function PaywallSheet({
               name={planName[plan]}
               billing={billing}
               selected={chosen === plan}
-              current={cycle.plan === plan}
+              current={isCurrent(plan, billing)}
               onSelect={() => setChosen(plan)}
             />
           ))}
@@ -272,7 +331,7 @@ function PaywallSheet({
           <Button
             size="lg"
             className="h-12 w-full text-[15px]"
-            disabled={user === null || !canChoose}
+            disabled={user === null || same}
             aria-busy={busy}
             onClick={() => void proceed()}
           >
@@ -285,7 +344,11 @@ function PaywallSheet({
                   busy && "opacity-0"
                 )}
               >
-                {t.paywall.continueWith(planName[chosen])}
+                {paying
+                  ? same
+                    ? t.paywall.currentPlan
+                    : t.paywall.switchTo(planName[chosen])
+                  : t.paywall.continueWith(planName[chosen])}
               </span>
               <Spinner
                 className={cn(
@@ -295,10 +358,42 @@ function PaywallSheet({
               />
             </span>
           </Button>
+          {/* A subscriber sees what the switch costs before confirming. The
+              line keeps its room whenever the sheet is theirs, so the sheet
+              never changes height as they pick or the answer loads. */}
+          {paying && (
+            <p
+              className={cn(
+                "min-h-[2lh] px-2 text-center text-[13px] leading-snug text-muted-foreground transition-opacity duration-200",
+                previewText && !same ? "opacity-100" : "opacity-0"
+              )}
+            >
+              {previewText}
+            </p>
+          )}
           {problem && (
             <p className="text-center text-[13px] text-muted-foreground">
               {problem}
             </p>
+          )}
+          {/* Card, invoices and cancelling stay in Paddle's portal, one tap
+              away and in plain sight: cancelling should be as easy as
+              signing up. */}
+          {paying && (
+            <Button
+              variant="ghost"
+              size="lg"
+              className="h-11 w-full text-[14px] text-muted-foreground"
+              onClick={() => {
+                setProblem(null)
+                openExternal(portalLink).catch((err: unknown) => {
+                  console.error("Customer portal failed", err)
+                  setProblem(t.paywall.billingError)
+                })
+              }}
+            >
+              {t.paywall.manageBilling}
+            </Button>
           )}
         </div>
 
@@ -434,12 +529,9 @@ function PaidCard({
         type="button"
         role="radio"
         aria-checked={selected}
-        disabled={current}
         onClick={onSelect}
         whileTap={{ scale: 0.98 }}
-        className={cn(
-          "flex w-full items-center gap-3 px-4 py-3.5 text-left disabled:cursor-default"
-        )}
+        className={cn("flex w-full items-center gap-3 px-4 py-3.5 text-left")}
       >
         {/* The selection ring: a 2px ink stroke on the same squircle path —
             a CSS ring would be shaved by the clip (components/ui/squircle). */}

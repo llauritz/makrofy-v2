@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 
 import { AiSparkle } from "@/components/AiSparkle"
+import { LegalLinks } from "@/components/LegalLinks"
 import { Squircle } from "@/components/ui/squircle"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import { startGoogleSignIn } from "@/data/identity"
@@ -211,6 +212,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
             {t.signIn.signInWithGoogle}
           </OutlineButton>
         </div>
+        <LegalLinks className="mt-5" />
       </div>
     </Page>
   )
