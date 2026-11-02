@@ -148,7 +148,7 @@ export function useAiFill({
         consumeAiUse(db, uid, day)
       }
       called = true
-      const reply = await fillMacros(prompt)
+      const reply = await fillMacros(prompt, final)
       grounded = reply?.attribution != null
       if (runId !== run.current) return
       applyReply(reply, description, final)

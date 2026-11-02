@@ -1,9 +1,12 @@
 import { initializeApp } from "firebase-admin/app"
-import { getFirestore } from "firebase-admin/firestore"
+import { getFirestore, Timestamp } from "firebase-admin/firestore"
 import { defineSecret } from "firebase-functions/params"
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https"
+import { onSchedule } from "firebase-functions/v2/scheduler"
 import { logger } from "firebase-functions/v2"
 
+import { classifyAiFailure, sanitizeReport } from "./ai-failure.js"
+import { ALERT_MESSAGE, runAiHealthCheck } from "./ai-health.js"
 import { isEntitling, type PaddleSubscription } from "./entitlement.js"
 import { changeSubscriptionPrice, createPortalLink } from "./paddle-api.js"
 import { PADDLE, type Billing, type PaidPlan } from "./paddle-config.js"
@@ -18,7 +21,8 @@ import {
 
 // Yaffle's server side (ADR 0012): Paddle's webhook writes each user's
 // entitlement doc, and two callables hand the app what needs the API key — a
-// customer-portal link and a plan change. Secrets come from Google Secret
+// customer-portal link and a plan change. AI fill failures are reported and
+// checked every 15 minutes (ADR 0014; docs/runbooks/ai-fill-errors.md). Secrets come from Google Secret
 // Manager (`firebase functions:secrets:set <NAME>`); see docs/runbooks/paddle.md.
 
 initializeApp()
@@ -128,8 +132,7 @@ export const paddleChangePlan = onCall(
       plan?: PaidPlan
       billing?: Billing
     }
-    const priceId =
-      plan && billing ? PADDLE.prices[plan]?.[billing] : undefined
+    const priceId = plan && billing ? PADDLE.prices[plan]?.[billing] : undefined
     if (!priceId) throw new HttpsError("invalid-argument", "Unknown plan.")
 
     const entitlement = fromDoc((await entitlementRef(db, uid).get()).data())
@@ -154,5 +157,64 @@ export const paddleChangePlan = onCall(
       new Date(sub.updated_at ?? Date.now())
     )
     return { plan }
+  }
+)
+
+/**
+ * The phone reports one failed AI fill (ADR 0014). Classified here, not on
+ * the phone, so a new rule applies without an app update. Any signed-in
+ * identity may report, Guests included; App Check is not enforced, because
+ * App Check failing is one of the things being reported.
+ */
+export const reportAiFailure = onCall(
+  { region: REGION, maxInstances: 3 },
+  async (req) => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Sign in first.")
+    const report = sanitizeReport(req.data)
+    const { blame, kind } = classifyAiFailure(report)
+    const at = Timestamp.now()
+    await db.collection("aiFailures").add({
+      ...report,
+      uid: req.auth.uid,
+      blame,
+      kind,
+      at,
+      // Firestore's TTL policy on expireAt deletes reports after 90 days.
+      expireAt: Timestamp.fromMillis(at.toMillis() + 90 * 86_400_000),
+    })
+    const log = blame === "ours" ? logger.error : logger.warn
+    log("AI fill failed", { blame, kind, uid: req.auth.uid, ...report })
+    return { blame, kind }
+  }
+)
+
+/**
+ * Every quarter hour: sum up the window that just ended. An alert is logged
+ * at error level as ALERT_MESSAGE; the Cloud Monitoring policy in the runbook
+ * turns it into an email.
+ */
+export const aiFillHealth = onSchedule(
+  {
+    region: REGION,
+    schedule: "every 15 minutes",
+    timeZone: "UTC",
+    maxInstances: 1,
+    retryCount: 0,
+  },
+  async (event) => {
+    const summary = await runAiHealthCheck(db, new Date(event.scheduleTime))
+    if (!summary) return
+    const fields = {
+      verdict: summary.verdict,
+      alerts: summary.alerts,
+      window: summary.start.toISOString(),
+      failures: summary.failures,
+      byKind: summary.byKind,
+      usersByBlame: summary.usersByBlame,
+      googleIncidents: summary.googleIncidents,
+      payingUsers: summary.payingUids.length,
+    }
+    if (summary.verdict === "quiet") logger.info("AI fill health", fields)
+    else logger.error(ALERT_MESSAGE, fields)
   }
 )

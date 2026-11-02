@@ -140,4 +140,15 @@ describe("server-only collections outside /users", () => {
     await assertFails(getDoc(doc(db, "paddleEvents/evt_1")))
     await assertFails(setDoc(doc(db, "paddleEvents/evt_2"), { uid: "alice" }))
   })
+
+  it("keep AI failure reports and health windows server-only", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "aiFailures/f1"), { uid: "alice" })
+      await setDoc(doc(ctx.firestore(), "aiHealth/w1"), { verdict: "quiet" })
+    })
+    const db = env.authenticatedContext("alice").firestore()
+    await assertFails(getDoc(doc(db, "aiFailures/f1")))
+    await assertFails(setDoc(doc(db, "aiFailures/f2"), { uid: "alice" }))
+    await assertFails(getDoc(doc(db, "aiHealth/w1")))
+  })
 })

@@ -1,4 +1,7 @@
+import type { AiFailureReport } from "../../functions/src/ai-failure"
+import { describeAiError, describeBadOutput } from "./ai-report"
 import { app } from "./firebase"
+import { callable } from "./functions"
 import {
   parseMacroFillResponse,
   SYSTEM_PROMPT,
@@ -176,15 +179,52 @@ function buildResponseSchema(Schema: typeof import("firebase/ai").Schema) {
  * answer against the four-tier contract. Returns null when the model replied
  * but not in contract shape — callers treat that like a failed call. Network
  * and service errors (offline, 401 without App Check, quota) propagate as
- * exceptions.
+ * exceptions. Either way the failure is reported for monitoring (ADR 0014);
+ * `final` marks the answer to a clarifying question.
  */
-export async function fillMacros(prompt: string): Promise<AiFillReply | null> {
-  const model = await ensureModel()
-  const { response } = await model.generateContent(prompt)
-  const result = parseMacroFillResponse(response.text())
-  if (!result) return null
+export async function fillMacros(
+  prompt: string,
+  final = false
+): Promise<AiFillReply | null> {
+  const started = performance.now()
+  const ctx = () => ({
+    model: MODEL_ID,
+    ms: performance.now() - started,
+    final,
+  })
+  let response: import("firebase/ai").EnhancedGenerateContentResponse
+  let text: string
+  try {
+    const model = await ensureModel()
+    response = (await model.generateContent(prompt)).response
+    text = response.text()
+  } catch (err) {
+    reportAiFailure(describeAiError(err, ctx()))
+    throw err
+  }
+  const candidate = response.candidates?.[0]
+  const result = parseMacroFillResponse(text)
+  if (!result) {
+    reportAiFailure(
+      describeBadOutput(candidate?.finishReason ?? null, text.length, ctx())
+    )
+    return null
+  }
   const entryPoint =
-    response.candidates?.[0]?.groundingMetadata?.searchEntryPoint
-      ?.renderedContent
+    candidate?.groundingMetadata?.searchEntryPoint?.renderedContent
   return { result, attribution: entryPoint || null }
+}
+
+// A burst of failures (say, Google down for an afternoon) shouldn't turn one
+// phone into a flood of reports; a handful per page load tells us enough.
+const MAX_REPORTS_PER_PAGE = 10
+let sent = 0
+
+/** Fire and forget: reporting must never slow down or break the fill. */
+function reportAiFailure(report: AiFailureReport): void {
+  if (sent >= MAX_REPORTS_PER_PAGE) return
+  sent++
+  callable("reportAiFailure", report).catch(() => {
+    // Nowhere left to report to; the user already sees the fill's own error.
+  })
 }
