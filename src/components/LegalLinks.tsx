@@ -9,9 +9,9 @@ import { cn } from "@/lib/utils"
 export function LegalLinks({ className }: { className?: string }) {
   const { t } = useI18n()
   const links = [
-    { href: "/pricing", label: t.settings.pricing },
     { href: "/terms", label: t.settings.terms },
     { href: "/privacy", label: t.settings.privacy },
+    { href: "/pricing", label: t.settings.pricing },
     { href: "/refunds", label: t.settings.refunds },
   ]
   return (
