@@ -197,6 +197,7 @@ export const en = {
     languageEnglish: "English",
     languageSpanish: "Español",
     legalLinks: "Legal",
+    pricing: "Pricing",
     terms: "Terms",
     privacy: "Privacy",
     refunds: "Refunds",
@@ -397,6 +398,13 @@ export const en = {
     billedYearly: (price: string) => `${price} billed yearly`,
     billedMonthly: "billed monthly",
     continueWith: (plan: string) => `Continue with ${plan}`,
+    // A subscriber's plans sheet (Settings → Manage).
+    switchTo: (plan: string) => `Switch to ${plan}`,
+    chargeNow: (amount: string) =>
+      `You’ll pay ${amount} now for the rest of this period.`,
+    creditNow: (amount: string) =>
+      `${amount} of unused time goes towards your next payments.`,
+    manageBilling: "Payment and cancellation",
     checkoutStub: "Checkout isn’t set up yet.",
     // Checkout, plan change or the Paddle portal didn't open.
     billingError: "That didn’t work. Check your connection and try again.",

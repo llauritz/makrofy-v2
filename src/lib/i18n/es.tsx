@@ -170,6 +170,7 @@ export const es: Dictionary = {
     languageEnglish: "English",
     languageSpanish: "Español",
     legalLinks: "Legal",
+    pricing: "Precios",
     terms: "Términos",
     privacy: "Privacidad",
     refunds: "Reembolsos",
@@ -370,6 +371,12 @@ export const es: Dictionary = {
     billedYearly: (price) => `${price} al año`,
     billedMonthly: "facturado cada mes",
     continueWith: (plan) => `Continuar con ${plan}`,
+    switchTo: (plan) => `Cambiar a ${plan}`,
+    chargeNow: (amount) =>
+      `Pagas ${amount} ahora por lo que queda de este periodo.`,
+    creditNow: (amount) =>
+      `${amount} del tiempo no usado se descuenta de tus próximos pagos.`,
+    manageBilling: "Pago y cancelación",
     checkoutStub: "El pago aún no está configurado.",
     billingError: "No funcionó. Revisa tu conexión y vuelve a intentarlo.",
     footnote: "Impuestos incluidos · Cancela cuando quieras",

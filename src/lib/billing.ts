@@ -9,8 +9,9 @@ import {
 } from "../../functions/src/paddle-config"
 
 // The app's side of payments (ADR 0012): Paddle's overlay checkout for a first
-// purchase, and two calls to our functions for what needs the API key — a
-// customer-portal link and a plan change for someone already paying. All of it
+// purchase, and calls to our functions for what needs the API key — a
+// customer-portal link, and a plan change (with its preview) for someone
+// already paying. All of it
 // loads on first use, so the launch bundle carries none of it.
 //
 // The checkout carries the Firebase uid as custom data; the webhook writes the
@@ -91,6 +92,20 @@ export async function portalLink(): Promise<string> {
     {}
   )
   return url
+}
+
+/** What a plan change would charge or credit now (minor units), unmade. */
+export interface ChangePreview {
+  action: "charge" | "credit" | null
+  amount: number
+  currency: string
+}
+
+export async function previewChange(
+  plan: PaidPlan,
+  billing: Billing
+): Promise<ChangePreview> {
+  return callable("paddlePreviewChange", { plan, billing })
 }
 
 /** Move a running subscription to another plan; Paddle prorates the difference. */

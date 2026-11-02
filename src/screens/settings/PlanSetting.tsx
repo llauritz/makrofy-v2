@@ -1,10 +1,8 @@
 import { AiSparkle } from "@/components/AiSparkle"
 import { Button } from "@/components/ui/button"
 import { Squircle } from "@/components/ui/squircle"
-import * as React from "react"
 
 import { isEntitling } from "@/data/entitlement"
-import { openExternal, portalLink } from "@/lib/billing"
 import { formatShortDate } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
 import { usePaywall } from "@/screens/paywall/Paywall"
@@ -12,14 +10,14 @@ import { usePaywall } from "@/screens/paywall/Paywall"
 // The Settings plan row (#65): the plan, what's left of the ✨ allowance, and
 // — for paid plans — the cycle's reset date, which #64 says must be findable
 // here. Free gets Upgrade, which opens the plans. Anyone with a Paddle
-// subscription gets Manage, which opens Paddle's customer portal (cancel,
-// card, invoices — #66). A failed payment or a scheduled end takes over the
+// subscription gets Manage, which opens the same plans sheet on their own
+// plan: switch up, down or between monthly and yearly there, and reach
+// Paddle's customer portal (card, invoices, cancel) from its foot (#66). A failed payment or a scheduled end takes over the
 // status line. Free never shows a date: its tries refill silently and the
 // copy neither promises nor denies it. Renders nothing while billing is off.
 export function PlanSetting({ onOpen }: { onOpen: () => void }) {
   const { t, n, language } = useI18n()
   const paywall = usePaywall()
-  const [problem, setProblem] = React.useState(false)
   if (paywall === null) return null
   const { cycle, entitlement } = paywall
   const date = formatShortDate(cycle.resetsOn, language)
@@ -34,9 +32,8 @@ export function PlanSetting({ onOpen }: { onOpen: () => void }) {
       : cycle.plan === "pro"
         ? t.paywall.planPro
         : t.paywall.planUnlimited
-  const status = problem
-    ? t.paywall.billingError
-    : entitlement?.status === "past_due" && subscribed
+  const status =
+    entitlement?.status === "past_due" && subscribed
       ? t.paywall.pastDueStatus
       : entitlement?.cancelsAt && subscribed
         ? t.paywall.endingStatus(
@@ -66,16 +63,8 @@ export function PlanSetting({ onOpen }: { onOpen: () => void }) {
         variant={subscribed ? "outline" : "default"}
         size="sm"
         onClick={() => {
-          if (subscribed) {
-            setProblem(false)
-            openExternal(portalLink).catch((err) => {
-              console.error("Customer portal failed", err)
-              setProblem(true)
-            })
-            return
-          }
           onOpen()
-          paywall.open("browse")
+          paywall.open(subscribed ? "manage" : "browse")
         }}
       >
         {subscribed ? t.paywall.manage : t.paywall.upgrade}

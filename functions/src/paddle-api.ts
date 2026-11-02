@@ -1,8 +1,8 @@
 import { paddleApiBase } from "./paddle-config.js"
 
-// The two Paddle API calls the app needs, over plain fetch: a customer portal
-// session (manage, cancel, card) and a plan change on an existing
-// subscription. The API key needs only subscription.read, subscription.write
+// The Paddle API calls the app needs, over plain fetch: a customer portal
+// session (card, invoices, cancel), and a plan change on an existing
+// subscription with its preview. The API key needs only subscription.read, subscription.write
 // and customer_portal_session.write.
 
 async function paddle<T>(
@@ -51,6 +51,16 @@ export async function createPortalLink(
   )
 }
 
+/** The update a plan change sends; the preview sends the same. */
+function priceChange(priceId: string) {
+  return {
+    items: [{ price_id: priceId, quantity: 1 }],
+    proration_billing_mode: "prorated_immediately",
+    // Choosing a plan means staying: drop a pending end-of-period cancel.
+    scheduled_change: null,
+  }
+}
+
 /**
  * Move a subscription onto another price, charging or crediting the
  * difference now, and keep it running if a cancellation was scheduled.
@@ -61,10 +71,47 @@ export async function changeSubscriptionPrice<T>(
   subscriptionId: string,
   priceId: string
 ): Promise<T> {
-  return paddle<T>(apiKey, "PATCH", `/subscriptions/${subscriptionId}`, {
-    items: [{ price_id: priceId, quantity: 1 }],
-    proration_billing_mode: "prorated_immediately",
-    // Choosing a plan means staying: drop a pending end-of-period cancel.
-    scheduled_change: null,
-  })
+  return paddle<T>(
+    apiKey,
+    "PATCH",
+    `/subscriptions/${subscriptionId}`,
+    priceChange(priceId)
+  )
+}
+
+/** What a plan change would charge or credit now, without making it. */
+export interface ChangePreview {
+  /** "charge": paid now; "credit": kept towards later payments. */
+  action: "charge" | "credit" | null
+  /** In the currency's minor unit (cents), as Paddle reports it. */
+  amount: number
+  currency: string
+}
+
+export async function previewSubscriptionPrice(
+  apiKey: string,
+  subscriptionId: string,
+  priceId: string
+): Promise<ChangePreview> {
+  const data = await paddle<{
+    currency_code?: string
+    update_summary?: {
+      result?: { action?: string; amount?: string; currency_code?: string }
+    } | null
+  }>(
+    apiKey,
+    "PATCH",
+    `/subscriptions/${subscriptionId}/preview`,
+    priceChange(priceId)
+  )
+  const result = data.update_summary?.result
+  const action =
+    result?.action === "charge" || result?.action === "credit"
+      ? result.action
+      : null
+  return {
+    action,
+    amount: Number(result?.amount ?? 0) || 0,
+    currency: result?.currency_code ?? data.currency_code ?? "USD",
+  }
 }
