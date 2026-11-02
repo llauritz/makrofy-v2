@@ -387,7 +387,7 @@ export const en = {
     billing: "Billing",
     billingAnnual: "Yearly",
     billingMonthly: "Monthly",
-    save: (pct: string) => `Save ${pct}%`,
+    save: (pct: string) => `Save up to ${pct}%`,
     freeLine: (limit: string) => `${limit} free AI fills`,
     paidLine: (limit: string) => `${limit} AI fills / 30 days`,
     supportsDev: "Supports development",

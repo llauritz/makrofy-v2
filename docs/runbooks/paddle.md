@@ -66,7 +66,8 @@ sandbox checkout: `https://goyaffle.web.app/?paywall`.
   Paddle's test card `4242 4242 4242 4242`, any future expiry, CVC `100`.
 - Within a few seconds Settings shows the plan. The webhook log is in the
   Firebase console (Functions → `paddleWebhook` → Logs) and every event is
-  recorded under `/paddleEvents` in Firestore.
+  recorded under `/paddleEvents` in Firestore, with each subscription's
+  latest state under `/paddleSubscriptions`.
 - *Manage* opens Paddle's customer portal: cancel there and the plan shows
   "ends …"; cancel immediately from the Paddle dashboard and it drops to Free.
 - From Pro, run out of fills (or use *Get Unlimited*) to test the in-place

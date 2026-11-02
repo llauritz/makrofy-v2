@@ -25,6 +25,13 @@ app still reads everything through the Firestore SDK.
   audit trail. Events older than the last applied one are ignored (Paddle
   doesn't promise order). `paddleChangePlan` applies Paddle's reply through the
   same code, so the webhook's echo is a no-op.
+- **More than one subscription.** Each subscription's latest state is kept
+  under `/paddleSubscriptions/{id}` (server-only, like `/paddleEvents`), and
+  the entitlement follows the best one still paying: highest plan, then
+  newest. Cancelling one of two (two checkouts on two devices) leaves the plan
+  of the other, which is still charging. Staleness is judged per subscription.
+  (Added Nov 2026 after the second sandbox sweep caught the user dropping to
+  Free.)
 - **Identity through checkout, never email.** The overlay checkout passes
   `customData: { uid }`; Paddle copies it onto the subscription, and the
   webhook addresses `/users/{uid}` with it. A subscription without a uid is

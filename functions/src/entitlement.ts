@@ -59,6 +59,46 @@ export function isEntitling(status: SubscriptionStatus): boolean {
   return status === "active" || status === "trialing" || status === "past_due"
 }
 
+/** A subscription as last seen, with when that state was current. */
+export interface SeenSubscription {
+  sub: PaddleSubscription
+  occurredAt: Date
+}
+
+const RANK: Record<Plan, number> = { free: 0, pro: 1, unlimited: 2 }
+
+function rankOf(sub: PaddleSubscription): number {
+  const priceId = sub.items.find((item) => item.price?.id)?.price?.id
+  const sold = priceId ? planForPrice(priceId) : null
+  return sold ? RANK[sold.plan] : 0
+}
+
+/**
+ * The subscription the entitlement follows when a user has more than one —
+ * two checkouts on two devices, or a second plan bought instead of upgrading.
+ * Of those still entitling, the highest plan wins, then the newest; with none
+ * entitling, the one that just changed, so the doc shows its lapse. Without
+ * this, cancelling the newer of two left the user on Free while the older
+ * one was still charging them.
+ */
+export function leadSubscription(
+  changed: SeenSubscription,
+  others: SeenSubscription[]
+): SeenSubscription {
+  const live = [
+    changed,
+    ...others.filter((o) => o.sub.id !== changed.sub.id),
+  ].filter((s) => isEntitling(s.sub.status))
+  if (live.length === 0) return changed
+  return live.reduce((best, s) => {
+    const diff = rankOf(s.sub) - rankOf(best.sub)
+    return diff > 0 ||
+      (diff === 0 && s.occurredAt.getTime() > best.occurredAt.getTime())
+      ? s
+      : best
+  })
+}
+
 /** The Firebase uid the checkout attached as custom data, if any. */
 export function uidOf(sub: PaddleSubscription): string | null {
   const uid = sub.custom_data?.uid

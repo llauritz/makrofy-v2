@@ -8,6 +8,7 @@ import { getFirestore, Timestamp, type Firestore } from "firebase-admin/firestor
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 
 import {
+  leadSubscription,
   nextEntitlement,
   uidOf,
   type Entitlement,
@@ -140,6 +141,40 @@ describe("nextEntitlement", () => {
   })
 })
 
+describe("leadSubscription", () => {
+  const pro = sub({ id: "sub_pro" })
+  const unl = sub({ id: "sub_unl", items: [{ price: { id: "pri_unl_m" } }] })
+
+  it("follows the highest plan still paying", () => {
+    const lead = leadSubscription({ sub: pro, occurredAt: later(5) }, [
+      { sub: unl, occurredAt: later(1) },
+    ])
+    expect(lead.sub.id).toBe("sub_unl")
+  })
+
+  it("falls back to the other subscription when the changed one lapses", () => {
+    const lead = leadSubscription(
+      { sub: { ...unl, status: "canceled" }, occurredAt: later(5) },
+      [{ sub: pro, occurredAt: T0 }],
+    )
+    expect(lead.sub.id).toBe("sub_pro")
+  })
+
+  it("prefers the newer of two on the same plan, and the changed one when none pays", () => {
+    const older = sub({ id: "sub_a" })
+    const newer = sub({ id: "sub_b" })
+    expect(
+      leadSubscription({ sub: older, occurredAt: T0 }, [{ sub: newer, occurredAt: later(1) }]).sub
+        .id,
+    ).toBe("sub_b")
+    const gone = { sub: { ...older, status: "canceled" as const }, occurredAt: later(2) }
+    expect(
+      leadSubscription(gone, [{ sub: { ...newer, status: "paused" }, occurredAt: later(1) }]).sub
+        .id,
+    ).toBe("sub_a")
+  })
+})
+
 describe("verifyPaddleSignature", () => {
   const secret = "pdl_ntfset_test"
   const body = '{"event_id":"evt_1"}'
@@ -227,6 +262,52 @@ describe("applyPaddleEvent (emulator)", () => {
     const doc = await read()
     expect(doc?.plan).toBe("free")
     expect((doc?.planStartedAt as Timestamp).toDate()).toEqual(later(30))
+  })
+
+  it("keeps the plan of an older subscription when the newer one is cancelled", async () => {
+    const pro = sub({ id: "sub_pro", items: [{ price: { id: "pri_pro_m" } }] })
+    const unl = sub({ id: "sub_unl", items: [{ price: { id: "pri_unl_m" } }] })
+    await applyPaddleEvent(db, event("evt_1", "subscription.created", T0, pro))
+    await applyPaddleEvent(db, event("evt_2", "subscription.created", later(1), unl))
+    expect((await read())?.plan).toBe("unlimited")
+    // The older Pro renewing must not pull the user down from Unlimited.
+    await applyPaddleEvent(db, event("evt_3", "subscription.updated", later(2), pro))
+    expect((await read())?.plan).toBe("unlimited")
+    await applyPaddleEvent(
+      db,
+      event(
+        "evt_4",
+        "subscription.canceled",
+        later(3),
+        { ...unl, status: "canceled", current_billing_period: null },
+      ),
+    )
+    const doc = await read()
+    expect(doc?.plan).toBe("pro")
+    expect(doc?.status).toBe("active")
+    expect(doc?.subscriptionId).toBe("sub_pro")
+    // And once Pro goes too, the user is on Free.
+    await applyPaddleEvent(
+      db,
+      event(
+        "evt_5",
+        "subscription.canceled",
+        later(4),
+        { ...pro, status: "canceled", current_billing_period: null },
+      ),
+    )
+    expect((await read())?.plan).toBe("free")
+  })
+
+  it("drops an event older than its own subscription's last one", async () => {
+    await applyPaddleEvent(db, event("evt_1", "subscription.created", later(5), sub()))
+    expect(
+      await applyPaddleEvent(
+        db,
+        event("evt_2", "subscription.canceled", later(4), sub({ status: "canceled" })),
+      ),
+    ).toBe("skipped: older than the last applied event")
+    expect((await read())?.plan).toBe("pro")
   })
 
   it("ignores other event types and subscriptions without a uid", async () => {
