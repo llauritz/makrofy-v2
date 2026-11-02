@@ -147,9 +147,14 @@ function Row({
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted disabled:opacity-45"
+        className="flex w-full items-center gap-2.5 py-3 pr-4 pl-1 text-left transition-colors hover:bg-muted disabled:opacity-45"
       >
-        <span className="text-muted-foreground">{icon}</span>
+        {/* A 32px icon slot, like the account photo and plan badge above,
+            so every icon in the group shares one centre line and every
+            label starts at the same x. */}
+        <span className="flex w-8 shrink-0 justify-center text-muted-foreground">
+          {icon}
+        </span>
         <span className="flex-1 text-[15px] font-medium">{label}</span>
         <span className="text-[13px] text-muted-foreground">{hint}</span>
       </button>

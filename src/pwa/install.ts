@@ -31,3 +31,23 @@ export function resolveInstallAffordance(env: InstallEnv): InstallAffordance {
   if (env.isIOS) return "ios-guide"
   return "none"
 }
+
+/**
+ * Whether the install card belongs on the main screen. It is the one nudge
+ * the app makes, so it is narrow: only where installing is actually possible,
+ * only on a phone or tablet (a desktop installs from Settings), and never
+ * again once ✕ has been tapped. Settings keeps its "Install app" row either
+ * way.
+ */
+export function showInstallCard({
+  affordance,
+  isTouch,
+  dismissed,
+}: {
+  affordance: InstallAffordance
+  isTouch: boolean
+  dismissed: boolean
+}): boolean {
+  if (dismissed || !isTouch) return false
+  return affordance === "prompt" || affordance === "ios-guide"
+}

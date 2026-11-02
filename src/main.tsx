@@ -10,6 +10,7 @@ import { bootstrapIdentity } from "@/data/identity"
 import { refreshOnResume } from "@/data/resume-sync"
 import { auth, db } from "@/lib/firebase"
 import { preloadAssets } from "@/lib/preload"
+import { captureInstallPrompt } from "@/pwa/install-store"
 import { registerServiceWorker } from "@/pwa/register"
 
 // Guests get a real Firebase identity from first launch (ADR 0002); a Google
@@ -26,6 +27,10 @@ startBootMirror(auth, db)
 // stream the phone silently dropped in the background can't hold back what
 // another device logged meanwhile.
 refreshOnResume(db)
+
+// Chromium offers installation once per page load, early; catch it before
+// React renders so the install card and the Settings row can both use it.
+captureInstallPrompt()
 
 // Fetch the fonts and the wordmark animation now, alongside sign-in, so a
 // first run's welcome screen can appear fully formed (src/lib/preload.ts).
