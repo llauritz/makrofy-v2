@@ -7,6 +7,15 @@ import type { StatDay } from "@/lib/stats"
 // label/revise chips (the morning nudge from #42, merged into this strip).
 
 /**
+ * Switched off for now (Nov 2026): the strip's look is being reworked, so it
+ * stays out of the main screen until then. The component, gates and copy are
+ * all kept; set this back to true to bring the strip back. While it is off
+ * the Coverage nudge chips go with it, and Coverage is labelled from the
+ * per-Day CoverageControl below the entry list as before.
+ */
+export const MORNING_STRIP_ENABLED = false
+
+/**
  * Whether the strip belongs above the summary card right now. "First open
  * each morning" falls out of the two dismissals: today has no Entries yet
  * (the first log auto-dismisses) and ✕ hasn't been tapped today

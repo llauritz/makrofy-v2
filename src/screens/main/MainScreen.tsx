@@ -39,6 +39,7 @@ import { EntryList } from "./EntryList"
 import type { EntryDraft } from "./fields"
 import { Header } from "./Header"
 import { InstallCard } from "./InstallCard"
+import { MORNING_STRIP_ENABLED } from "./morning"
 import { MorningStrip } from "./MorningStrip"
 import { SummaryCard } from "./SummaryCard"
 import { summarize } from "./summary"
@@ -213,7 +214,9 @@ export function MainScreen({
             {pending && <UndoSnackbar key="undo" onUndo={undo} />}
           </AnimatePresence>
           <InstallCard />
-          <MorningStrip uid={uid} goalKcal={goalKcal} />
+          {MORNING_STRIP_ENABLED && (
+            <MorningStrip uid={uid} goalKcal={goalKcal} />
+          )}
           {/* Logged rows slide behind the card, never out below it: a page-
               coloured backdrop sits under the card from just below its top
               edge down to the screen's bottom edge, side gutters included
