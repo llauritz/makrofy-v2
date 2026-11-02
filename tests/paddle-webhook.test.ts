@@ -103,16 +103,44 @@ describe("nextEntitlement", () => {
     )
   })
 
-  it("canceled or paused lapses to free and re-anchors", () => {
+  it("canceled lapses to free and re-anchors", () => {
     const first = written(nextEntitlement(null, sub(), T0))
-    for (const status of ["canceled", "paused"] as const) {
-      const e = written(
-        nextEntitlement(first, sub({ status, current_billing_period: null }), later(40)),
-      )
-      expect(e.plan).toBe("free")
-      expect(e.billing).toBeNull()
-      expect(e.planStartedAt).toEqual(later(40))
-    }
+    const e = written(
+      nextEntitlement(first, sub({ status: "canceled", current_billing_period: null }), later(40)),
+    )
+    expect(e.plan).toBe("free")
+    expect(e.billing).toBeNull()
+    expect(e.planStartedAt).toEqual(later(40))
+  })
+
+  it("a downgrade keeps the cycle, so it hands out no fresh allowance", () => {
+    const unl = written(
+      nextEntitlement(null, sub({ items: [{ price: { id: "pri_unl_m" } }] }), T0),
+    )
+    const down = written(nextEntitlement(unl, sub(), later(10)))
+    expect(down.plan).toBe("pro")
+    expect(down.planStartedAt).toEqual(T0)
+  })
+
+  it("a pause holds the cycle and the resume picks it up", () => {
+    const first = written(nextEntitlement(null, sub(), T0))
+    const paused = written(
+      nextEntitlement(first, sub({ status: "paused", current_billing_period: null }), later(10)),
+    )
+    expect(paused.plan).toBe("free")
+    expect(paused.planStartedAt).toEqual(T0)
+    const resumed = written(nextEntitlement(paused, sub(), later(20)))
+    expect(resumed.plan).toBe("pro")
+    expect(resumed.planStartedAt).toEqual(T0)
+  })
+
+  it("a new purchase after a lapse starts a fresh cycle", () => {
+    const first = written(nextEntitlement(null, sub(), T0))
+    const lapsed = written(
+      nextEntitlement(first, sub({ status: "canceled", current_billing_period: null }), later(40)),
+    )
+    const again = written(nextEntitlement(lapsed, sub({ id: "sub_2" }), later(50)))
+    expect(again.planStartedAt).toEqual(later(50))
   })
 
   it("ignores an event older than the one already applied", () => {
