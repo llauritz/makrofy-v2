@@ -13,17 +13,28 @@ import type { GoalStatus } from "@/data/goal"
 /** The three top-level things the app can be showing. */
 export type AppView = "loading" | "onboarding" | "main"
 
+/**
+ * Which view to show. `freshDevice` means this device has never held a
+ * profile (no boot mirror, ADR 0011): the identity about to be minted is a
+ * brand-new Guest, which by construction has no Goal and no Entries. Waiting
+ * on the sign-in and two server answers to learn that only kept a first-time
+ * visitor on the splash for seconds, so on a fresh device the undecided
+ * states show onboarding straight away; the real answers still win once they
+ * arrive (a Goal turning up — say, a Google sign-in from Welcome — moves on to
+ * the main screen). Anywhere else, undecided still means the splash, so a
+ * returning user never flashes onboarding.
+ */
 export function resolveAppView(
   uid: string | null,
   goalStatus: GoalStatus,
-  entriesStatus: EntriesStatus
+  entriesStatus: EntriesStatus,
+  freshDevice = false,
 ): AppView {
-  // Nothing is decidable without an identity — and we must never offer
-  // onboarding before there is a uid to write the Goal against.
-  if (uid === null) return "loading"
-  if (goalStatus === "loading") return "loading"
+  const undecided = freshDevice ? "onboarding" : "loading"
+  if (uid === null) return undecided
+  if (goalStatus === "loading") return undecided
   if (goalStatus === "set") return "main"
   // No Goal: only a profile that has never logged is on its first run.
-  if (entriesStatus === "loading") return "loading"
+  if (entriesStatus === "loading") return undecided
   return entriesStatus === "some" ? "main" : "onboarding"
 }
