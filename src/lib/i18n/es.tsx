@@ -240,11 +240,12 @@ export const es: Dictionary = {
     points: [
       {
         title: "Escribe lo que sabes",
-        body: "Alimento y cantidad, en cualquier unidad. Sin buscar en una base de datos.",
+        body:
+          "Alimento y cantidad, en cualquier unidad. Sin base de datos que consultar ni mantener.",
       },
       {
         title: "La IA completa el resto",
-        body: "Las calorías y macros que falten se estiman.",
+        body: "Pide a la IA que busque o estime calorías y macros.",
       },
       {
         title: "Recuerda tus comidas",
