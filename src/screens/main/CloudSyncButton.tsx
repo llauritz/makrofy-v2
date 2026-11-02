@@ -87,13 +87,13 @@ export function CloudPill({
       outline="solid"
       outlineClassName={
         "transition-colors duration-300 " +
-        // The outline is drawn in the label's own colour, so the pill reads
-        // as one button rather than faint text in a fainter frame.
+        // The outline is the label's own colour at half strength, so the pill
+        // reads as one button rather than faint text in a fainter frame.
         (!prompt
           ? "text-transparent"
           : button.label === "loginAgain"
-            ? "text-foreground"
-            : "text-muted-foreground")
+            ? "text-foreground/50"
+            : "text-muted-foreground/50")
       }
     >
       <motion.button
