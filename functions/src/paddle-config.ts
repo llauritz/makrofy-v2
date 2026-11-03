@@ -15,18 +15,18 @@ export type PaidPlan = "pro" | "unlimited"
 export type Billing = "monthly" | "annual"
 
 export const PADDLE = {
-  environment: "sandbox" as PaddleEnvironment,
-  /** Developer tools → Authentication → client-side token (`test_…` in sandbox). */
-  clientToken: "test_d292176a394d113e02eebc2ea74",
+  environment: "production" as PaddleEnvironment,
+  /** Developer tools → Authentication → client-side token (`live_…`). */
+  clientToken: "live_5ac501d20644d8a0463e3477735",
   /** Catalog → Products → each price's `pri_…` ID. */
   prices: {
     pro: {
-      monthly: "pri_01m6ceh25d7h9bp0jt8xcgpgps",
-      annual: "pri_01m6cejvkeejbjbk6gp2df7h5e",
+      monthly: "pri_01m6fayjav39sdk2n4w36dw61y",
+      annual: "pri_01m6fayjj79kfdep37w194jtpd",
     },
     unlimited: {
-      monthly: "pri_01m6cempnar24g4q89fn84d4yc",
-      annual: "pri_01m6cenng71r8m8ecshy3mwrce",
+      monthly: "pri_01m6fayk7p8pz0rn54wqfxa4b9",
+      annual: "pri_01m6faykffkvff2dt6022x7n1t",
     },
   } satisfies Record<PaidPlan, Record<Billing, string>>,
 }
