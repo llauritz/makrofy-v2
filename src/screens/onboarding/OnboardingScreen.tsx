@@ -311,48 +311,55 @@ function GoalStep({
         {t.onboarding.goalSubtitle}
       </p>
 
-      <GoalField
-        value={draft === null ? n(kcal) : draft === "" ? "" : n(Number(draft))}
-        unit={t.units.kcal}
-        ariaLabel={t.onboarding.dailyGoalAria}
-        decrease={
-          <Stepper
-            label={t.onboarding.decrease(STEP)}
-            onClick={() => nudge(-STEP)}
-          >
-            <Minus className="h-[18px] w-[18px]" />
-          </Stepper>
-        }
-        increase={
-          <Stepper
-            label={t.onboarding.increase(STEP)}
-            onClick={() => nudge(STEP)}
-          >
-            <Plus className="h-[18px] w-[18px]" />
-          </Stepper>
-        }
-        onChange={(raw) => setDraft(raw.replace(/\D/g, "").slice(0, 5))}
-        onFocus={(e) => {
-          setDraft(String(kcal))
-          requestAnimationFrame(() => e.target.select())
-        }}
-        onBlur={commitDraft}
-      />
+      {/* The field and the calculator sit in the free space between the
+          heading and the button, a little above its middle, rather than
+          straight under the heading. */}
+      <div className="flex flex-1 flex-col justify-center pt-10 pb-16">
+        <GoalField
+          value={
+            draft === null ? n(kcal) : draft === "" ? "" : n(Number(draft))
+          }
+          unit={t.units.kcal}
+          ariaLabel={t.onboarding.dailyGoalAria}
+          decrease={
+            <Stepper
+              label={t.onboarding.decrease(STEP)}
+              onClick={() => nudge(-STEP)}
+            >
+              <Minus className="h-[18px] w-[18px]" />
+            </Stepper>
+          }
+          increase={
+            <Stepper
+              label={t.onboarding.increase(STEP)}
+              onClick={() => nudge(STEP)}
+            >
+              <Plus className="h-[18px] w-[18px]" />
+            </Stepper>
+          }
+          onChange={(raw) => setDraft(raw.replace(/\D/g, "").slice(0, 5))}
+          onFocus={(e) => {
+            setDraft(String(kcal))
+            requestAnimationFrame(() => e.target.select())
+          }}
+          onBlur={commitDraft}
+        />
 
-      <div className="mt-10 flex flex-col items-center">
-        <Squircle asChild pill outline="solid">
-          <button
-            type="button"
-            onClick={() => setNeedOpen(true)}
-            className="flex items-center gap-2 bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-muted"
-          >
-            <Calculator className="h-4 w-4" aria-hidden />
-            {t.onboarding.calculate}
-          </button>
-        </Squircle>
+        <div className="mt-10 flex flex-col items-center">
+          <Squircle asChild pill outline="solid">
+            <button
+              type="button"
+              onClick={() => setNeedOpen(true)}
+              className="flex items-center gap-2 bg-card px-5 py-3 text-sm font-semibold transition-colors hover:bg-muted"
+            >
+              <Calculator className="h-4 w-4" aria-hidden />
+              {t.onboarding.calculate}
+            </button>
+          </Squircle>
+        </div>
       </div>
 
-      <div className="mt-auto pt-10">
+      <div className="pt-10">
         <StepDots active={1} />
         {/* mb-12 matches the sign-in line under Welcome's button, so the button
             stays put across the two steps. */}
@@ -428,7 +435,7 @@ function GoalField({
   )
 
   return (
-    <div className="mt-14 flex items-center justify-center gap-3">
+    <div className="flex items-center justify-center gap-3">
       {decrease}
       <Squircle asChild radius="2xl">
         <label
