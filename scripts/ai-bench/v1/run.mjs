@@ -21,7 +21,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
-import { parseMacroFillResponse } from "../../src/lib/macro-fill.ts"
+import { parseMacroFillResponse } from "../../../src/lib/macro-fill.ts"
 import { geminiClient, jevClient, mockClients } from "./clients.mjs"
 import { FOODS } from "./foods.mjs"
 import {
@@ -51,7 +51,7 @@ const { values: args } = parseArgs({
   },
 })
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "../..")
+const root = join(dirname(fileURLToPath(import.meta.url)), "../../..")
 
 // Keys may live in the git-ignored .env.local instead of the shell.
 const envFile = join(root, ".env.local")

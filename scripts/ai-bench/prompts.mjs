@@ -1,44 +1,47 @@
-// Prompts and decision questions for the router bench. The production prompt
-// is imported, so the "today" and "no search" arms send exactly what users get.
-import { SYSTEM_PROMPT } from "../../src/lib/macro-fill.ts"
+// Prompts, schemas and decision questions used by the bench variants.
+// Production prompts are imported, never copied, so a variant named after a
+// production design sends exactly what that design sends.
+import { createHash } from "node:crypto"
+import { execFileSync } from "node:child_process"
+import { mkdtempSync, writeFileSync, existsSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { pathToFileURL } from "node:url"
+import { SYSTEM_PROMPT as APP_PROMPT } from "../../src/lib/macro-fill.ts"
 
-export { SYSTEM_PROMPT }
+export const sha = (s) => createHash("sha256").update(s).digest("hex").slice(0, 10)
 
 // ── The fill reply schema (REST form) ──────────────────────────────────────
 // Mirror of buildResponseSchema() in src/lib/ai.ts. Keep the two in step.
-const FOOD = {
-  type: "OBJECT",
-  description: "Fill when status is 'confident' or 'unsure'.",
-  properties: {
-    label: { type: "STRING" },
-    servingText: { type: "STRING" },
-    grams: { type: "NUMBER", nullable: true },
-    calories: { type: "NUMBER" },
-    protein_g: { type: "NUMBER" },
-    carbs_g: { type: "NUMBER" },
-    fat_g: { type: "NUMBER" },
-  },
-  required: ["label", "servingText", "calories", "protein_g", "carbs_g", "fat_g"],
-}
-
-export function fillSchema(statuses = ["confident", "unsure", "ambiguous", "hopeless"]) {
+// `handOver` adds the cascade's "search" status.
+export function fillSchema(handOver = false) {
   return {
     type: "OBJECT",
     properties: {
-      status: { type: "STRING", enum: statuses },
-      food: FOOD,
+      status: {
+        type: "STRING",
+        enum: ["confident", "unsure", "ambiguous", "hopeless", ...(handOver ? ["search"] : [])],
+      },
+      food: {
+        type: "OBJECT",
+        description: "Fill when status is 'confident' or 'unsure'.",
+        properties: {
+          label: { type: "STRING" },
+          servingText: { type: "STRING" },
+          grams: { type: "NUMBER", nullable: true },
+          calories: { type: "NUMBER" },
+          protein_g: { type: "NUMBER" },
+          carbs_g: { type: "NUMBER" },
+          fat_g: { type: "NUMBER" },
+        },
+        required: ["label", "servingText", "calories", "protein_g", "carbs_g", "fat_g"],
+      },
       uncertainFields: {
         type: "ARRAY",
         description: "Fill ONLY when status is 'unsure': names of low-confidence fields.",
-        items: {
-          type: "STRING",
-          enum: ["servingText", "grams", "calories", "protein_g", "carbs_g", "fat_g"],
-        },
+        items: { type: "STRING", enum: ["servingText", "grams", "calories", "protein_g", "carbs_g", "fat_g"] },
       },
-      question: {
-        type: "STRING",
-        description: "Fill ONLY when status is 'ambiguous': exactly one clarifying question.",
-      },
+      question: { type: "STRING", description: "Fill ONLY when status is 'ambiguous': exactly one clarifying question." },
       answerChips: {
         type: "ARRAY",
         description:
@@ -51,39 +54,39 @@ export function fillSchema(statuses = ["confident", "unsure", "ambiguous", "hope
   }
 }
 
-// ── Arm: Gemini cascade (first call, no search tool) ───────────────────────
-// Stand-in for the price review thread's ROUTING_PROMPT
-// (functions/src/ai-prompt.ts on its branch): answer staples, generic dishes
-// and questions without search, or reply {"status":"search"}. Once that file
-// is on main, run.mjs imports it instead (see loadCascadePrompt).
-const SEARCH_RULE =
-  /Searching: [\s\S]*$/ // the production prompt's last paragraph
-
-export const CASCADE_FALLBACK_PROMPT =
-  SYSTEM_PROMPT.replace(SEARCH_RULE, "").trimEnd() +
-  `
-
-You have no web search in this step. Answer from your knowledge for common staple foods and generic home-style dishes. If the food is a specific brand, chain or restaurant item, or a packaged or regional product whose label or menu is the source of truth, do not estimate: reply exactly {"status":"search","answerChips":[]} and nothing else.`
-
-export async function loadCascadePrompt() {
-  try {
-    const mod = await import("../../functions/src/ai-prompt.ts")
-    if (typeof mod.ROUTING_PROMPT === "string") {
-      return {
-        prompt: mod.ROUTING_PROMPT,
-        // Its second step searches with its own prompt; without one, the
-        // cascade reuses the bench's `search` answer.
-        searchPrompt: typeof mod.SEARCH_PROMPT === "string" ? mod.SEARCH_PROMPT : null,
-        source: "functions/src/ai-prompt.ts ROUTING_PROMPT + SEARCH_PROMPT",
-      }
+// ── Prompt sets ────────────────────────────────────────────────────────────
+// `app`: the single-call prompt the app sends today (src/lib/macro-fill.ts).
+// `pipeline`: ROUTING_PROMPT / SEARCH_PROMPT / SYSTEM_PROMPT from
+// functions/src/ai-prompt.ts (the two-step fill, ADR 0016). Read from the
+// working tree when present, else from a git ref (--prompts-ref).
+export async function loadPrompts(promptsRef) {
+  const prompts = { app: { text: APP_PROMPT, source: "src/lib/macro-fill.ts SYSTEM_PROMPT" } }
+  const file = "functions/src/ai-prompt.ts"
+  let mod = null
+  let source = null
+  if (existsSync(file) && !promptsRef) {
+    mod = await import(pathToFileURL(join(process.cwd(), file)).href)
+    source = `${file} (working tree)`
+  } else {
+    const ref = promptsRef ?? "origin/main"
+    try {
+      const text = execFileSync("git", ["show", `${ref}:${file}`], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })
+      const dir = mkdtempSync(join(tmpdir(), "ai-bench-prompts-"))
+      writeFileSync(join(dir, "ai-prompt.ts"), text)
+      mod = await import(pathToFileURL(join(dir, "ai-prompt.ts")).href)
+      source = `${file} at ${ref} (${execFileSync("git", ["rev-parse", "--short", ref], { encoding: "utf8" }).trim()})`
+    } catch {
+      // Not available at that ref: variants that need it refuse to run.
     }
-  } catch {
-    // Not on this branch yet.
   }
-  return { prompt: CASCADE_FALLBACK_PROMPT, searchPrompt: null, source: "bench stand-in (CASCADE_FALLBACK_PROMPT)" }
+  for (const name of ["ROUTING_PROMPT", "SEARCH_PROMPT", "SYSTEM_PROMPT"]) {
+    if (typeof mod?.[name] === "string") prompts[name] = { text: mod[name], source: `${source} ${name}` }
+  }
+  for (const p of Object.values(prompts)) p.sha = sha(p.text)
+  return prompts
 }
 
-// ── Arm: Gemini as a router (tiny classifier call) ─────────────────────────
+// ── Gemini as a three-way router ───────────────────────────────────────────
 export const GEMINI_ROUTER_PROMPT = `You route food diary entries. Input: one short food description in any language. Reply with JSON {"route": ...}:
 - "staple": a generic food or simple home-style dish; standard food tables give its nutrition (fruit, vegetables, eggs, rice, pasta, bread, milk, meat, nuts, oil), with or without an amount.
 - "branded": a specific brand, chain or restaurant item, or a packaged product whose label or menu is the source of truth.
@@ -95,14 +98,11 @@ export const GEMINI_ROUTER_SCHEMA = {
   required: ["route"],
 }
 
-// ── Arms: Jev (TypeSafe System One) ────────────────────────────────────────
-// One request carries both router questions; Jev answers them in parallel and
-// independently, so the bench can score two router designs for one call.
+// ── Jev questions ──────────────────────────────────────────────────────────
 export const JEV_ROUTER_QUESTIONS = {
   route: {
     type: "choice",
-    instructions:
-      "Which kind of food diary entry is this? The text may be in English, Spanish or German.",
+    instructions: "Which kind of food diary entry is this? The text may be in English, Spanish or German.",
     criteria: {
       staple:
         "A generic food or simple home-style dish whose nutrition standard food tables give (fruit, vegetables, eggs, rice, pasta, bread, milk, meat, nuts, oil), with or without an amount.",
@@ -119,7 +119,6 @@ export const JEV_ROUTER_QUESTIONS = {
   },
 }
 
-/** Jev as a checker on a no-search answer: is it plausible enough to keep? */
 export const JEV_CHECK_QUESTIONS = {
   plausible: {
     type: "noul",
