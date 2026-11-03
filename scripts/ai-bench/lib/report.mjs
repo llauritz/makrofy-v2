@@ -21,7 +21,9 @@ export function buildReport(run, foods) {
     .filter((r) => foodByText.has(r.food))
     .map((r) => {
       const food = foodByText.get(r.food)
-      return { ...r, food, s: scoreRecord(r, food) }
+      // Runs before 856f934 didn't store jev-table's misses; the trace has them.
+      const miss = r.tableHit || r.tableMiss ? undefined : (r.trace ?? []).find((c) => c.step?.startsWith("table") && c.out && !c.out.result)?.out.reason
+      return { ...r, ...(miss ? { tableMiss: miss } : {}), food, s: scoreRecord(r, food) }
     })
   const ids = run.variants.map((v) => v.id)
   const of = (id) => rows.filter((r) => r.variant === id)

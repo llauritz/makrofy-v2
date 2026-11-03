@@ -94,11 +94,13 @@ export const VARIANTS = {
       if (route === "branded") {
         return { route, result: (await s.fill({ ...g(o), prompt: "SEARCH_PROMPT", search: true })).out }
       }
+      let tableMiss
       if (route === "staple") {
         const t = await s.table({ jevModel: o.jev, minConfidence: Number(o.minConfidence ?? 0.6) })
         if (t.out?.result) return { route, result: t.out.result, tableHit: t.out.match }
+        tableMiss = t.out?.reason
       }
-      return { route, ...(await cascade(s, o)) }
+      return { route, tableMiss, ...(await cascade(s, o)) }
     },
   },
 }
