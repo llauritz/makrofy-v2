@@ -11,12 +11,14 @@ import {
 
 import { AiSparkle } from "@/components/AiSparkle"
 import { LegalLinks } from "@/components/LegalLinks"
+import { Spinner } from "@/components/ui/spinner"
 import { Squircle } from "@/components/ui/squircle"
 import { DEFAULT_GOAL_KCAL } from "@/data/goal"
 import { startGoogleSignIn } from "@/data/identity"
 import { auth } from "@/lib/firebase"
 import { clampGoalKcal, parseGoalKcal } from "@/lib/goal-input"
 import { useI18n } from "@/lib/i18n/useI18n"
+import { cn } from "@/lib/utils"
 import { FADE_IN, FADE_OUT } from "@/screens/main/anim"
 import { AddCard } from "@/screens/main/AddCard"
 import { AnimatedWordmark } from "@/screens/main/AnimatedWordmark"
@@ -116,9 +118,12 @@ function PrimaryButton({
 // 1px border box takes 1px off each side of the padding, so the two match.
 function OutlineButton({
   onClick,
+  busy = false,
   children,
 }: {
   onClick: () => void
+  /** Swaps the label for a spinner, keeping the button's size. */
+  busy?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -126,13 +131,57 @@ function OutlineButton({
       <motion.button
         type="button"
         onClick={onClick}
-        whileTap={{ scale: 0.98 }}
-        className="w-full rounded-full py-[13px] text-[15px] font-semibold transition-colors hover:bg-muted"
+        disabled={busy}
+        aria-busy={busy}
+        whileTap={busy ? undefined : { scale: 0.98 }}
+        className="w-full rounded-full py-[13px] text-[15px] font-semibold transition-colors hover:bg-muted disabled:hover:bg-transparent"
       >
-        {children}
+        {/* The label and the spinner share one cell and cross-fade, as on
+            the paywall's button, so nothing jumps. */}
+        <span className="grid place-items-center">
+          <span
+            className={cn(
+              "col-start-1 row-start-1 transition-opacity duration-200",
+              busy && "opacity-0"
+            )}
+          >
+            {children}
+          </span>
+          <Spinner
+            className={cn(
+              "col-start-1 row-start-1 opacity-0 transition-opacity duration-200",
+              busy && "opacity-90"
+            )}
+          />
+        </span>
       </motion.button>
     </Squircle>
   )
+}
+
+// Leaving for Google can take a second, so the sign-in button shows a
+// spinner from the tap until the page goes. It resets if the redirect fails,
+// and when the browser brings this page back from its back/forward cache
+// (the user pressed Back on Google's page), where it would otherwise still
+// be spinning.
+function useSignInBusy() {
+  const [busy, setBusy] = React.useState(false)
+  React.useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setBusy(false)
+    }
+    window.addEventListener("pageshow", onShow)
+    return () => window.removeEventListener("pageshow", onShow)
+  }, [])
+  const start = () => {
+    if (busy) return
+    setBusy(true)
+    startGoogleSignIn(auth).catch((err: unknown) => {
+      console.error("Google sign-in did not start", err)
+      setBusy(false)
+    })
+  }
+  return [busy, start] as const
 }
 
 // The AI point wears the app's own AI mark, as the add card above it does:
@@ -145,6 +194,7 @@ function AiPointIcon() {
 const POINT_ICONS = [PencilLine, AiPointIcon, BookText] as const
 
 function WelcomeStep({ onNext }: { onNext: () => void }) {
+  const [signingIn, signIn] = useSignInBusy()
   const { t } = useI18n()
   return (
     <Page>
@@ -208,7 +258,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
             Guest (ADR 0002); a returning user's synced Goal then arrives
             and the gate moves on to the main screen. */}
         <div className="mt-3">
-          <OutlineButton onClick={() => void startGoogleSignIn(auth)}>
+          <OutlineButton busy={signingIn} onClick={signIn}>
             {t.signIn.signInWithGoogle}
           </OutlineButton>
         </div>
