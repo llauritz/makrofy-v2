@@ -207,6 +207,26 @@ Spread: (max − min) / median kcal of a food over rounds. Atwater gap: |4P + 4C
 
 ## Takeaways
 
-_Written after review: what the numbers show, what they don't, and what to test next._
+Written 3 Nov 2026 after reading the numbers.
+
+**What the numbers show**
+
+1. **The same-food check at 0.5 removes the false matches and loses nothing.** Without it, the table answered "200 g de pechuga de pollo asada con piel" as skinless breast in all 3 rounds. With it, it answered from the table 82 times, none of them wrong. The 3 tries it turned away were exactly those false matches. Accuracy stays at 209/222, because on that food the cascade fallback also says 330 kcal. The check costs one more Jev call, which is less than $0.01 per 1,000 fills, plus about 0.1 s on table answers.
+2. **At 0.7 the check is too strict.** It turned away 3 correct table answers and fell to 206/222.
+3. **Table in front of the cascade is better than the cascade alone on both sets together.** It scores +3 points within tolerance (0 to +7, so only just), mean kcal error 2.5% against 3.8%, 0.2–0.3 s faster, and $0.15 cheaper per 1,000 fills. The gain is all on staples (177/189 against 170/189). Brands are identical, because both search them.
+4. Egg whites didn't false-match in this run even without the check. The held-out run had one such match in three rounds, so it is rare, but the check covers it.
+
+**What they don't show**
+
+- The table's gain on main-set staples is still partly circular (USDA references, USDA table). The held-out set is independent, but the table hardly answers there by design.
+- The cascade got one brand outside tolerance here (32/33) but none in v2-first: that is noise between runs on the same prompts.
+
+**Current best pipeline on the bench:** `table-jev:verify=0.5`: the food table with a same-food check, then the two-step cascade, with search only on brands. It costs about $4.30 per 1,000 fills on this food mix, against $14.19 for today's single call in v2-first.
+
+**What to test next**
+
+1. Coverage on real food texts, to see how often the table can answer (this needs L's OK on using the logs).
+2. A larger table (the 300–500 most logged foods), re-run on both sets.
+3. A cache for brands, which are now nearly all the cost ($23 per 1,000 brand fills).
 
 Raw calls: `docs/research/ai-bench/runs/2026-11-03-table-verify.json`. Re-make this report with `node scripts/ai-bench/bench.mjs report docs/research/ai-bench/runs/2026-11-03-table-verify.json`.
