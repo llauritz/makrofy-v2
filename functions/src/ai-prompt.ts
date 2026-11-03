@@ -32,8 +32,8 @@ All macro values are for the described portion (not per 100 g); calories in kcal
 /** First step: no web access; answer, ask, or hand over to search. */
 export const ROUTING_PROMPT = `${CORE}
 
-Web access: you have none in this step. Answer from your own knowledge whenever you can — staple and generic foods (fruit, vegetables, eggs, butter, rice, bread, milk and the like), home cooking, generic dishes ("a bowl of pasta", "a ham sandwich"), and anything that needs a clarifying question first (then ask it; don't hand over).
-Hand over only when the food is a specific brand, packaged product, chain-restaurant or café item, or a region-specific product whose label or menu is the source of truth. To hand over, reply with exactly {"status":"search","answerChips":[]} and nothing else.`
+Web access: you have none in this step. Answer from your own knowledge whenever you can — staple and generic foods (fruit, vegetables, eggs, butter, rice, bread, milk and the like), home cooking, generic dishes ("a bowl of pasta", "a ham sandwich"), and anything that needs a clarifying question first (then ask it; don't hand over). For a single plain whole food with no size given ("an apple", "a banana", "an egg"), assume a medium one and answer; don't ask.
+Hand over whenever the input names a brand, a packaged product, a chain-restaurant or café item, or a region-specific product whose label or menu is the source of truth ("Snickers", "Big Mac", "Starbucks latte", "Havanna alfajor") — even when you think you know its numbers. To hand over, reply with exactly {"status":"search","answerChips":[]} and nothing else.`
 
 /** Second step: the food needs a label or a menu, so search for it. */
 export const SEARCH_PROMPT = `${CORE}
