@@ -1,6 +1,7 @@
 import type { Language } from "@/lib/language"
 
 import { en, type Dictionary } from "./en"
+import { de } from "./de"
 import { es } from "./es"
 
 // The i18n barrel: the typed dictionaries, the language → dictionary lookup, and
@@ -11,7 +12,7 @@ import { es } from "./es"
 export type { Dictionary } from "./en"
 export { formatNumber, formatPrice, formatShortDate, localeFor } from "./format"
 
-const DICTIONARIES: Record<Language, Dictionary> = { en, es }
+const DICTIONARIES: Record<Language, Dictionary> = { en, es, de }
 
 /** The active language's dictionary. */
 export function dictionaryFor(language: Language): Dictionary {

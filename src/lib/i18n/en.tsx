@@ -196,6 +196,7 @@ export const en = {
     // both dictionaries by convention, so the toggle reads the same everywhere.
     languageEnglish: "English",
     languageSpanish: "Español",
+    languageGerman: "Deutsch",
     legalLinks: "Legal",
     pricing: "Pricing",
     terms: "Terms",
@@ -308,7 +309,7 @@ export const en = {
     activityHintLow: "Desk job and little exercise.",
     activityHintModerate: "On your feet a lot, or exercise 2–3 times a week.",
     activityHintHigh: "Physical job, or exercise most days.",
-    aim: "Goal",
+    aim: "Weight goal",
     lose: "Lose",
     maintain: "Maintain",
     gain: "Gain",

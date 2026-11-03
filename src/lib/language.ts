@@ -1,13 +1,13 @@
-// The app language, kept pure and device-local (spec § i18n): en + es only,
+// The app language, kept pure and device-local (spec § i18n): en, es and de,
 // English the source of truth. This module only decides *which* language is
 // active; the typed dictionaries and the t() hook that translate against it
 // arrive with #25. A stored device-local choice always wins; otherwise we take
 // the first browser language we support; otherwise English.
 
-export type Language = "en" | "es"
+export type Language = "en" | "es" | "de"
 
 /** Supported languages, English first (the source of truth). */
-export const LANGUAGES: readonly Language[] = ["en", "es"]
+export const LANGUAGES: readonly Language[] = ["en", "es", "de"]
 
 export const DEFAULT_LANGUAGE: Language = "en"
 
