@@ -7,6 +7,7 @@ import { YaffleLogo } from "@/components/ui/yaffle-logo"
 import { readBootMirror } from "@/data/boot-mirror"
 import { DEFAULT_GOAL_KCAL, setGoal } from "@/data/goal"
 import { useEntriesStatus, useGoalStatus, useIdentity } from "@/data/hooks"
+import { isRedirectPending, useRedirectPending } from "@/data/redirect-pending"
 import { auth, db } from "@/lib/firebase"
 import { bootSplashShowing, dismissBootSplash } from "@/lib/boot-splash"
 import { useAssetsReady } from "@/lib/preload"
@@ -44,9 +45,13 @@ export function App() {
   const entriesStatus = useEntriesStatus(goalStatus === "unset" ? uid : null)
   // Read once: has this device ever held a profile? If not, the welcome
   // screen needn't wait on the Guest sign-in or the server (see gate.ts).
-  const [freshDevice] = React.useState(() => readBootMirror() === null)
+  // Not when a Google sign-in is landing: that account may well have a Goal.
+  const [freshDevice] = React.useState(
+    () => readBootMirror() === null && !isRedirectPending()
+  )
   const view = resolveAppView(uid, goalStatus, entriesStatus, freshDevice)
   const assetsReady = useAssetsReady()
+  const redirectPending = useRedirectPending()
 
   // A profile that logged while onboarding was parked but never set a Goal
   // gets the default written once — the figure its ring already shows — so
@@ -89,8 +94,12 @@ export function App() {
   // holds it until the fonts and the wordmark animation have loaded
   // (src/lib/preload.ts, capped), so the welcome screen appears in its final
   // form: no font swap reflowing it, no static logo before the animation.
+  // A Google sign-in coming back from its redirect holds it too, until the
+  // account is settled (data/redirect-pending.ts).
   const showSplash =
-    view === "loading" || (view === "onboarding" && !assetsReady)
+    redirectPending ||
+    view === "loading" ||
+    (view === "onboarding" && !assetsReady)
   // index.html's static splash covers everything until the first real screen
   // commits; a layout effect removes it in that same frame.
   React.useLayoutEffect(() => {

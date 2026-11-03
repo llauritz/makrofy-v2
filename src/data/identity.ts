@@ -15,6 +15,7 @@ import type { Firestore } from "firebase/firestore"
 import { readAllDays, writeMissingDays } from "@/data/days"
 import { readAllEntries, writeEntries } from "@/data/entries"
 import { readAllOverlays, writeMissingOverlays } from "@/data/products"
+import { markRedirectPending, settleRedirect } from "@/data/redirect-pending"
 
 const RETRY_BASE_MS = 2_000
 const RETRY_MAX_MS = 60_000
@@ -133,7 +134,12 @@ export async function bootstrapIdentity(
   } catch (err) {
     console.error("Google sign-in did not complete", err)
   }
-  return ensureIdentity(auth)
+  try {
+    return await ensureIdentity(auth)
+  } finally {
+    // The account this load ends up on is settled: the splash can lift.
+    settleRedirect()
+  }
 }
 
 /**
@@ -149,7 +155,12 @@ export async function startGoogleSignIn(auth: Auth): Promise<void> {
   // mints one; mint the Guest now so there is something to link onto (a
   // collision then union-merges it into the old account, as above).
   const user = auth.currentUser ?? (await ensureIdentity(auth))
-  await linkWithRedirect(user, new GoogleAuthProvider())
+  // Always show Google's account chooser: with one signed-in Google account
+  // it would otherwise pick that one silently and bounce straight back.
+  const provider = new GoogleAuthProvider()
+  provider.setCustomParameters({ prompt: "select_account" })
+  markRedirectPending()
+  await linkWithRedirect(user, provider)
 }
 
 /**
