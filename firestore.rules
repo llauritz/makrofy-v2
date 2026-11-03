@@ -4,21 +4,24 @@ service cloud.firestore {
     // All of a user's data lives under /users/{uid}/... and only that user
     // may touch it (docs/research/firebase-backend-validation.md § 3).
     //
-    // One carve-out: the entitlement doc at settings/subscription is written
-    // only by the Paddle webhook (Admin SDK, which bypasses rules) — the user
-    // may read it but never write it (ADR 0012). Rules grant access when ANY
-    // matching allow passes, so the exclusion has to live inside the
-    // catch-all's condition; a separate `allow write: if false` would not
-    // override it.
+    // Two carve-outs the user may read but never write, because a server
+    // function writes them (Admin SDK, which bypasses rules): the entitlement
+    // doc at settings/subscription, written by the Paddle webhook (ADR 0012),
+    // and the AI allowance counters under aiCycles, written by the aiFill
+    // function (ADR 0016). Rules grant access when ANY matching allow passes,
+    // so the exclusions have to live inside the catch-all's condition; a
+    // separate `allow write: if false` would not override it.
     match /users/{userId}/{document=**} {
       allow read: if request.auth != null
                   && request.auth.uid == userId;
       allow write: if request.auth != null
                    && request.auth.uid == userId
-                   && request.path != /databases/$(database)/documents/users/$(userId)/settings/subscription;
+                   && request.path != /databases/$(database)/documents/users/$(userId)/settings/subscription
+                   && !(request.path[5] == 'aiCycles');
     }
     // Everything outside /users — the webhook's /paddleEvents log and
     // /paddleSubscriptions records, the AI fill /aiFailures reports and
-    // /aiHealth windows (ADR 0014) — is server-only: no rule matches, so every client request is refused.
+    // /aiHealth windows (ADR 0014), the /aiStats daily totals (ADR 0016) — is
+    // server-only: no rule matches, so every client request is refused.
   }
 }

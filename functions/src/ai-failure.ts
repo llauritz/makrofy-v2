@@ -1,9 +1,10 @@
 // What went wrong with an AI fill, and whose problem it is (ADR 0014).
 //
-// The app calls Gemini straight from the phone (Firebase AI Logic), so a
-// failure is only ever seen there. The phone sends us the bare facts of the
-// failure — never the food text the user typed — and this module decides who
-// has to act:
+// Gemini runs in the aiFill function (ADR 0016), which reports its own failed
+// calls; the phone reports the trips that failed before or after it (no
+// connection, App Check, a reply it can't read). Both send the bare facts of
+// the failure — never the food text the user typed — and this module decides
+// who has to act:
 //
 //   ours    — something we must fix: a bad request, a retired model, a quota
 //             we set too low, a reply our parser can't read, a crash in our
@@ -106,6 +107,7 @@ export function classifyAiFailure(r: AiFailureReport): Classified {
   if (r.code.startsWith("appCheck/")) {
     return { blame: "device", kind: "app-check" }
   }
+  if (r.code.startsWith("functions/")) return classifyCallable(r)
   if (r.code === "parse-failed")
     return { blame: "google", kind: "bad-response" }
   if (r.code === "AbortError" || r.code === "TimeoutError") {
@@ -128,6 +130,11 @@ export function classifyAiFailure(r: AiFailureReport): Classified {
     if (s >= 500) return { blame: "google", kind: "server-error" }
   }
 
+  if (r.code === "upstream") {
+    // The aiFill function couldn't reach Gemini at all (no HTTP status).
+    return { blame: "google", kind: "unreachable" }
+  }
+
   if (r.code === "error" || r.code === "fetch-error") {
     // The SDK wraps a fetch that never got an answer as code "error".
     if (!r.online || NETWORK.test(r.message)) {
@@ -144,6 +151,36 @@ export function classifyAiFailure(r: AiFailureReport): Classified {
     return { blame: "ours", kind: "app-crash" }
   }
   return { blame: "unknown", kind: r.code || "unknown" }
+}
+
+/**
+ * A failure of the aiFill callable as the phone saw it (ADR 0016). Gemini's
+ * own errors are reported by the function itself, so these are the trips
+ * that never got that far, or never got an answer back.
+ */
+function classifyCallable(r: AiFailureReport): Classified {
+  switch (r.code) {
+    case "functions/unauthenticated":
+      // enforceAppCheck refuses a phone without a valid App Check token.
+      return { blame: "device", kind: "app-check" }
+    case "functions/not-found":
+    case "functions/invalid-argument":
+    case "functions/failed-precondition":
+    case "functions/permission-denied":
+      return { blame: "ours", kind: "config" }
+    case "functions/deadline-exceeded":
+      return r.online
+        ? { blame: "google", kind: "timeout" }
+        : { blame: "device", kind: "network" }
+    case "functions/unavailable":
+    case "functions/internal":
+    case "functions/unknown":
+      if (!r.online || NETWORK.test(r.message)) {
+        return { blame: "device", kind: "network" }
+      }
+      return { blame: "ours", kind: "function-error" }
+  }
+  return { blame: "unknown", kind: r.code }
 }
 
 const str = (v: unknown, max: number): string | null =>

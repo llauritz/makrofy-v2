@@ -1,11 +1,24 @@
 import { initializeApp } from "firebase-admin/app"
+import { getAuth } from "firebase-admin/auth"
 import { getFirestore, Timestamp } from "firebase-admin/firestore"
 import { defineSecret } from "firebase-functions/params"
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https"
 import { onSchedule } from "firebase-functions/v2/scheduler"
 import { logger } from "firebase-functions/v2"
 
-import { classifyAiFailure, sanitizeReport } from "./ai-failure.js"
+import {
+  admitAiCall,
+  describeGeminiError,
+  parseRequest,
+  recordAiCost,
+  runGemini,
+  type AiFillResponse,
+} from "./ai-fill.js"
+import {
+  classifyAiFailure,
+  sanitizeReport,
+  type AiFailureReport,
+} from "./ai-failure.js"
 import { ALERT_MESSAGE, runAiHealthCheck } from "./ai-health.js"
 import { isEntitling, type PaddleSubscription } from "./entitlement.js"
 import {
@@ -25,8 +38,10 @@ import {
 
 // Yaffle's server side (ADR 0012): Paddle's webhook writes each user's
 // entitlement doc, and two callables hand the app what needs the API key — a
-// customer-portal link and a plan change. AI fill failures are reported and
-// checked every 15 minutes (ADR 0014; docs/runbooks/ai-fill-errors.md). Secrets come from Google Secret
+// customer-portal link and a plan change. Every AI fill runs through the
+// aiFill callable, which enforces the plan's allowance (ADR 0016). AI fill
+// failures are reported and checked every 15 minutes (ADR 0014;
+// docs/runbooks/ai-fill-errors.md). Secrets come from Google Secret
 // Manager (`firebase functions:secrets:set <NAME>`); see docs/runbooks/paddle.md.
 
 initializeApp()
@@ -223,21 +238,123 @@ export const reportAiFailure = onCall(
   { region: REGION, maxInstances: 3 },
   async (req) => {
     if (!req.auth) throw new HttpsError("unauthenticated", "Sign in first.")
-    const report = sanitizeReport(req.data)
-    const { blame, kind } = classifyAiFailure(report)
-    const at = Timestamp.now()
-    await db.collection("aiFailures").add({
-      ...report,
-      uid: req.auth.uid,
-      blame,
-      kind,
-      at,
-      // Firestore's TTL policy on expireAt deletes reports after 90 days.
-      expireAt: Timestamp.fromMillis(at.toMillis() + 90 * 86_400_000),
+    return storeAiFailure(req.auth.uid, sanitizeReport(req.data))
+  }
+)
+
+/** Classify one failed AI fill and keep it for the health check. */
+async function storeAiFailure(uid: string, report: AiFailureReport) {
+  const { blame, kind } = classifyAiFailure(report)
+  const at = Timestamp.now()
+  await db.collection("aiFailures").add({
+    ...report,
+    uid,
+    blame,
+    kind,
+    at,
+    // Firestore's TTL policy on expireAt deletes reports after 90 days.
+    expireAt: Timestamp.fromMillis(at.toMillis() + 90 * 86_400_000),
+  })
+  const log = blame === "ours" ? logger.error : logger.warn
+  log("AI fill failed", { blame, kind, uid, ...report })
+  return { blame, kind }
+}
+
+// Account creation times never change, so one lookup per user per instance.
+const createdCache = new Map<string, Date>()
+
+async function accountCreated(uid: string): Promise<Date> {
+  const cached = createdCache.get(uid)
+  if (cached) return cached
+  const created = new Date((await getAuth().getUser(uid)).metadata.creationTime)
+  createdCache.set(uid, created)
+  return created
+}
+
+/**
+ * One AI fill round trip (ADR 0016): admit it against the plan's allowance,
+ * ask Gemini, count what it cost. Guests count like anyone else. App Check is
+ * enforced, so only the app itself can call it; together with the allowance
+ * and its burst brake this replaces the advisory counter on the phone.
+ *
+ * A refusal is `resource-exhausted` with the reason, plan, limit and reset
+ * date in `details`; a Gemini failure is `unavailable`, already reported to
+ * /aiFailures (`details.reported`), so the phone doesn't report it twice.
+ */
+export const aiFill = onCall(
+  {
+    region: REGION,
+    enforceAppCheck: true,
+    // One warm instance keeps the first fill of a session from waiting on a
+    // cold start; each instance serves many fills at once.
+    minInstances: 1,
+    maxInstances: 10,
+    concurrency: 40,
+    cpu: 1,
+    memory: "512MiB",
+    timeoutSeconds: 75,
+  },
+  async (req): Promise<AiFillResponse> => {
+    if (!req.auth) throw new HttpsError("unauthenticated", "Sign in first.")
+    const uid = req.auth.uid
+    const request = parseRequest(req.data)
+    if (!request) throw new HttpsError("invalid-argument", "Bad prompt.")
+    const now = new Date()
+    const admission = await admitAiCall(db, uid, {
+      final: request.final,
+      now,
+      accountCreated: () => accountCreated(uid),
     })
-    const log = blame === "ours" ? logger.error : logger.warn
-    log("AI fill failed", { blame, kind, uid: req.auth.uid, ...report })
-    return { blame, kind }
+    if (!admission.ok) {
+      logger.info("AI fill refused", {
+        uid,
+        refusal: admission.refusal,
+        plan: admission.plan,
+      })
+      throw new HttpsError("resource-exhausted", admission.refusal, {
+        reason: admission.refusal,
+        plan: admission.plan,
+        limit: admission.limit,
+        resetsOn: admission.resetsOn.toISOString(),
+      })
+    }
+
+    const started = Date.now()
+    let reply: Awaited<ReturnType<typeof runGemini>>
+    try {
+      reply = await runGemini(request.prompt)
+    } catch (err) {
+      const report = describeGeminiError(err, {
+        ms: Date.now() - started,
+        final: request.final,
+      })
+      await storeAiFailure(uid, report).catch((e: unknown) =>
+        logger.error("AI failure report not stored", errorFields(e))
+      )
+      throw new HttpsError("unavailable", "The AI service failed.", {
+        reason: "upstream",
+        reported: true,
+        status: report.status,
+      })
+    }
+    const { queries, steps, ...answer } = reply
+    logger.info("AI fill", {
+      uid,
+      plan: admission.plan,
+      final: request.final,
+      steps,
+      queries,
+      ms: Date.now() - started,
+    })
+    await recordAiCost(db, admission.cycleRef, {
+      final: request.final,
+      queries,
+      steps,
+      now,
+    }).catch((e: unknown) =>
+      logger.error("AI fill cost not recorded", errorFields(e))
+    )
+    return answer
   }
 )
 

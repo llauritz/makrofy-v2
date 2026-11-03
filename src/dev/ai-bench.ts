@@ -1,8 +1,10 @@
 // Latency/quality bench for AI macro-fill at /ai-bench.html: served by the
-// dev server and by AI_BENCH=1 builds (see vite.config.ts). It drives the exact production request via createModel, so
-// the numbers reflect what users wait for.
+// dev server and by AI_BENCH=1 builds (see vite.config.ts). It calls Gemini
+// from the browser in the single-call shape (src/dev/ai-bench-model.ts), so it
+// compares models and prompts; production's two-step fill runs in the aiFill
+// function and logs its own timings (ADR 0016).
 
-import { createModel, type AiModelConfig } from "@/lib/ai"
+import { createModel, type AiModelConfig } from "@/dev/ai-bench-model"
 import { parseMacroFillResponse } from "@/lib/macro-fill"
 
 const CONFIGS: (AiModelConfig & { name: string })[] = [

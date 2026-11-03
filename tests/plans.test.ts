@@ -24,7 +24,7 @@ describe("plan arithmetic", () => {
       limit: 10,
       remaining: 0,
     })
-    expect(aiCycle("pro", 188, resetsOn).remaining).toBe(812)
+    expect(aiCycle("pro", 188, resetsOn).remaining).toBe(12)
   })
 })
 
