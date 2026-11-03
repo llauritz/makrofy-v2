@@ -34,10 +34,15 @@ const jevRoute = (raw) => raw.jroute?.answers?.route?.choice ?? null
 const jevNoul = (raw) => raw.jroute?.answers?.needs_search?.noul ?? null
 const checkNoul = (raw) => raw.jcheck?.answers?.plausible?.noul ?? null
 
-const cascadeOf = (raw, pre = []) =>
-  raw.cascade.result.status === "search"
-    ? { result: raw.search.result, calls: [...pre, step(raw, "cascade"), step(raw, "search")] }
-    : { result: raw.cascade.result, calls: [...pre, step(raw, "cascade")] }
+// The cascade's second step is its own search call when the run has one
+// (cascade2), else the bench's single-call search answer.
+const cascadeOf = (raw, pre = []) => {
+  if (raw.cascade.result.status !== "search") {
+    return { result: raw.cascade.result, calls: [...pre, step(raw, "cascade")] }
+  }
+  const second = raw.cascade2 ? "cascade2" : "search"
+  return { result: raw[second].result, calls: [...pre, step(raw, "cascade"), step(raw, second)] }
+}
 
 export const PIPELINES = [
   {

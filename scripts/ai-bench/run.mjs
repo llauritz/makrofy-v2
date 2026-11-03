@@ -47,6 +47,7 @@ const { values: args } = parseArgs({
     jev: { type: "string", default: "jev-latest" },
     out: { type: "string" },
     "add-jev": { type: "string" },
+    "redo-cascade": { type: "string" },
   },
 })
 
@@ -92,6 +93,16 @@ async function fill(user, system, search, allowSearch = false) {
   return { ...r, result: r.error ? { status: "error" } : parseFill(r.text, allowSearch) }
 }
 
+/** The cascade's first call, plus its own search step when it hands over. */
+async function cascadeCall(raw, user) {
+  const first = await fill(user, cascade.prompt, false, true)
+  delete raw.cascade2
+  if (first.result.status === "search" && cascade.searchPrompt) {
+    raw.cascade2 = await fill(user, cascade.searchPrompt, true)
+  }
+  return first
+}
+
 async function runFood(food, round) {
   const raw = { food: food.text, round }
   const user = food.text
@@ -99,7 +110,7 @@ async function runFood(food, round) {
   const tasks = {
     search: () => fill(user, SYSTEM_PROMPT, true),
     plain: () => fill(user, SYSTEM_PROMPT, false),
-    cascade: () => fill(user, cascade.prompt, false, true),
+    cascade: () => cascadeCall(raw, user),
     groute: async () => {
       const r = await gemini.generate({ system: GEMINI_ROUTER_PROMPT, user, schema: GEMINI_ROUTER_SCHEMA, search: false })
       let route = null
@@ -118,7 +129,7 @@ async function runFood(food, round) {
   for (const k of order) raw[k] = await tasks[k]()
   await jevCheck(raw)
   // Raw text isn't needed in the saved file once parsed; keep it short.
-  for (const k of ["search", "plain", "cascade", "groute"]) {
+  for (const k of ["search", "plain", "cascade", "cascade2", "groute"]) {
     if (raw[k]?.text) raw[k].text = raw[k].text.slice(0, 600)
   }
   return raw
@@ -140,6 +151,33 @@ async function jevCheck(raw) {
       questions: JEV_CHECK_QUESTIONS,
     })
   }
+}
+
+// --redo-cascade <run.json>: re-run only the cascade arm (e.g. after its
+// prompt changed) on a saved run's foods and rounds; writes <run>-cascade.json.
+if (args["redo-cascade"]) {
+  const file = args["redo-cascade"]
+  const saved = JSON.parse(readFileSync(file, "utf8"))
+  let i = 0
+  let next = 0
+  async function redo() {
+    while (next < saved.calls.length) {
+      const raw = saved.calls[next++]
+      raw.cascade = await cascadeCall(raw, raw.food)
+      for (const k of ["cascade", "cascade2"]) {
+        if (raw[k]?.text) raw[k].text = raw[k].text.slice(0, 600)
+      }
+      process.stderr.write(`\r${++i}/${saved.calls.length}`)
+    }
+  }
+  await Promise.all(Array.from({ length: Number(args.concurrency) }, redo))
+  process.stderr.write("\n")
+  saved.cascadePrompt = `${cascade.source} (cascade re-run ${new Date().toISOString()})`
+  const out = args.out ?? file.replace(/\.json$/, "-cascade.json")
+  writeFileSync(out, JSON.stringify(saved, null, 1))
+  console.error(`raw calls: ${out}`)
+  console.log(report(saved, FOODS))
+  process.exit(0)
 }
 
 // --add-jev <run.json>: add the Jev arms to a saved run, reusing its Gemini

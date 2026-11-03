@@ -69,12 +69,18 @@ export async function loadCascadePrompt() {
   try {
     const mod = await import("../../functions/src/ai-prompt.ts")
     if (typeof mod.ROUTING_PROMPT === "string") {
-      return { prompt: mod.ROUTING_PROMPT, source: "functions/src/ai-prompt.ts ROUTING_PROMPT" }
+      return {
+        prompt: mod.ROUTING_PROMPT,
+        // Its second step searches with its own prompt; without one, the
+        // cascade reuses the bench's `search` answer.
+        searchPrompt: typeof mod.SEARCH_PROMPT === "string" ? mod.SEARCH_PROMPT : null,
+        source: "functions/src/ai-prompt.ts ROUTING_PROMPT + SEARCH_PROMPT",
+      }
     }
   } catch {
     // Not on this branch yet.
   }
-  return { prompt: CASCADE_FALLBACK_PROMPT, source: "bench stand-in (CASCADE_FALLBACK_PROMPT)" }
+  return { prompt: CASCADE_FALLBACK_PROMPT, searchPrompt: null, source: "bench stand-in (CASCADE_FALLBACK_PROMPT)" }
 }
 
 // ── Arm: Gemini as a router (tiny classifier call) ─────────────────────────
