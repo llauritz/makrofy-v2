@@ -17,8 +17,8 @@ const PCT = " %"
 // string.
 //
 // Register: informal "du" (lowercase, as most consumer apps write it), plain and
-// factual. "AI fill" is "KI-Abfrage" as the counted unit and feature name; the
-// button that runs one reads "Mit KI ausfüllen". "Plan" is "Tarif". Spaced en
+// factual. "AI fill" is "KI-Ergänzung" as the counted unit and feature name (L's
+// pick); the button that runs one reads "Mit KI ergänzen". "Plan" is "Tarif". Spaced en
 // dashes (" – ") stand where English uses em dashes.
 
 export const de: Dictionary = {
@@ -129,11 +129,11 @@ export const de: Dictionary = {
   addCard: {
     placeholder: "Was hast du gegessen?",
     food: "Lebensmittel",
-    fillWithAi: "Mit KI ausfüllen",
+    fillWithAi: "Mit KI ergänzen",
     calories: "Kalorien",
     addEntry: "Eintrag hinzufügen",
     use: (label) => `${label} übernehmen`,
-    aiOffline: "Für die KI-Abfrage brauchst du eine Verbindung.",
+    aiOffline: "Für die KI-Ergänzung brauchst du eine Verbindung.",
     aiLimit: "Tageslimit für KI erreicht – morgen geht es weiter.",
     aiError: "Die KI ist gerade nicht erreichbar – versuch es gleich noch einmal.",
     aiNoEstimate: "Dafür gibt es keine Schätzung – versuch es anders zu formulieren.",
@@ -165,7 +165,7 @@ export const de: Dictionary = {
 
   settings: {
     title: "Einstellungen",
-    foodGlossary: "Lebensmittelliste",
+    foodGlossary: "Meine Lebensmittel",
     exportImport: "Export / Import",
     dailyGoal: "Tagesziel",
     dailyGoalAria: "Tägliches Kalorienziel",
@@ -229,7 +229,7 @@ export const de: Dictionary = {
     importHint: "Wiederherstellen",
     previewTitle: "Sicherung importieren",
     previewBody:
-      "Stellt dein Ziel, die Angaben pro Tag und die Lebensmittelliste wieder her und fügt alle Einträge hinzu, die noch nicht im Tagebuch stehen.",
+      "Stellt dein Ziel, die Angaben pro Tag und deine Lebensmittel wieder her und fügt alle Einträge hinzu, die noch nicht im Tagebuch stehen.",
     newEntries: (count: string) => `${count} Einträge kommen hinzu`,
     duplicatesSkipped: (count: string) =>
       `${count} schon eingetragen – übersprungen`,
@@ -293,7 +293,7 @@ export const de: Dictionary = {
     activityHintModerate:
       "Du bist viel auf den Beinen oder treibst zwei- bis dreimal pro Woche Sport.",
     activityHintHigh: "Du arbeitest körperlich oder treibst fast täglich Sport.",
-    aim: "Ziel",
+    aim: "Gewichtsziel",
     lose: "Abnehmen",
     maintain: "Halten",
     gain: "Zunehmen",
@@ -309,7 +309,7 @@ export const de: Dictionary = {
   },
 
   glossary: {
-    title: "Lebensmittelliste",
+    title: "Meine Lebensmittel",
     search: "Lebensmittel suchen",
     emptyTitle: "Noch keine Lebensmittel",
     emptyBody:
@@ -355,24 +355,24 @@ export const de: Dictionary = {
     planFree: "Kostenlos",
     planPro: "Pro",
     planUnlimited: "Unbegrenzt",
-    titleExhaustedFree: "Das war deine letzte kostenlose KI-Abfrage",
+    titleExhaustedFree: "Das war deine letzte kostenlose KI-Ergänzung",
     bodyExhaustedFree:
-      "Die KI-Abfrage sucht mit der Google-Suche nach dem, was du gegessen hast, und trägt die Werte ein. Pro und Unbegrenzt enthalten mehr Abfragen.",
-    titleExhaustedPro: "Die Abfragen für diesen Zeitraum sind aufgebraucht",
+      "Die KI schlägt dein Essen bei Google nach und trägt die Nährwerte ein. Pro und Unbegrenzt bieten mehr davon.",
+    titleExhaustedPro: "Die Ergänzungen für diesen Zeitraum sind aufgebraucht",
     bodyExhaustedPro: (date) =>
-      `Pro wird am ${date} wieder aufgefüllt. Unbegrenzt enthält mehr Abfragen.`,
-    titleBrowseFree: "Mehr KI-Abfragen",
+      `Pro wird am ${date} wieder aufgefüllt. Unbegrenzt enthält mehr Ergänzungen.`,
+    titleBrowseFree: "Mehr KI-Ergänzungen",
     bodyBrowseFree: (left, limit) =>
-      `Die KI-Abfrage sucht mit der Google-Suche nach dem, was du gegessen hast, und trägt die Werte ein. Noch ${left} von ${limit} kostenlosen Abfragen übrig.`,
+      `Die KI schlägt dein Essen bei Google nach und trägt die Nährwerte ein. Noch ${left} von ${limit} kostenlosen Ergänzungen übrig.`,
     titleBrowsePaid: "Dein Tarif",
     bodyBrowsePaid: (date) =>
-      `Deine KI-Abfragen werden am ${date} wieder aufgefüllt.`,
+      `Deine KI-Ergänzungen werden am ${date} wieder aufgefüllt.`,
     billing: "Abrechnung",
     billingAnnual: "Jährlich",
     billingMonthly: "Monatlich",
     save: (pct) => `bis −${pct}${PCT}`,
-    freeLine: (limit) => `${limit} kostenlose KI-Abfragen`,
-    paidLine: (limit) => `${limit} Abfragen / 30\u00a0Tage`,
+    freeLine: (limit) => `${limit} kostenlose KI-Ergänzungen`,
+    paidLine: (limit) => `${limit} Ergänzungen / 30\u00a0Tage`,
     supportsDev: "Unterstützt Yaffle",
     bestValue: "Empfohlen",
     currentPlan: "Dein Tarif",
@@ -391,16 +391,16 @@ export const de: Dictionary = {
       "Das hat nicht geklappt. Prüf deine Verbindung und versuch es noch einmal.",
     footnote: "Inkl. MwSt. · Jederzeit kündbar",
     usageMeter: (used, limit) =>
-      `${used}/${limit} kostenlose KI-Abfragen genutzt`,
+      `${used}/${limit} kostenlose KI-Ergänzungen genutzt`,
     exhaustedFree: (limit) =>
-      `Du hast alle ${limit} kostenlosen KI-Abfragen genutzt.`,
+      `Du hast alle ${limit} kostenlosen KI-Ergänzungen genutzt.`,
     exhaustedPro: (limit, date) =>
-      `Du hast die ${limit} KI-Abfragen dieses Zeitraums genutzt. Neue gibt es am ${date}.`,
+      `Du hast die ${limit} KI-Ergänzungen dieses Zeitraums genutzt. Neue gibt es am ${date}.`,
     exhaustedUnlimited: (limit, date) =>
-      `Du hast die Fair-Use-Grenze von ${limit} KI-Abfragen erreicht. Neue gibt es am ${date}.`,
+      `Du hast die Fair-Use-Grenze von ${limit} KI-Ergänzungen erreicht. Neue gibt es am ${date}.`,
     seePlans: "Tarife ansehen",
     getUnlimited: "Unbegrenzt wählen",
-    aiFill: "KI-Abfragen",
+    aiFill: "KI-Ergänzungen",
     freeStatus: (left, limit) => `${left} von ${limit} kostenlos übrig`,
     proStatus: (left, limit, date) =>
       `${left} von ${limit} übrig · neue am ${date}`,
@@ -411,9 +411,9 @@ export const de: Dictionary = {
     endingStatus: (left, date) => `${left} übrig · endet am ${date}`,
     upgrade: "Upgrade",
     manage: "Verwalten",
-    noticeTitle: "Für KI-Abfragen gibt es jetzt Tarife",
+    noticeTitle: "Für KI-Ergänzungen gibt es jetzt Tarife",
     noticeBody: (limit) =>
-      `Alle bekommen ${limit} kostenlose KI-Abfragen. Pro und Unbegrenzt enthalten mehr und unterstützen die Entwicklung von Yaffle. Alles andere in Yaffle bleibt kostenlos.`,
+      `Alle bekommen ${limit} kostenlose KI-Ergänzungen. Pro und Unbegrenzt enthalten mehr und unterstützen die Entwicklung von Yaffle. Alles andere in Yaffle bleibt kostenlos.`,
     noticeDismiss: "Verstanden",
   },
 

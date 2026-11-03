@@ -286,7 +286,7 @@ export const es: Dictionary = {
     activityHintLow: "Trabajo sentado y poco ejercicio.",
     activityHintModerate: "Mucho tiempo de pie, o ejercicio 2–3 veces por semana.",
     activityHintHigh: "Trabajo físico, o ejercicio casi todos los días.",
-    aim: "Objetivo",
+    aim: "Objetivo de peso",
     lose: "Bajar",
     maintain: "Mantener",
     gain: "Subir",
