@@ -5,9 +5,11 @@ Google Cloud, and how to give an affected paying customer a free month.
 
 ## How it works
 
-1. A fill fails on the phone: Google answered with an error, the request hung,
-   or the reply broke our four-tier contract. The app sends the error's facts
-   (never the food text) to the `reportAiFailure` function.
+1. A fill fails. Gemini runs in the `aiFill` function (ADR 0016), which
+   reports Google's errors and timeouts itself. The phone reports what only
+   it can see: no connection, App Check refusing it, a call to `aiFill` that
+   failed, or a reply that broke our four-tier contract. Either way only the
+   error's facts go out (never the food text).
 2. The function decides whose problem it is (`functions/src/ai-failure.ts`)
    and stores the report in `/aiFailures`. Each report is also in the
    function's log: error level when it's ours, warning otherwise.
@@ -21,15 +23,16 @@ Google Cloud, and how to give an affected paying customer a free month.
 
 | Blame | Kind | What it means | What to do |
 |---|---|---|---|
-| ours | `bad-request` | Google rejected our request (400) | Check the request shape in `src/lib/ai.ts`; often a schema change on Google's side |
+| ours | `bad-request` | Google rejected our request (400) | Check the request shape in `functions/src/ai-fill.ts`; often a schema change on Google's side |
 | ours | `model-missing` | The model ID no longer exists (404) | Move `MODEL_ID` to the current model |
-| ours | `permission` | 403: API switched off, billing, App Check enforcement | Firebase console → AI Logic; Cloud billing |
+| ours | `permission` | 403: API switched off, billing, or the function's service account lacks Vertex AI access | `docs/runbooks/ai-fill-server.md` step 2; Cloud billing |
+| ours | `function-error` | The `aiFill` call failed while the phone was online | Logs Explorer for `aiFill`; a deploy in progress or a crash |
 | ours | `config` | The SDK refused before sending | Firebase config, AI Logic enabled |
 | ours | `quota` | A quota we set or can raise (AI Logic per-user rate limit) | Raise it in the Google Cloud console |
 | ours | `bad-output` | The model answered, but not in our contract shape | Prompt / schema / parser (`src/lib/macro-fill.ts`); a sudden wave with no deploy of ours points at a model change by Google |
 | ours | `chunk-load` | An open tab asked for a code file the last deploy replaced | Usually passes; many reports mean the service worker isn't updating |
 | ours | `app-crash` | Our own code threw | Read the message |
-| google | `unavailable`, `server-error`, `timeout`, `overloaded`, `bad-response` | Google is failing or overloaded | Wait; check the incident link in the alert |
+| google | `unavailable`, `server-error`, `timeout`, `overloaded`, `bad-response`, `unreachable` | Google is failing or overloaded | Wait; check the incident link in the alert |
 | google | `blocked` | Google's filters withheld the reply (`finishReason`) | Nothing, unless it repeats for normal foods |
 | device | `network` | The phone lost its connection | Nothing |
 | device | `app-check` | App Check refused this phone (often an ad blocker stopping reCAPTCHA) | Nothing, unless many phones at once (the health check alerts on 5) |

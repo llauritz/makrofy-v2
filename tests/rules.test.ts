@@ -122,12 +122,41 @@ describe("the entitlement doc (settings/subscription)", () => {
     await assertFails(getDoc(doc(db, "users/alice/settings/subscription")))
   })
 
-  it("leaves the rest of settings and the AI cycle docs writable", async () => {
+  it("leaves the rest of settings writable", async () => {
     const db = env.authenticatedContext("alice").firestore()
     await assertSucceeds(setDoc(doc(db, "users/alice/settings/goal"), { kcal: 1800 }))
-    await assertSucceeds(
-      setDoc(doc(db, "users/alice/aiCycles/2026-11-01T00:00:00.000Z"), { fills: 1 }),
+  })
+})
+
+// The AI allowance counters are written only by the aiFill function (ADR
+// 0016), so a phone can read its count but never lower it.
+describe("AI cycle counters", () => {
+  const CYCLE = "users/alice/aiCycles/2026-11-01T00:00:00.000Z"
+
+  it("are readable by their owner", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), CYCLE), { fills: 3 })
+    })
+    const db = env.authenticatedContext("alice").firestore()
+    await assertSucceeds(getDoc(doc(db, CYCLE)))
+  })
+
+  it("refuse every client write, the owner's included", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), CYCLE), { fills: 3 })
+    })
+    const db = env.authenticatedContext("alice").firestore()
+    await assertFails(setDoc(doc(db, CYCLE), { fills: 0 }))
+    await assertFails(setDoc(doc(db, CYCLE), { fills: 0 }, { merge: true }))
+    await assertFails(deleteDoc(doc(db, CYCLE)))
+    await assertFails(
+      setDoc(doc(db, "users/alice/aiCycles/2026-12-01T00:00:00.000Z"), { fills: 0 }),
     )
+  })
+
+  it("are invisible to other users", async () => {
+    const db = env.authenticatedContext("mallory").firestore()
+    await assertFails(getDoc(doc(db, CYCLE)))
   })
 })
 

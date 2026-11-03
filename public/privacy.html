@@ -23,7 +23,7 @@
   </header>
 
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: 2 November 2026</p>
+  <p class="updated">Last updated: 3 November 2026</p>
 
   <div class="summary">
     <p><strong>The short version.</strong> We store your food log so Yaffle can work and sync. When you use AI fill, the food description you type is sent to Google's Gemini to estimate calories and macros. We don't run ads, we don't use analytics trackers, and we don't sell your data. You can export your data at any time and ask us to delete it.</p>
@@ -60,7 +60,7 @@
         <td>Performance of contract.</td>
       </tr>
       <tr>
-        <td><strong>Usage counters</strong>: how many AI fills you have used in the current cycle.</td>
+        <td><strong>Usage counters</strong>: how many AI fills you have used in the current cycle, and how many web searches they needed.</td>
         <td>To apply your plan's allowance and prevent abuse.</td>
         <td>Performance of contract; our legitimate interest in preventing abuse.</td>
       </tr>
@@ -89,7 +89,7 @@
   <h2>4. Who we share data with</h2>
   <p>We share personal data only with the following, and only as needed:</p>
   <ul>
-    <li><strong>Google (Firebase and Google Cloud)</strong>: hosts the app, signs you in (Firebase Authentication), stores your data (Cloud Firestore), protects against abuse (App Check, reCAPTCHA Enterprise), and runs AI fill (Gemini models through Firebase AI Logic and Vertex AI, with grounding in Google Search). Google acts as our processor under its data processing terms. Under Google Cloud's terms, Google does not use the food descriptions we send to train its models.</li>
+    <li><strong>Google (Firebase and Google Cloud)</strong>: hosts the app, signs you in (Firebase Authentication), stores your data (Cloud Firestore), protects against abuse (App Check, reCAPTCHA Enterprise), and runs AI fill (Gemini models on Vertex AI, called from our server on Google Cloud Functions, with grounding in Google Search). Google acts as our processor under its data processing terms. Under Google Cloud's terms, Google does not use the food descriptions we send to train its models.</li>
     <li><strong>Paddle</strong> (Paddle.com Market Limited, UK): our reseller and Merchant of Record. Paddle processes your payment details, billing address and tax information to sell you the subscription, and is an independent controller of that data under <a href="https://www.paddle.com/legal/privacy">Paddle's Privacy Policy</a>. We pass Paddle your Yaffle account ID so your purchase can be linked to your account.</li>
     <li><strong>Professional advisers</strong>, such as accountants and lawyers, where needed for tax, accounting or legal matters.</li>
     <li><strong>Authorities</strong>, such as tax authorities, courts or regulators, where the law requires it.</li>
@@ -104,7 +104,7 @@
   <ul>
     <li><strong>Your account and food log</strong>: for as long as you use Yaffle. When you ask us to delete your account, we delete it within 30 days; copies in Google's backups expire on Google's schedule.</li>
     <li><strong>Guest data</strong>: until you clear it or ask us to delete it.</li>
-    <li><strong>AI fill requests</strong>: we don't store the request beyond the food entry you save. Google may keep request logs for a limited time for abuse monitoring under its terms.</li>
+    <li><strong>AI fill requests</strong>: our server passes the request to Google and doesn't store it or log it; we keep only the food entry you save. Google may keep request logs for a limited time for abuse monitoring under its terms.</li>
     <li><strong>Usage counters</strong>: until your account is deleted.</li>
     <li><strong>Purchase and tax records</strong>: for as long as tax and accounting law requires, up to 10 years.</li>
     <li><strong>Security logs</strong>: for the periods set by Google, typically up to 30 days.</li>

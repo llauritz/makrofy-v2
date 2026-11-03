@@ -150,7 +150,7 @@ export const en = {
     addEntry: "Add entry",
     use: (label: string) => `Use ${label}`,
     aiOffline: "AI fill needs a connection.",
-    aiLimit: "Daily AI limit reached — more tomorrow.",
+    aiLimit: "Too many AI fills in a short time. Try again in a minute.",
     aiError: "Couldn't reach the AI — try again in a moment.",
     aiNoEstimate: "Couldn't estimate that — try rewording it.",
     aiHopeless: (hint: string) => `Can't estimate this one. ${hint}`,

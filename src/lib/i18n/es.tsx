@@ -126,7 +126,7 @@ export const es: Dictionary = {
     addEntry: "Añadir entrada",
     use: (label) => `Usar ${label}`,
     aiOffline: "El relleno con IA necesita conexión.",
-    aiLimit: "Límite diario de IA alcanzado — más mañana.",
+    aiLimit: "Demasiados rellenos con IA en poco tiempo. Inténtalo de nuevo en un minuto.",
     aiError:
       "No se pudo contactar con la IA — inténtalo de nuevo en un momento.",
     aiNoEstimate: "No se pudo estimar eso — prueba a reformularlo.",

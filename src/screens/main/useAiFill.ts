@@ -1,15 +1,12 @@
 import * as React from "react"
 
+import { notePendingFill } from "@/data/ai-pending"
 import {
-  AI_DAILY_LIMIT,
-  consumeAiUse,
-  readAiUsage,
-  recordAiCall,
-  recordGrounded,
-} from "@/data/ai-quota"
-import { fillMacros, type AiFillReply } from "@/lib/ai"
-import { localDay } from "@/lib/day"
-import { db } from "@/lib/firebase"
+  AiRefusedError,
+  fillMacros,
+  warmAiFill,
+  type AiFillReply,
+} from "@/lib/ai"
 import { formatShortDate } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
 import {
@@ -25,9 +22,10 @@ import { useAiCycleState, usePaywall } from "@/screens/paywall/Paywall"
 import type { AiZoneState } from "./AiZone"
 
 // The AI fill choreography every ✨ surface shares (spec § AI macro-fill,
-// #21/#53): the offline note, the quota gate (the plan cycle once billing is
-// on, ADR 0013; the daily brake until then), the serial guard against
-// stale replies, and the four-tier reply handling with its one-question cap.
+// #21/#53): the offline note, the plan cycle gate (ADR 0013; the aiFill
+// function enforces it, ADR 0016, and the phone answers from its live copy
+// first), the serial guard against stale replies, and the four-tier reply
+// handling with its one-question cap.
 // What differs per surface — where a fill's numbers land and which flags stay
 // standing — arrives through the `apply` callback; the add card overwrites
 // its whole form, the editor and the row fill only what's missing.
@@ -76,6 +74,18 @@ export function useAiFill({
   // on from — manual entry never waits on the AI.
   const run = React.useRef(0)
 
+  // Wake the fill function while the surface is on screen, so the first ✨
+  // of a session doesn't wait on a cold start (throttled in warmAiFill).
+  React.useEffect(() => {
+    if (!online) return
+    warmAiFill()
+    const wake = () => {
+      if (document.visibilityState === "visible") warmAiFill()
+    }
+    document.addEventListener("visibilitychange", wake)
+    return () => document.removeEventListener("visibilitychange", wake)
+  }, [online])
+
   /** Drop every AI trace and invalidate any reply still in flight. */
   const clear = () => {
     run.current++
@@ -108,20 +118,9 @@ export function useAiFill({
     // typed, per-plan line — read from the live counter, so it answers
     // offline too. Free and Pro carry the way up; Unlimited's fair-use line
     // doesn't sell anything. Only a new ✨ fill is refused: the answer to a
-    // clarifying question rides free. Skipped while billing is off.
+    // clarifying question rides free. The server holds the same line.
     if (!final && paywall !== null && paywall.cycle.remaining === 0) {
-      const { plan, limit, resetsOn } = paywall.cycle
-      const date = formatShortDate(resetsOn, language)
-      setPhase({
-        kind: "hint",
-        hint:
-          plan === "free"
-            ? t.paywall.exhaustedFree(n(limit))
-            : plan === "pro"
-              ? t.paywall.exhaustedPro(n(limit), date)
-              : t.paywall.exhaustedUnlimited(n(limit), date),
-        upgrade: plan !== "unlimited",
-      })
+      showExhausted()
       return
     }
     if (!online) {
@@ -131,35 +130,49 @@ export function useAiFill({
       return
     }
     setPhase({ kind: "thinking" })
-    // The cycle this trip counts against, fixed before the call so a reply
-    // landing after a rollover still counts where it started.
-    const cycleId = cycleState?.cycleId ?? null
+    // The counter moves with the tap: the server counts the fill as it
+    // admits it, and the pending note covers the moment until that arrives.
+    const settle =
+      !final && cycleState
+        ? notePendingFill(cycleState.cycleId, cycleState.cycle.used)
+        : null
     try {
-      if (paywall === null) {
-        // Until billing is on, the old daily brake still applies.
-        const day = localDay(new Date())
-        const used = await readAiUsage(db, uid, day)
-        if (runId !== run.current) return
-        if (used >= AI_DAILY_LIMIT) {
-          setPhase({ kind: "hint", hint: t.addCard.aiLimit })
-          return
-        }
-        consumeAiUse(db, uid, day)
-      }
-      // Count the trip as it starts, so the counter moves with the tap: a
-      // fill counts once, its clarifying answer only as a call (ADR 0013).
-      // A failed call still hit the service, so it counts too.
-      if (cycleId !== null) recordAiCall(db, uid, cycleId, { fill: !final })
       const reply = await fillMacros(prompt, final)
-      if (cycleId !== null && reply?.attribution != null) {
-        recordGrounded(db, uid, cycleId)
-      }
       if (runId !== run.current) return
       applyReply(reply, description, final)
-    } catch {
+    } catch (err) {
       if (runId !== run.current) return
+      if (err instanceof AiRefusedError) {
+        // The server's count was ahead of this phone's (another device used
+        // the last fills), or a brake held.
+        if (err.refusal === "cycle-exhausted" && paywall !== null) {
+          showExhausted()
+        } else {
+          setPhase({ kind: "hint", hint: t.addCard.aiLimit })
+        }
+        return
+      }
       setPhase({ kind: "hint", hint: t.addCard.aiError })
+    } finally {
+      settle?.()
     }
+  }
+
+  /** The typed, per-plan line for a used-up cycle. */
+  const showExhausted = () => {
+    if (paywall === null) return
+    const { plan, limit, resetsOn } = paywall.cycle
+    const date = formatShortDate(resetsOn, language)
+    setPhase({
+      kind: "hint",
+      hint:
+        plan === "free"
+          ? t.paywall.exhaustedFree(n(limit))
+          : plan === "pro"
+            ? t.paywall.exhaustedPro(n(limit), date)
+            : t.paywall.exhaustedUnlimited(n(limit), date),
+      upgrade: plan !== "unlimited",
+    })
   }
 
   const applyReply = (

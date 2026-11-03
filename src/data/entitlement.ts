@@ -29,31 +29,13 @@ export interface Entitlement {
   cancelsAt: Date | null
 }
 
-/**
- * Days a paid plan keeps working past its period end without word from the
- * server (ADR 0012). A renewal always moves currentPeriodEnd forward, so a
- * paying user only hits this after a week with no connection at renewal — and
- * then only until the app syncs again.
- */
-export const OFFLINE_GRACE_DAYS = 7
-
-/** Paddle is still collecting (or retrying the card): the plan holds. */
-export function isEntitling(status: SubscriptionStatus): boolean {
-  return status === "active" || status === "trialing" || status === "past_due"
-}
-
-/** The plan the app acts on: the doc's, unless it lapsed or ran past grace. */
-export function effectivePlan(e: Entitlement | null, now: Date): Plan {
-  if (e === null || e.plan === "free" || !isEntitling(e.status)) return "free"
-  if (
-    e.currentPeriodEnd !== null &&
-    now.getTime() >
-      e.currentPeriodEnd.getTime() + OFFLINE_GRACE_DAYS * 86_400_000
-  ) {
-    return "free"
-  }
-  return e.plan
-}
+// The plan rules are shared with the aiFill function, which enforces the
+// allowance on the server (ADR 0016): both read the same doc the same way.
+export {
+  effectivePlan,
+  OFFLINE_GRACE_DAYS,
+} from "../../functions/src/ai-allowance"
+export { isEntitling } from "../../functions/src/entitlement"
 
 /** A raw Firestore doc as an Entitlement; null for none or a malformed one. */
 export function parseEntitlement(

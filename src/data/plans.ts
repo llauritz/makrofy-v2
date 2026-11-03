@@ -1,24 +1,25 @@
 // The subscription ladder as decided in the wayfinder map (#58): three plans,
 // one dimension — how many ✨ AI fills a plan allows per fixed 30-day cycle
-// (#64). Pure constants and arithmetic, no Firebase, so the paywall's numbers
-// stay testable and there is exactly one place a price or limit is written.
+// (#64; limits from the Nov 2026 price review). Pure constants and arithmetic,
+// no Firebase, so the paywall's numbers stay testable and there is exactly one
+// place a price or limit is written.
 //
 // Prices are build-locked by #60 (Scenario B) behind the pre-launch
 // queries-per-fill re-verify gate; USD only for now — the per-currency charm
 // table (GBP/EUR) lands with checkout (#66).
 
+import { CYCLE_LIMIT } from "../../functions/src/ai-allowance"
+
 export type Plan = "free" | "pro" | "unlimited"
 export type Billing = "annual" | "monthly"
 
-/** ✨ fills per 30-day cycle. Unlimited's 10,000 is shown on its plan card. */
-export const CYCLE_LIMIT: Record<Plan, number> = {
-  free: 10,
-  pro: 1_000,
-  unlimited: 10_000,
-}
-
-/** Length of an allowance cycle in days (#64: fixed cycle, not a calendar month). */
-export const CYCLE_DAYS = 30
+// The allowance itself — limits, cycle length and cycle maths — lives with the
+// aiFill function that enforces it (ADR 0016); the app only shows it.
+export {
+  CYCLE_DAYS,
+  CYCLE_LIMIT,
+  cycleWindow,
+} from "../../functions/src/ai-allowance"
 
 /** Sticker prices in USD, tax-inclusive display (#60). */
 export const PRICE_USD: Record<
@@ -61,20 +62,4 @@ export function aiCycle(plan: Plan, used: number, resetsOn: Date): AiCycle {
     remaining: Math.max(0, limit - used),
     resetsOn,
   }
-}
-
-/**
- * The 30-day cycle `now` falls in, counted in whole cycles from the anchor
- * (#64: the cycle starts when the plan starts — account creation for Free, the
- * entitlement doc's `planStartedAt` once a plan has been bought). A clock set
- * before the anchor stays in the first cycle.
- */
-export function cycleWindow(
-  anchor: Date,
-  now: Date
-): { start: Date; end: Date } {
-  const length = CYCLE_DAYS * 86_400_000
-  const k = Math.max(0, Math.floor((now.getTime() - anchor.getTime()) / length))
-  const start = new Date(anchor.getTime() + k * length)
-  return { start, end: new Date(start.getTime() + length) }
 }

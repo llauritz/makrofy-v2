@@ -11,6 +11,7 @@ import {
   listenToEntitlement,
   type Entitlement,
 } from "@/data/entitlement"
+import { shownFills, usePendingFills } from "@/data/ai-pending"
 import { readPlanMirror, writePlanMirror } from "@/data/plan-mirror"
 import { aiCycle, cycleWindow, type AiCycle } from "@/data/plans"
 import { auth, db } from "@/lib/firebase"
@@ -99,15 +100,18 @@ export function useSubscriptionState(
     )
   }, [uid, cycleId])
 
+  // A tapped fill shows at once; the server's count catches up a moment later.
+  const pending = usePendingFills()
   const state = React.useMemo(() => {
     if (!loaded || !span || !cycleId || usage?.key !== usageKey) return null
+    const used = shownFills(pending, cycleId, usage.value.fills)
     return {
       entitlement: ent,
-      cycle: aiCycle(effectivePlan(ent, now), usage.value.fills, span.end),
+      cycle: aiCycle(effectivePlan(ent, now), used, span.end),
       cycleId,
       usage: usage.value,
     }
-  }, [loaded, ent, now, span, cycleId, usage, usageKey])
+  }, [loaded, ent, now, span, cycleId, usage, usageKey, pending])
 
   const createdMs = created?.getTime() ?? null
   React.useEffect(() => {

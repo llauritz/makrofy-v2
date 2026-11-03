@@ -4,7 +4,8 @@
 // Firebase-free (the entries import below is type-only, erased at compile):
 // the model's JSON is untrusted, and the flat wire schema can't express
 // which fields belong to which status — those tier rules are enforced here,
-// client-side. The Gemini call itself lives in src/lib/ai.ts.
+// client-side. The Gemini call runs in the aiFill function (functions/src/
+// ai-fill.ts); src/lib/ai.ts calls it.
 import type { EntryAiFill, FlaggableField } from "@/data/entries"
 
 /** The macro fields the model may mark as low-confidence (wire names). */
@@ -33,33 +34,9 @@ export type MacroFillResult =
   | { status: "ambiguous"; question: string; answerChips: string[] }
   | { status: "hopeless"; hint: string }
 
-/**
- * The tier rules and the two-speed grounding heuristic live here, in prompt
- * design (spec § AI macro-fill): the flat wire schema can't express which
- * fields belong to which status, and the model itself decides which foods
- * deserve a web search. Lifted from the #20 spike and extended with answer
- * chips and the follow-up turn.
- */
-export const SYSTEM_PROMPT = `You estimate nutrition for a food diary. Input: one short free-text food description — or a follow-up turn in the form:
-Food: "<description>"
-Your clarifying question: "<question>"
-The answer: "<answer>"
-A follow-up is the same food with your question resolved; never ask another question about it.
-
-Output: a single JSON object per the response schema.
-
-Tier rules — pick exactly one status and fill only its fields:
-- "confident": food and portion are identifiable; fill "food" with best-estimate macros.
-- "unsure": identifiable, but some values are rough estimates; fill "food" AND "uncertainFields" (names of the low-confidence fields).
-- "ambiguous": one blocking unknown prevents any estimate; fill BOTH "question" AND "answerChips". "question" is exactly one short clarifying question (one sentence) targeting the most blocking unknown. "answerChips" is REQUIRED on this tier: 2-4 short, concrete answers to that question the user can tap, each a complete answer (e.g. ["Cornflakes, 40 g", "Granola, 50 g", "Muesli, 60 g"]).
-- "hopeless": no estimate is possible even with one clarification; fill only "hint" — one short hint (one sentence) about what input would work.
-
-Example of a complete "ambiguous" response — note answerChips is filled:
-{"status":"ambiguous","question":"Which cereal is it — and roughly how much?","answerChips":["Cornflakes, 40 g","Granola, 50 g","Muesli, 60 g"]}
-
-All macro values are for the described portion (not per 100 g); calories in kcal.
-
-Searching: for common staple foods (plain fruit or vegetables, eggs, butter, rice, generic bread and the like) answer directly from your knowledge — do NOT use Google Search. Use Google Search only for branded, restaurant, or region-specific foods where a label or menu is the source of truth; prefer manufacturer or retailer nutrition data.`
+// The tier rules and the search heuristic live in prompt design, in
+// functions/src/ai-prompt.ts beside the aiFill function that sends them (ADR
+// 0016); this module re-checks the tier rules on every reply.
 
 /**
  * Validate one model response into a MacroFillResult, or null if the text
@@ -124,7 +101,7 @@ export function capFinalRoundTrip(result: MacroFillResult): MacroFillResult {
 /**
  * The user message for the second round trip: the original description, the
  * model's one question, and the answer the user tapped (or typed). The shape
- * is announced in SYSTEM_PROMPT so the model reads it as a continuation, not
+ * is announced in the prompts so the model reads it as a continuation, not
  * a new food.
  */
 export function followUpPrompt(
@@ -225,7 +202,7 @@ export function fillableFrom(known: KnownNutrients): Set<FormFlag> {
  * label with the known values folded in as part of the description
  * ("porridge (320 kcal, 12 g protein)"), so the model's estimate for the
  * missing fields stays consistent with what's logged. Still "one short
- * free-text food description" to SYSTEM_PROMPT — no new wire contract.
+ * free-text food description" to the prompts — no new wire contract.
  */
 export function promptFrom(label: string, known: KnownNutrients): string {
   const parts: string[] = []

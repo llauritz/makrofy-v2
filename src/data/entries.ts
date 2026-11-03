@@ -226,13 +226,153 @@ export function listenToDayFreshness(
   )
 }
 
+// The full history without paying for it on every launch (ADR 0017). Firestore
+// bills a listener that has been away for more than 30 minutes as a brand-new
+// query, so a live listener on the whole collection re-read every Entry each
+// time the app came back after a break — a cost that grew with every month of
+// logging. Instead the history is split at a cutoff Day:
+//
+//   recent — the last RECENT_DAYS Days, a normal live listener: edits and
+//            deletes from another device arrive as they happen.
+//   older  — everything before, read from the phone's own cache (free) by a
+//            cache-only listener, so local edits and deletes still show at
+//            once. A server read refreshes it once every REFRESH_DAYS, on a
+//            new device, or when the cache holds fewer Entries than the last
+//            refresh saw.
+//
+// Entries never move to another Day (EntryEdit), so an Entry belongs to one
+// half for good, apart from the slow drift of the cutoff itself.
+
+/** Days covered by the live listener. */
+export const RECENT_DAYS = 35
+/** Days between server refreshes of the older history. */
+export const REFRESH_DAYS = 7
+/** Give up on a refresh that hasn't completed in this long. */
+const REFRESH_TIMEOUT_MS = 60_000
+
+/** The first Day the live listener covers. */
+export function historyCutoff(now: Date): string {
+  return localDay(new Date(now.getTime() - RECENT_DAYS * 86_400_000))
+}
+
+function recentQuery(db: Firestore, uid: string, cutoff: string) {
+  return query(entriesCollection(db, uid), where("date", ">=", cutoff))
+}
+
+function olderQuery(db: Firestore, uid: string, cutoff: string) {
+  return query(entriesCollection(db, uid), where("date", "<", cutoff))
+}
+
+interface RefreshMark {
+  /** When the last server refresh completed, ms. */
+  at: number
+  /** How many older Entries it saw. */
+  count: number
+}
+
+const refreshKey = (uid: string) => `yaffle.history-refresh.${uid}`
+
+function readRefreshMark(uid: string): RefreshMark | null {
+  try {
+    const raw = localStorage.getItem(refreshKey(uid))
+    const mark = raw ? (JSON.parse(raw) as Partial<RefreshMark>) : null
+    return typeof mark?.at === "number" && typeof mark.count === "number"
+      ? { at: mark.at, count: mark.count }
+      : null
+  } catch {
+    return null
+  }
+}
+
+function writeRefreshMark(uid: string, mark: RefreshMark): void {
+  try {
+    localStorage.setItem(refreshKey(uid), JSON.stringify(mark))
+  } catch {
+    // No storage: the next launch refreshes again, which is only a cost.
+  }
+}
+
+/** Whether the older history needs a server read now. */
+export function needsRefresh(
+  mark: RefreshMark | null,
+  cachedCount: number,
+  nowMs: number,
+): boolean {
+  if (mark === null) return true
+  if (nowMs - mark.at >= REFRESH_DAYS * 86_400_000) return true
+  // The cache dropped Entries it held (evicted, or cleared by the browser).
+  return cachedCount < mark.count
+}
+
+const refreshing = new Set<string>()
+
+/**
+ * Bring the cached older history up to date with the server: attach a live
+ * listener until the server has confirmed the whole result — the SDK reports
+ * fromCache: false only once it has also resolved Entries deleted elsewhere —
+ * then let it go. The cache-only listeners pick up the result.
+ */
+function refreshOlder(db: Firestore, uid: string, cutoff: string): void {
+  if (refreshing.has(uid)) return
+  refreshing.add(uid)
+  let stop: Unsubscribe | null = null
+  const done = () => {
+    clearTimeout(timer)
+    stop?.()
+    stop = null
+    refreshing.delete(uid)
+  }
+  const timer = setTimeout(done, REFRESH_TIMEOUT_MS)
+  stop = onSnapshot(
+    olderQuery(db, uid, cutoff),
+    { includeMetadataChanges: true },
+    (snap) => {
+      if (snap.metadata.fromCache) return
+      writeRefreshMark(uid, { at: Date.now(), count: snap.size })
+      done()
+    },
+    (err) => {
+      console.error("History refresh failed", err)
+      done()
+    },
+  )
+}
+
 /** Observe the full Entry history — feeds typeahead (ADR 0005) and stats. */
 export function listenToAllEntries(
   db: Firestore,
   uid: string,
   onChange: (entries: Entry[]) => void,
 ): Unsubscribe {
-  return onSnapshot(entriesCollection(db, uid), (snap) => onChange(toEntries(snap)))
+  const cutoff = historyCutoff(new Date())
+  let recent: Entry[] | null = null
+  let older: Entry[] | null = null
+  let checked = false
+  const emit = () => {
+    if (recent !== null && older !== null) onChange([...older, ...recent])
+  }
+  const stopRecent = onSnapshot(recentQuery(db, uid, cutoff), (snap) => {
+    recent = toEntries(snap)
+    emit()
+  })
+  const stopOlder = onSnapshot(
+    olderQuery(db, uid, cutoff),
+    { source: "cache" },
+    (snap) => {
+      older = toEntries(snap)
+      if (!checked) {
+        checked = true
+        if (needsRefresh(readRefreshMark(uid), snap.size, Date.now())) {
+          refreshOlder(db, uid, cutoff)
+        }
+      }
+      emit()
+    },
+  )
+  return () => {
+    stopRecent()
+    stopOlder()
+  }
 }
 
 /** Whether a profile has logged anything, as the first-run gate sees it. */
@@ -266,15 +406,43 @@ export function listenToSyncMetadata(
   uid: string,
   onChange: (meta: SnapshotMeta) => void,
 ): Unsubscribe {
-  return onSnapshot(
-    entriesCollection(db, uid),
+  // The same two halves as listenToAllEntries (and the same targets, so no
+  // extra reads): the live recent half says whether the server is reachable,
+  // and either half can hold a queued write — an edit to an old Day lands in
+  // the cache-only older half.
+  const cutoff = historyCutoff(new Date())
+  let recent: SnapshotMeta | null = null
+  let olderPending = false
+  const emit = () => {
+    if (recent === null) return
+    onChange({
+      hasPendingWrites: recent.hasPendingWrites || olderPending,
+      fromCache: recent.fromCache,
+    })
+  }
+  const stopRecent = onSnapshot(
+    recentQuery(db, uid, cutoff),
     { includeMetadataChanges: true },
-    (snap) =>
-      onChange({
+    (snap) => {
+      recent = {
         hasPendingWrites: snap.metadata.hasPendingWrites,
         fromCache: snap.metadata.fromCache,
-      }),
+      }
+      emit()
+    },
   )
+  const stopOlder = onSnapshot(
+    olderQuery(db, uid, cutoff),
+    { includeMetadataChanges: true, source: "cache" },
+    (snap) => {
+      olderPending = snap.metadata.hasPendingWrites
+      emit()
+    },
+  )
+  return () => {
+    stopRecent()
+    stopOlder()
+  }
 }
 
 /**
