@@ -84,8 +84,8 @@ describe("admitCall", () => {
     })
   })
 
-  it("has the limits from the Nov 2026 price review", () => {
-    expect(CYCLE_LIMIT).toEqual({ free: 10, pro: 200, unlimited: 1_000 })
+  it("keeps the published plan limits", () => {
+    expect(CYCLE_LIMIT).toEqual({ free: 10, pro: 1_000, unlimited: 10_000 })
   })
 })
 
@@ -141,12 +141,12 @@ describe("admitAiCall (server, emulator)", () => {
       planStartedAt: Timestamp.fromDate(started),
       currentPeriodEnd: Timestamp.fromDate(new Date("2026-12-02T09:00:00Z")),
     })
-    await cycleDoc(started).set({ fills: 199, calls: 199 })
+    await cycleDoc(started).set({ fills: 999, calls: 999 })
     const now = new Date("2026-11-03T12:00:00Z")
     const ok = await admitAiCall(admin, UID, { final: false, now, accountCreated })
     expect(ok).toMatchObject({ ok: true, plan: "pro" })
     const refused = await admitAiCall(admin, UID, { final: false, now, accountCreated })
-    expect(refused).toMatchObject({ ok: false, refusal: "cycle-exhausted", limit: 200 })
+    expect(refused).toMatchObject({ ok: false, refusal: "cycle-exhausted", limit: 1_000 })
   })
 
   it("treats a lapsed subscription as Free", async () => {

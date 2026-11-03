@@ -116,7 +116,7 @@ Normative: [#10](https://github.com/llauritz/makrofy-v2/issues/10).
 
 Normative: [#58](https://github.com/llauritz/makrofy-v2/issues/58) map + ADR 0012 (entitlement) + ADR 0013 (AI allowance). Setup and go-live: `docs/runbooks/paddle.md`.
 
-- **Plans**: Free 10 AI fills · Pro 200 per 30 days ($3.99/mo, $29.99/yr) · Unlimited 1,000 per 30 days ($9.99/mo, $79.99/yr). AI fill is the only gate.
+- **Plans**: Free 10 AI fills · Pro 1,000 per 30 days ($3.99/mo, $29.99/yr) · Unlimited 10,000 per 30 days ($9.99/mo, $79.99/yr). AI fill is the only gate.
 - **Paddle** is the Merchant of Record: overlay checkout (Paddle.js) carrying the uid as custom data; purchases need a Google-linked account; Manage opens Paddle's customer portal; a payer changes plan in place.
 - **One server writer**: the `paddleWebhook` Cloud Function writes `/users/{uid}/settings/subscription`; rules let the owner read it, never write it.
 - **Billing switch**: dark until `paddle-config.ts` says `production`; `?paywall` turns it on for the tab to test the sandbox.

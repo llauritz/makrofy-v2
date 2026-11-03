@@ -511,7 +511,7 @@ function PaidCard({
     billing === "annual"
       ? t.paywall.billedYearly(money(price.annual))
       : t.paywall.billedMonthly
-  // Both paid cards state their allowance; Unlimited's 1,000 is its
+  // Both paid cards state their allowance; Unlimited's 10,000 is its
   // fair-use cap, disclosed right on the card rather than in a footnote.
   const line = t.paywall.paidLine(n(CYCLE_LIMIT[plan]))
 

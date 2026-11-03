@@ -9,8 +9,8 @@ import { isEntitling, type Plan, type SubscriptionStatus } from "./entitlement.j
 /** ✨ fills per 30-day cycle (price review, Nov 2026). */
 export const CYCLE_LIMIT: Record<Plan, number> = {
   free: 10,
-  pro: 200,
-  unlimited: 1_000,
+  pro: 1_000,
+  unlimited: 10_000,
 }
 
 /** Length of an allowance cycle in days (#64: fixed cycle, not a calendar month). */

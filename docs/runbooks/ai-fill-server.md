@@ -86,7 +86,7 @@ gcloud billing budgets create \
 
 | What | Where | Now |
 | --- | --- | --- |
-| Plan limits | `functions/src/ai-allowance.ts` `CYCLE_LIMIT` | Free 10, Pro 200, Unlimited 1,000 per 30 days |
+| Plan limits | `functions/src/ai-allowance.ts` `CYCLE_LIMIT` | Free 10, Pro 1,000, Unlimited 10,000 per 30 days |
 | Burst brake | `BURST_CALLS`, `BURST_WINDOW_MS` | 10 round trips a minute |
 | Search mode | `functions/src/ai-fill.ts` `SEARCH_MODE` | `"single"` (the live prompt, model decides in one call); `"two-step"` only after a bench run |
 | Search time limit | `SEARCH_TIMEOUT_MS` | two-step only: 10 s; past it the fill estimates without search (`searchTimeouts` in `/aiStats`) |

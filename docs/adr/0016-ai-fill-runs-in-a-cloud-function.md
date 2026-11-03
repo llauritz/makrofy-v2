@@ -57,7 +57,7 @@ billed per query), so the margin on Pro sat close to zero.
 - **Gemini failures are reported by the function** (ADR 0014) with Google's
   HTTP status; the phone reports only what it saw itself (no connection, App
   Check, a reply it couldn't read) and skips errors marked `reported`.
-- **Limits:** Free 10 · Pro 200 · Unlimited 1,000 per 30 days
+- **Limits:** Free 10 · Pro 1,000 · Unlimited 10,000 per 30 days, unchanged
   (`functions/src/ai-allowance.ts`, re-exported by `src/data/plans.ts`).
 
 ## Consequences
