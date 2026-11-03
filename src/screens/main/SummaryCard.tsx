@@ -1,8 +1,11 @@
 import { BarChart3 } from "lucide-react"
-import { motion } from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 
 import { Squircle } from "@/components/ui/squircle"
 import { useI18n } from "@/lib/i18n/useI18n"
+import { useAiCycleState } from "@/screens/paywall/Paywall"
+import { statsAvailable } from "@/screens/stats/access"
+import { SPRING } from "./anim"
 import { MACROS } from "./macros"
 import { MacroLetter } from "./MacroLetter"
 import type { DaySummary } from "./summary"
@@ -66,7 +69,9 @@ function ProgressRing({ summary }: { summary: DaySummary }) {
 // chips. The ring and the Remaining/Over readout open Settings (where the goal
 // they measure against is edited); the stats button and macro totals keep
 // their own roles. The sticky footer and undo snackbar around it are the
-// MainScreen's.
+// MainScreen's. The stats button is for Pro and Unlimited only for now
+// (src/screens/stats/access.ts); it is absent while the plan loads, and if a
+// subscriber's plan arrives after the first frame the button scales in.
 export function SummaryCard({
   summary,
   onOpenSettings,
@@ -77,6 +82,7 @@ export function SummaryCard({
   onOpenStats: () => void
 }) {
   const { t, n } = useI18n()
+  const showStats = statsAvailable(useAiCycleState()?.cycle.plan)
   const headline = summary.isOver
     ? t.summary.over(n(summary.over))
     : t.summary.remaining(n(summary.remaining))
@@ -111,14 +117,24 @@ export function SummaryCard({
                 {t.summary.pctOfGoal(n(summary.pctOfGoal), n(summary.goalKcal))}
               </div>
             </button>
-            <button
-              type="button"
-              onClick={onOpenStats}
-              aria-label={t.summary.statistics}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-input text-muted-foreground transition-transform outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95"
-            >
-              <BarChart3 className="h-4 w-4" />
-            </button>
+            <AnimatePresence initial={false}>
+              {showStats && (
+                <motion.button
+                  key="stats"
+                  type="button"
+                  onClick={onOpenStats}
+                  aria-label={t.summary.statistics}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={SPRING}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-input text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
           <div className="mt-2.5 border-t pt-2.5">
             <Squircle asChild pill>
