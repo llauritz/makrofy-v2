@@ -273,9 +273,15 @@ async function accountCreated(uid: string): Promise<Date> {
 
 /**
  * One AI fill round trip (ADR 0016): admit it against the plan's allowance,
- * ask Gemini, count what it cost. Guests count like anyone else. App Check is
- * enforced, so only the app itself can call it; together with the allowance
- * and its burst brake this replaces the advisory counter on the phone.
+ * ask Gemini, count what it cost. Guests count like anyone else. Only the app
+ * itself can call it (App Check); together with the allowance and its burst
+ * brake this replaces the advisory counter on the phone.
+ *
+ * `{ warm: true }` does nothing but start an instance. The app sends it when
+ * it opens, so the first fill of a session doesn't wait on a cold start
+ * without paying for an instance kept running all month. It needs no App
+ * Check, so the reCAPTCHA script still loads only on the first ✨ tap; the
+ * check is therefore made here rather than with enforceAppCheck.
  *
  * A refusal is `resource-exhausted` with the reason, plan, limit and reset
  * date in `details`; a Gemini failure is `unavailable`, already reported to
@@ -284,17 +290,18 @@ async function accountCreated(uid: string): Promise<Date> {
 export const aiFill = onCall(
   {
     region: REGION,
-    enforceAppCheck: true,
-    // One warm instance keeps the first fill of a session from waiting on a
-    // cold start; each instance serves many fills at once.
-    minInstances: 1,
+    // Each instance serves many fills at once (they mostly wait on Gemini).
     maxInstances: 10,
     concurrency: 40,
     cpu: 1,
     memory: "512MiB",
     timeoutSeconds: 75,
   },
-  async (req): Promise<AiFillResponse> => {
+  async (req): Promise<AiFillResponse | { warm: true }> => {
+    const warm = (req.data as { warm?: unknown } | null)?.warm === true
+    if (warm) return { warm: true }
+    // Set only when the request carried a valid App Check token.
+    if (!req.app) throw new HttpsError("unauthenticated", "App Check failed.")
     if (!req.auth) throw new HttpsError("unauthenticated", "Sign in first.")
     const uid = req.auth.uid
     const request = parseRequest(req.data)

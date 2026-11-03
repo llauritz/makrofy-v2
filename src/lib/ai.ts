@@ -9,8 +9,8 @@ import { parseMacroFillResponse, type MacroFillResult } from "./macro-fill"
 // The phone's side of AI macro-fill (spec § AI macro-fill, #21). Gemini runs
 // in the aiFill Cloud Function (ADR 0016), which checks the plan's allowance,
 // counts the trip and calls the model; the phone sends the text and validates
-// the answer against the four-tier contract. The callable enforces App Check,
-// so the reCAPTCHA script loads on the first ✨ tap — most sessions never pay
+// the answer against the four-tier contract. The function requires App Check,
+// whose reCAPTCHA script loads on the first ✨ tap — most sessions never pay
 // for it.
 
 /** Shown in failure reports; the function's own constant is MODEL_ID. */
@@ -122,6 +122,23 @@ export async function fillMacros(
     return null
   }
   return { result, attribution: reply.attribution }
+}
+
+// The aiFill function scales to zero when nobody uses it, and a cold start
+// adds a second or two. A no-op call when the app opens or comes back starts
+// an instance, which stays up for a quarter of an hour; by the time someone
+// has typed a food and tapped ✨, it is ready.
+const WARM_EVERY_MS = 5 * 60_000
+let warmedAt = -Infinity
+
+/** Start an aiFill instance ahead of the first fill; at most every 5 minutes. */
+export function warmAiFill(): void {
+  const now = Date.now()
+  if (now - warmedAt < WARM_EVERY_MS) return
+  warmedAt = now
+  callable("aiFill", { warm: true }).catch(() => {
+    // Only a head start; the fill itself still works cold.
+  })
 }
 
 // A burst of failures (say, Google down for an afternoon) shouldn't turn one

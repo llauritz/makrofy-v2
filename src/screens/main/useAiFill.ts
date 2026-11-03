@@ -1,7 +1,12 @@
 import * as React from "react"
 
 import { notePendingFill } from "@/data/ai-pending"
-import { AiRefusedError, fillMacros, type AiFillReply } from "@/lib/ai"
+import {
+  AiRefusedError,
+  fillMacros,
+  warmAiFill,
+  type AiFillReply,
+} from "@/lib/ai"
 import { formatShortDate } from "@/lib/i18n"
 import { useI18n } from "@/lib/i18n/useI18n"
 import {
@@ -68,6 +73,18 @@ export function useAiFill({
   // stale in-flight reply can never write into a surface the user has moved
   // on from — manual entry never waits on the AI.
   const run = React.useRef(0)
+
+  // Wake the fill function while the surface is on screen, so the first ✨
+  // of a session doesn't wait on a cold start (throttled in warmAiFill).
+  React.useEffect(() => {
+    if (!online) return
+    warmAiFill()
+    const wake = () => {
+      if (document.visibilityState === "visible") warmAiFill()
+    }
+    document.addEventListener("visibilitychange", wake)
+    return () => document.removeEventListener("visibilitychange", wake)
+  }, [online])
 
   /** Drop every AI trace and invalidate any reply still in flight. */
   const clear = () => {

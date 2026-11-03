@@ -4,6 +4,10 @@ status: accepted
 
 # The AI allowance is a 30-day plan cycle, checked on the client
 
+> **Update (3 November 2026):** the allowance is now enforced on the server
+> by the `aiFill` function (ADR 0016, the Level 2 below), and the limits are
+> Free 10 · Pro 200 · Unlimited 1,000. The cycle rules here still hold.
+
 Records [#64](https://github.com/llauritz/makrofy-v2/issues/64) (resolved
 2026-07-31), now built.
 
