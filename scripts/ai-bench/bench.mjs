@@ -4,7 +4,7 @@
 //   node scripts/ai-bench/bench.mjs list
 //   node scripts/ai-bench/bench.mjs run --name <slug> --purpose "<why>" \
 //        --variants "today cascade jev-router:jev=jev-1.13.0" [--rounds 3] [--baseline today]
-//        [--only "Big Mac,sandwich"] [--kinds staple,branded] [--prompts-ref origin/main]
+//        [--set main|heldout|all] [--only "Big Mac,sandwich"] [--kinds staple,branded] [--prompts-ref origin/main]
 //        [--project goyaffle] [--concurrency 3] [--mock]
 //   node scripts/ai-bench/bench.mjs report <raw run.json>
 //
@@ -21,7 +21,7 @@ import { geminiClient, jevClient, mockClients } from "./lib/clients.mjs"
 import { buildReport } from "./lib/report.mjs"
 import { foodContext } from "./lib/steps.mjs"
 import { loadTable } from "./lib/table.mjs"
-import { FOODS, FOODS_VERSION } from "./foods.mjs"
+import { ALL_FOODS, FOODS, FOODS_VERSION, HELDOUT, HELDOUT_REFS, HELDOUT_VERSION } from "./foods.mjs"
 import { loadPrompts } from "./prompts.mjs"
 import { parseVariant, VARIANTS } from "./variants.mjs"
 
@@ -49,6 +49,7 @@ const { values: args, positionals } = parseArgs({
     rounds: { type: "string", default: "3" },
     only: { type: "string" },
     kinds: { type: "string" },
+    set: { type: "string", default: "main" },
     "prompts-ref": { type: "string" },
     project: { type: "string", default: "goyaffle" },
     concurrency: { type: "string", default: "3" },
@@ -66,7 +67,7 @@ const git = (...a) => {
 
 /** Write the report, keeping hand-written takeaways from an earlier version. */
 function writeReport(run, mdFile) {
-  let text = buildReport(run, FOODS)
+  let text = buildReport(run, ALL_FOODS)
   if (existsSync(mdFile)) {
     const old = readFileSync(mdFile, "utf8").match(/## Takeaways\n([\s\S]*?)\nRaw calls:/)
     if (old && !old[1].includes("_Written after review")) {
@@ -118,11 +119,16 @@ if (!args.variants) throw new Error("--variants is required (see `bench.mjs list
 const variants = args.variants.trim().split(/\s+/).map(parseVariant)
 const only = args.only?.split(",").map((s) => s.trim())
 const kinds = args.kinds?.split(",")
-const foods = FOODS.filter((f) => (!only || only.includes(f.text)) && (!kinds || kinds.includes(f.kind)))
+const SETS = { main: FOODS, heldout: HELDOUT, all: ALL_FOODS }
+if (!SETS[args.set]) throw new Error(`--set must be one of ${Object.keys(SETS).join(", ")}`)
+if (args.set !== "main" && !HELDOUT_REFS && !args.mock) {
+  throw new Error("No held-out references: run node scripts/ai-bench/data/build-heldout.mjs first.")
+}
+const foods = SETS[args.set].filter((f) => (!only || only.includes(f.text)) && (!kinds || kinds.includes(f.kind)))
 const rounds = Number(args.rounds)
 
 const { gemini, jev } = args.mock
-  ? mockClients(FOODS)
+  ? mockClients(ALL_FOODS)
   : { gemini: geminiClient({ project: args.project }), jev: jevClient() }
 const prompts = await loadPrompts(args["prompts-ref"])
 const table = loadTable({ mock: args.mock })
@@ -181,7 +187,8 @@ const run = {
   machine: `${platform()} ${arch()}`,
   node: process.versions.node,
   backend: gemini.backend,
-  foodsVersion: FOODS_VERSION,
+  foodSet: args.set,
+  foodsVersion: [args.set !== "heldout" && `main ${FOODS_VERSION}`, args.set !== "main" && `held-out ${HELDOUT_VERSION}`].filter(Boolean).join(" + "),
   rounds,
   baseline: args.baseline ?? variants[0].id,
   variants: variants.map(({ id, base, options, describe }) => ({ id, base, options, describe })),

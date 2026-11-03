@@ -35,6 +35,7 @@ Options:
 | `--variants` | space-separated; options after a colon, comma-separated: `jev-check:threshold=0.8,jev=jev-1.13.0` |
 | `--baseline` | the variant the others are compared with (default: the first) |
 | `--rounds` | times each food is filled (default 3) |
+| `--set` | `main` (default), `heldout` or `all`: which food set |
 | `--only "Big Mac,sandwich"` / `--kinds staple,branded` | a subset of foods |
 | `--prompts-ref` | git ref to read `functions/src/ai-prompt.ts` from when it isn't in the working tree (default `origin/main`) |
 | `--project` | Google Cloud project (default `goyaffle`) |
@@ -82,6 +83,12 @@ Every report has the same sections in the same order:
 
 When you add or change a food, bump `FOODS_VERSION`.
 
+## The held-out set
+
+`data/heldout.spec.mjs`: 34 common staples that are not in the food table. Half of them are traps that share words with a table food but not its calories (full-fat against nonfat Greek yogurt, dry against cooked pasta, almond milk against almonds and milk, turkey against chicken). Any table answer on this set is a false match, and the report lists them. The set also measures Gemini on staples outside the table.
+
+References are USDA SR Legacy, which is independent here because none of these foods is in the table. Build them once with `node scripts/ai-bench/data/build-heldout.mjs`, and run with `--set heldout`. It has its own version (`HELDOUT_VERSION`).
+
 ## The food table
 
 `data/food-table.json` holds per-100 g values for about 50 common foods from USDA FoodData Central (SR Legacy), with portion weights. The list is in `data/food-table.spec.mjs`. Build or rebuild it with:
@@ -112,5 +119,5 @@ Add an entry to `VARIANTS` in `variants.mjs`: a one-line `describe` and a `run(s
 | `lib/report.mjs` | the report |
 | `lib/table.mjs` | food table lookup and portion maths |
 | `lib/prices.mjs` | model and search prices |
-| `data/` | the food table and its build script |
+| `data/` | the food table, the held-out set, and their build scripts (`usda.mjs` reads the USDA download) |
 | `v1/` | the first router bench (3 Nov 2026), kept to reproduce `docs/research/ai-bench/2026-11-03-router.md` |

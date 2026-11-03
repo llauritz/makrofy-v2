@@ -17,6 +17,11 @@
 // from the label or the 1 Nov bench notes. Foods without a solid reference
 // have no `ref` and are only scored on route, status and consistency.
 
+import { existsSync, readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+import { HELDOUT_SPEC, HELDOUT_VERSION } from "./data/heldout.spec.mjs"
+
 const usda = "USDA SR Legacy"
 
 export const FOODS_VERSION = "2026-11-03b"
@@ -129,3 +134,22 @@ export const FOODS = [
   { text: "smoothie", kind: "vague", accept: ["ambiguous"] },
   { text: "Curry", kind: "vague", accept: ["ambiguous"] },
 ]
+
+for (const f of FOODS) f.set = "main"
+
+// The held-out staple set (data/heldout.spec.mjs): foods not in the food
+// table, many of them traps for it. References come from data/heldout.json
+// (build-heldout.mjs); without it the foods run unscored, which is enough
+// for --mock.
+const HELDOUT_FILE = join(dirname(fileURLToPath(import.meta.url)), "data/heldout.json")
+const built = existsSync(HELDOUT_FILE) ? JSON.parse(readFileSync(HELDOUT_FILE, "utf8")) : null
+export const HELDOUT_REFS = built ? { version: built.version, source: built.source } : null
+export { HELDOUT_VERSION }
+export const HELDOUT = HELDOUT_SPEC.map((spec) => {
+  const b = built?.foods.find((f) => f.text === spec.text)
+  return { text: spec.text, kind: "staple", set: "heldout", trap: spec.trap ?? null, accept: ["confident", "unsure"], ...(b ? { ref: b.ref } : {}) }
+})
+
+/** Every food any run may have used, for re-scoring old runs. */
+export const ALL_FOODS = [...FOODS, ...HELDOUT]
+

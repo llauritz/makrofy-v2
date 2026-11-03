@@ -160,6 +160,14 @@ export function buildReport(run, foods) {
       if (Object.keys(misses).length) out.push(`Misses: ${Object.entries(misses).map(([k2, v]) => `${k2} ${v}`).join(", ")}.`, "")
       const vagueHits = hits.filter((r) => r.food.kind !== "staple")
       if (vagueHits.length) out.push(`Answered from the table but not a staple: ${[...new Set(vagueHits.map((r) => r.food.text))].join(", ")}.`, "")
+      const held = tried.filter((r) => r.food.set === "heldout")
+      if (held.length) {
+        const fm = hits.filter((r) => r.food.set === "heldout")
+        out.push(
+          `False matches on the held-out set (foods not in the table): ${fm.length} of ${held.length} tries${fm.length ? `: ${[...new Set(fm.map((r) => `${r.food.text} → ${r.tableHit} (${r.result.food.calories} kcal, reference ${r.food.ref?.kcal ?? "–"})`))].join("; ")}` : ""}.`,
+          ""
+        )
+      }
     }
   }
 
