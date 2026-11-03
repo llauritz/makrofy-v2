@@ -4,6 +4,7 @@ Every bench run, newest first. Each report has the same sections (setup, variant
 
 | Date | Run | Purpose | Variants | Foods × rounds |
 | --- | --- | --- | --- | --- |
+| 2026-11-03 | [heldout](2026-11-03-heldout.md) | Held-out staples (not in the food table, half of them traps): does the table answer foods it doesn't hold, and how good are the cascade and today's fill on staples outside the table, on 3.5 and 3.1 Flash-Lite? | `today`, `no-search`, `cascade`, `table-jev`, `jev-table`, `cascade:model=gemini-3.1-flash-lite`, `table-jev:model=gemini-3.1-flash-lite` | 34 × 3 |
 | 2026-11-03 | [v2-first](2026-11-03-v2-first.md) | First v2 run: can the USDA food table with Jev answer staples as well as Gemini for less, and how do the cascade and Jev hybrids compare with today's fill on 3.5 and 3.1 Flash-Lite? | `today`, `no-search`, `cascade`, `jev-router`, `jev-cascade`, `table-jev`, `jev-table`, `cascade:model=gemini-3.1-flash-lite`, `today:model=gemini-3.1-flash-lite` | 57 × 3 |
 | 2026-11-03 | [router](2026-11-03-router.md) | Bench v1: can a cheap router (Gemini or Jev) skip search on staples? Includes the real cascade re-run. | today, no search, cascade, Gemini router, Jev router, Jev yes/no, Jev cascade, Jev check | 36 × 3 |
 | 2026-11-01 | [flash-lite](2026-11-01-flash-lite.md) | Browser bench: 3.1 against 3.5 Flash-Lite for the fill. | 3 configs | 10 × 3 |

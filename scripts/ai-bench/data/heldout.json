@@ -1,0 +1,415 @@
+{
+ "version": "2026-11-03",
+ "source": "USDA FoodData Central, SR Legacy (April 2018)",
+ "built": "2026-11-03T22:38:27.291Z",
+ "foods": [
+  {
+   "text": "250 g full-fat Greek yogurt",
+   "trap": "greek-yogurt-nonfat",
+   "ref": {
+    "kcal": 243,
+    "p": 22.5,
+    "f": 12.5,
+    "c": 10,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Yogurt, Greek, plain, whole milk (fdc 171304) 250 g"
+   }
+  },
+  {
+   "text": "80 g dry spaghetti",
+   "trap": "pasta-cooked",
+   "ref": {
+    "kcal": 297,
+    "p": 10.4,
+    "f": 1.2,
+    "c": 59.8,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Pasta, dry, enriched (fdc 169736) 80 g"
+   }
+  },
+  {
+   "text": "70 g uncooked white rice",
+   "trap": "rice-white-cooked",
+   "ref": {
+    "kcal": 256,
+    "p": 5,
+    "f": 0.5,
+    "c": 56,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Rice, white, long-grain, regular, raw, enriched (fdc 168877) 70 g"
+   }
+  },
+  {
+   "text": "50 g dry lentils",
+   "trap": "lentils-cooked",
+   "ref": {
+    "kcal": 176,
+    "p": 12.3,
+    "f": 0.6,
+    "c": 31.7,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Lentils, raw (fdc 172420) 50 g"
+   }
+  },
+  {
+   "text": "250 ml unsweetened almond milk",
+   "trap": "almonds, milk-whole",
+   "ref": {
+    "kcal": 38,
+    "p": 1,
+    "f": 2.6,
+    "c": 3.3,
+    "tol": 0.25,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Beverages, almond milk, unsweetened, shelf stable (fdc 174832) 255 g"
+   }
+  },
+  {
+   "text": "10 g peanut oil",
+   "trap": "peanuts, olive-oil",
+   "ref": {
+    "kcal": 88,
+    "p": 0,
+    "f": 10,
+    "c": 0,
+    "tol": 0.08,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Oil, peanut, salad or cooking (fdc 171410) 10 g"
+   }
+  },
+  {
+   "text": "100 g egg whites",
+   "trap": "egg-raw",
+   "ref": {
+    "kcal": 52,
+    "p": 10.9,
+    "f": 0.2,
+    "c": 0.7,
+    "tol": 0.12,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Egg, white, raw, fresh (fdc 172183) 100 g"
+   }
+  },
+  {
+   "text": "2 rice cakes",
+   "trap": "rice-white-cooked",
+   "ref": {
+    "kcal": 70,
+    "p": 1.5,
+    "f": 0.5,
+    "c": 14.7,
+    "tol": 0.2,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Snacks, rice cakes, brown rice, plain, unsalted (fdc 170250) 18 g; USDA 1 cake 9 g"
+   }
+  },
+  {
+   "text": "1 butter croissant",
+   "trap": "butter",
+   "ref": {
+    "kcal": 231,
+    "p": 4.7,
+    "f": 12,
+    "c": 26.1,
+    "tol": 0.2,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Croissants, butter (fdc 174987) 57 g; USDA medium 57 g"
+   }
+  },
+  {
+   "text": "60 g rye bread",
+   "trap": "bread-white, bread-wholewheat",
+   "ref": {
+    "kcal": 155,
+    "p": 5.1,
+    "f": 2,
+    "c": 29,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Bread, rye (fdc 172684) 60 g"
+   }
+  },
+  {
+   "text": "150 g roast turkey breast",
+   "trap": "chicken-breast-cooked",
+   "ref": {
+    "kcal": 221,
+    "p": 45.2,
+    "f": 3.2,
+    "c": 0,
+    "tol": 0.12,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Turkey, whole, breast, meat only, cooked, roasted (fdc 171496) 150 g"
+   }
+  },
+  {
+   "text": "200 g de pechuga de pollo asada con piel",
+   "trap": "chicken-breast-cooked",
+   "ref": {
+    "kcal": 394,
+    "p": 59.6,
+    "f": 15.6,
+    "c": 0,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Chicken, broilers or fryers, breast, meat and skin, cooked, roasted (fdc 171075) 200 g"
+   }
+  },
+  {
+   "text": "100 g Räucherlachs",
+   "trap": "salmon-raw",
+   "ref": {
+    "kcal": 117,
+    "p": 18.3,
+    "f": 4.3,
+    "c": 0,
+    "tol": 0.15,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Fish, salmon, chinook, smoked (fdc 173687) 100 g"
+   }
+  },
+  {
+   "text": "200 ml de jugo de naranja",
+   "trap": "orange",
+   "ref": {
+    "kcal": 94,
+    "p": 1.5,
+    "f": 0.4,
+    "c": 21.6,
+    "tol": 0.15,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Orange juice, raw (Includes foods for USDA's Food Distribution Program) (fdc 169098) 208 g"
+   }
+  },
+  {
+   "text": "50 g hummus",
+   "trap": "chickpeas-cooked",
+   "ref": {
+    "kcal": 119,
+    "p": 3.9,
+    "f": 8.9,
+    "c": 7.5,
+    "tol": 0.2,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Hummus, commercial (fdc 174289) 50 g"
+   }
+  },
+  {
+   "text": "30 g cream cheese",
+   "trap": "cheddar, mozzarella",
+   "ref": {
+    "kcal": 105,
+    "p": 1.9,
+    "f": 10.3,
+    "c": 1.7,
+    "tol": 0.12,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Cheese, cream (fdc 173418) 30 g"
+   }
+  },
+  {
+   "text": "150 g cottage cheese",
+   "trap": "cheddar, mozzarella",
+   "ref": {
+    "kcal": 147,
+    "p": 16.7,
+    "f": 6.5,
+    "c": 5.1,
+    "tol": 0.15,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Cheese, cottage, creamed, large or small curd (fdc 172179) 150 g"
+   }
+  },
+  {
+   "text": "200 g grilled sirloin steak",
+   "trap": null,
+   "ref": {
+    "kcal": 356,
+    "p": 58.8,
+    "f": 11.6,
+    "c": 0,
+    "tol": 0.15,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Beef, top sirloin, steak, separable lean only, trimmed to 1/8\" fat, all grades, cooked, broiled (fdc 174054) 200 g"
+   }
+  },
+  {
+   "text": "150 g cooked shrimp",
+   "trap": null,
+   "ref": {
+    "kcal": 179,
+    "p": 34.2,
+    "f": 2.6,
+    "c": 2.3,
+    "tol": 0.12,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Crustaceans, shrimp, mixed species, cooked, moist heat (may contain additives to retain moisture) (fdc 171971) 150 g"
+   }
+  },
+  {
+   "text": "150 g baked cod",
+   "trap": null,
+   "ref": {
+    "kcal": 158,
+    "p": 34.2,
+    "f": 1.4,
+    "c": 0,
+    "tol": 0.12,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Fish, cod, Atlantic, cooked, dry heat (fdc 171956) 150 g"
+   }
+  },
+  {
+   "text": "185 g cooked quinoa",
+   "trap": null,
+   "ref": {
+    "kcal": 222,
+    "p": 8.1,
+    "f": 3.5,
+    "c": 39.4,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Quinoa, cooked (fdc 168917) 185 g"
+   }
+  },
+  {
+   "text": "150 g cooked couscous",
+   "trap": null,
+   "ref": {
+    "kcal": 168,
+    "p": 5.7,
+    "f": 0.3,
+    "c": 34.8,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Couscous, cooked (fdc 169700) 150 g"
+   }
+  },
+  {
+   "text": "30 g feta",
+   "trap": null,
+   "ref": {
+    "kcal": 80,
+    "p": 4.3,
+    "f": 6.5,
+    "c": 1.2,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Cheese, feta (fdc 173420) 30 g"
+   }
+  },
+  {
+   "text": "20 g grated parmesan",
+   "trap": null,
+   "ref": {
+    "kcal": 84,
+    "p": 5.7,
+    "f": 5.6,
+    "c": 2.8,
+    "tol": 0.12,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Cheese, parmesan, grated (fdc 171247) 20 g"
+   }
+  },
+  {
+   "text": "30 g cashews",
+   "trap": null,
+   "ref": {
+    "kcal": 166,
+    "p": 5.5,
+    "f": 13.1,
+    "c": 9.1,
+    "tol": 0.08,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Nuts, cashew nuts, raw (fdc 170162) 30 g"
+   }
+  },
+  {
+   "text": "20 g sunflower seeds",
+   "trap": null,
+   "ref": {
+    "kcal": 117,
+    "p": 4.2,
+    "f": 10.3,
+    "c": 4,
+    "tol": 0.08,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Seeds, sunflower seed kernels, dried (fdc 170562) 20 g"
+   }
+  },
+  {
+   "text": "20 g dark chocolate, 70–85%",
+   "trap": null,
+   "ref": {
+    "kcal": 120,
+    "p": 1.6,
+    "f": 8.5,
+    "c": 9.2,
+    "tol": 0.1,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Chocolate, dark, 70-85% cacao solids (fdc 170273) 20 g"
+   }
+  },
+  {
+   "text": "30 g raisins",
+   "trap": null,
+   "ref": {
+    "kcal": 90,
+    "p": 1,
+    "f": 0.1,
+    "c": 23.8,
+    "tol": 0.08,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Raisins, dark, seedless (Includes foods for USDA's Food Distribution Program) (fdc 168165) 30 g"
+   }
+  },
+  {
+   "text": "150 g pineapple",
+   "trap": null,
+   "ref": {
+    "kcal": 75,
+    "p": 0.8,
+    "f": 0.2,
+    "c": 19.7,
+    "tol": 0.15,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Pineapple, raw, all varieties (fdc 169124) 150 g"
+   }
+  },
+  {
+   "text": "300 g watermelon",
+   "trap": null,
+   "ref": {
+    "kcal": 90,
+    "p": 1.8,
+    "f": 0.6,
+    "c": 22.8,
+    "tol": 0.2,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Watermelon, raw (fdc 167765) 300 g"
+   }
+  },
+  {
+   "text": "100 g champiñones",
+   "trap": null,
+   "ref": {
+    "kcal": 22,
+    "p": 3.1,
+    "f": 0.3,
+    "c": 3.3,
+    "tol": 0.3,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Mushrooms, white, raw (fdc 169251) 100 g"
+   }
+  },
+  {
+   "text": "150 g Erbsen, gekocht",
+   "trap": null,
+   "ref": {
+    "kcal": 117,
+    "p": 7.8,
+    "f": 0.5,
+    "c": 21.5,
+    "tol": 0.12,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Peas, green, frozen, cooked, boiled, drained, without salt (fdc 170017) 150 g"
+   }
+  },
+  {
+   "text": "1 Brezel",
+   "trap": null,
+   "ref": {
+    "kcal": 389,
+    "p": 9.4,
+    "f": 3.6,
+    "c": 79.8,
+    "tol": 0.25,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Pretzels, soft (fdc 169064) 115 g; USDA soft pretzel, medium 115 g"
+   }
+  },
+  {
+   "text": "2 cucharadas de dulce de leche",
+   "trap": null,
+   "ref": {
+    "kcal": 120,
+    "p": 2.6,
+    "f": 2.8,
+    "c": 21.1,
+    "tol": 0.3,
+    "src": "USDA FoodData Central, SR Legacy (April 2018): Dulce de Leche (fdc 173461) 38 g; USDA 1 tbsp 19 g"
+   }
+  }
+ ]
+}
