@@ -157,25 +157,31 @@ type StrokeProps = Shape & {
   className?: string
 }
 
+/** How far past the ring a dashed line's SVG stroke runs, each side — see Stroke. */
+const DASH_BLEED = 1
+
 /**
  * The squircle of a `width` × `height` box, stroked so the line's outer edge
  * sits on the box's own clip.
  *
- * A solid line is not an SVG stroke but a ring: a box filled with
- * `currentColor` and clipped, even-odd, to the squircle minus the same
- * squircle inset by the line's width (at that much less radius, so the two
- * stay concentric). An <svg> is a replaced element, and the browser snaps its
- * box to whole device pixels while the clip-path it sits under stays where
- * layout put it — so wherever a box lands on a fractional pixel (a centred
- * pill, a 16.5px line-height above it) the stroke slid against the clip and
- * one side was shaved: a 1px outline came out heavy on the top and left and
- * faint at the bottom. The ring is a plain box clipped by the same path
- * maths as the surface itself, so line and clip rasterize together and the
- * outline is even on every side, at any offset.
+ * The line is never an SVG stroke on its own but a ring: a box clipped,
+ * even-odd, to the squircle minus the same squircle inset by the line's width
+ * (at that much less radius, so the two stay concentric). An <svg> is a
+ * replaced element, and the browser snaps its box to whole device pixels
+ * while the clip-path it sits under stays where layout put it — so wherever
+ * a box lands on a fractional pixel (a centred pill, a 16.5px line-height
+ * above it, a 150% display) the stroke slid against the clip and one side was
+ * shaved: a solid 1px outline came out heavy on the top and left and faint at
+ * the bottom, and a dashed one could lose its bottom edge altogether. The
+ * ring is a plain box clipped by the same path maths as the surface itself,
+ * so line and clip rasterize together and the outline is even on every side,
+ * at any offset.
  *
- * Dashes can't be a ring, so a dashed line stays an SVG stroke — the path
- * runs half a stroke inside the box, at half a stroke less radius. Dashed
- * outlines are the low-contrast placeholders, where the snap doesn't show.
+ * A solid ring is filled with `currentColor`. A dashed one holds an SVG whose
+ * dashes run along the middle of the ring at its width plus DASH_BLEED either
+ * side: the ring decides where the line is and how thick, the SVG only where
+ * each dash starts and stops, so its snapping can move a dash end by a
+ * fraction of a pixel but can no longer move the line out of the clip.
  */
 function Stroke({
   width,
@@ -190,57 +196,64 @@ function Stroke({
   height: number
   style?: React.CSSProperties
 }) {
-  const classes = cn("pointer-events-none absolute", className)
-  if (!dashed) {
-    // The ring's box overhangs the shape by RING_BLEED on every side, with
-    // the paths shifted in to match: a box's background is snapped to device
-    // pixels while its clip-path is not, so a box exactly the shape's size
-    // could snap inward and leave a sliver of the ring unpainted.
-    const b = RING_BLEED
-    const outer = squircleD({ ...shape, width, height, x: b, y: b })
-    const inner = squircleD({
-      ...shape,
-      radius: px(shape.radius ?? "lg") - strokeWidth,
-      width: width - 2 * strokeWidth,
-      height: height - 2 * strokeWidth,
-      x: b + strokeWidth,
-      y: b + strokeWidth,
-    })
-    return (
-      <span
-        aria-hidden
-        className={cn("block bg-current", classes)}
-        style={{
-          top: (Number(style?.top) || 0) - b,
-          left: (Number(style?.left) || 0) - b,
-          width: width + 2 * b,
-          height: height + 2 * b,
-          clipPath: outer && inner && `path(evenodd, '${outer} ${inner}')`,
-          visibility: outer && inner ? undefined : "hidden",
-        }}
-      />
-    )
-  }
-  const inset = strokeWidth / 2
-  const d = squircleD({
+  // The ring's box overhangs the shape by RING_BLEED on every side, with the
+  // paths shifted in to match: a box's background is snapped to device pixels
+  // while its clip-path is not, so a box exactly the shape's size could snap
+  // inward and leave a sliver of the ring unpainted.
+  const b = RING_BLEED
+  const radius = px(shape.radius ?? "lg")
+  const outer = squircleD({ ...shape, width, height, x: b, y: b })
+  const inner = squircleD({
     ...shape,
-    radius: px(shape.radius ?? "lg") - inset,
-    width: width - strokeWidth,
-    height: height - strokeWidth,
+    radius: radius - strokeWidth,
+    width: width - 2 * strokeWidth,
+    height: height - 2 * strokeWidth,
+    x: b + strokeWidth,
+    y: b + strokeWidth,
   })
+  // A dashed line's dashes follow the ring's centre line: half a stroke in,
+  // at half a stroke less radius.
+  const inset = strokeWidth / 2
+  const middle =
+    dashed &&
+    squircleD({
+      ...shape,
+      radius: radius - inset,
+      width: width - strokeWidth,
+      height: height - strokeWidth,
+      x: b + inset,
+      y: b + inset,
+    })
+  const ready = outer && inner && (!dashed || middle)
   return (
-    <svg aria-hidden className={classes} style={style}>
-      {d && (
-        <path
-          d={d}
-          transform={`translate(${inset} ${inset})`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          strokeDasharray="4 3"
-        />
+    <span
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute block",
+        !dashed && "bg-current",
+        className
       )}
-    </svg>
+      style={{
+        top: (Number(style?.top) || 0) - b,
+        left: (Number(style?.left) || 0) - b,
+        width: width + 2 * b,
+        height: height + 2 * b,
+        clipPath: ready ? `path(evenodd, '${outer} ${inner}')` : undefined,
+        visibility: ready ? undefined : "hidden",
+      }}
+    >
+      {middle && (
+        <svg className="absolute inset-0 block size-full overflow-visible">
+          <path
+            d={middle}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={strokeWidth + 2 * DASH_BLEED}
+            strokeDasharray="4 3"
+          />
+        </svg>
+      )}
+    </span>
   )
 }
 
