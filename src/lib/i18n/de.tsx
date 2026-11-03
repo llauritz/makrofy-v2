@@ -289,9 +289,10 @@ export const de: Dictionary = {
     activityLow: "Wenig aktiv",
     activityModerate: "Aktiv",
     activityHigh: "Sehr aktiv",
-    activityHintLow: "Bürojob und wenig Sport.",
-    activityHintModerate: "Viel auf den Beinen oder zwei- bis dreimal pro Woche Sport.",
-    activityHintHigh: "Körperliche Arbeit oder an den meisten Tagen Sport.",
+    activityHintLow: "Du sitzt viel und treibst wenig Sport.",
+    activityHintModerate:
+      "Du bist viel auf den Beinen oder treibst zwei- bis dreimal pro Woche Sport.",
+    activityHintHigh: "Du arbeitest körperlich oder treibst fast täglich Sport.",
     aim: "Ziel",
     lose: "Abnehmen",
     maintain: "Halten",
