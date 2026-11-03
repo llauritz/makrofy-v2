@@ -140,7 +140,7 @@ V2 JSON only (`"format": "yaffle/2"`): all Entries (full schema) + Goal + the `d
 
 ## i18n
 
-Decided at spec time (swept from the map's fog): **en + es** (V1 parity), English the source of truth. Typed TS dictionary modules + a `t()` hook via a Language context — no i18n framework for a two-language app; a new language is one new module. Language device-local, defaults to browser language; dates/numbers via `Intl`.
+Decided at spec time (swept from the map's fog): **en + es** (V1 parity), English the source of truth. Typed TS dictionary modules + a `t()` hook via a Language context — no i18n framework for a two-language app; a new language is one new module. Language device-local, defaults to browser language; dates/numbers via `Intl`. German (de, informal "du") added Nov 2026 as the third language.
 
 ## Cross-cutting build requirements
 

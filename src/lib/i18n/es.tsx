@@ -169,6 +169,7 @@ export const es: Dictionary = {
     language: "Idioma",
     languageEnglish: "English",
     languageSpanish: "Español",
+    languageGerman: "Deutsch",
     legalLinks: "Legal",
     pricing: "Precios",
     terms: "Términos",

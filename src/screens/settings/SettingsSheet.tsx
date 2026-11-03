@@ -240,6 +240,7 @@ function LanguageSetting() {
         options={[
           { value: "en", label: t.settings.languageEnglish },
           { value: "es", label: t.settings.languageSpanish },
+          { value: "de", label: t.settings.languageGerman },
         ]}
       />
     </Field>

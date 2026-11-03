@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest"
 
 import { dictionaryFor, formatNumber, localeFor } from "@/lib/i18n"
 import { en } from "@/lib/i18n/en"
+import { de } from "@/lib/i18n/de"
 import { es } from "@/lib/i18n/es"
 
 describe("formatNumber", () => {
@@ -89,6 +90,35 @@ describe("Spanish dictionary parity", () => {
     expect(en.settings.languageSpanish).toBe("Español")
     expect(es.settings.languageEnglish).toBe(en.settings.languageEnglish)
     expect(es.settings.languageSpanish).toBe(en.settings.languageSpanish)
+    expect(en.settings.languageGerman).toBe("Deutsch")
+    for (const dict of [es, de]) {
+      expect(dict.settings.languageEnglish).toBe(en.settings.languageEnglish)
+      expect(dict.settings.languageSpanish).toBe(en.settings.languageSpanish)
+      expect(dict.settings.languageGerman).toBe(en.settings.languageGerman)
+    }
+  })
+})
+
+describe("German dictionary parity", () => {
+  it("mirrors the English dictionary's shape exactly", () => {
+    expect(shape(de)).toEqual(shape(en))
+  })
+
+  it("is actually translated, not a copy of English", () => {
+    expect(de.common.undo).toBe("Rückgängig")
+    expect(de.header.settings).toBe("Einstellungen")
+    expect(de.addCard.placeholder).toBe("Was hast du gegessen?")
+    expect(de.summary.remaining("1.234")).toBe("Übrig: 1.234")
+  })
+
+  it("puts a non-breaking space before the percent sign", () => {
+    expect(de.paywall.save("37")).toBe("bis \u221237\u00a0%")
+  })
+
+  it("formats numbers the German way", () => {
+    expect(formatNumber(1_234_567, "de")).toBe("1.234.567")
+    expect(formatNumber(12.5, "de")).toBe("12,5")
+    expect(dictionaryFor("de")).toBe(de)
   })
 })
 
