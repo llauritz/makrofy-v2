@@ -256,12 +256,12 @@ export const de: Dictionary = {
       },
       {
         title: "Merkt sich deine Lebensmittel",
-        body: "Gib eine neue Menge ein, und Yaffle rechnet mit deinen früheren Einträgen neu.",
+        body: "Bei einer neuen Menge rechnet Yaffle die Werte aus deinen früheren Einträgen um.",
       },
     ],
-    exampleLabel: "100g griech. joghurt aldi",
+    exampleLabel: "100g joghurt aldi",
     exampleAria:
-      "Beispiel: 100 g griechischer Joghurt, 120 kcal, von Yaffle ausgefüllt",
+      "Beispiel: 100 g Joghurt, 120 kcal, von Yaffle ausgefüllt",
     getStarted: "Loslegen",
 
     back: "Zurück",
