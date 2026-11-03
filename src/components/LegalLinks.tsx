@@ -4,14 +4,21 @@ import { cn } from "@/lib/utils"
 // The pricing and legal pages are static documents outside the app
 // (public/*.html), so Paddle's domain review and signed-out visitors can reach
 // them. The row sits at the foot of Settings and of the welcome screen, the
-// first thing a visitor to yaffleapp.com sees. The links open in a new tab
-// so an installed PWA keeps its own window.
-export function LegalLinks({ className }: { className?: string }) {
+// first thing a visitor to yaffleapp.com sees. The welcome screen leaves
+// Pricing out (the legal pages' own header still links it). The links open in
+// a new tab so an installed PWA keeps its own window.
+export function LegalLinks({
+  className,
+  pricing = true,
+}: {
+  className?: string
+  pricing?: boolean
+}) {
   const { t } = useI18n()
   const links = [
     { href: "/terms", label: t.settings.terms },
     { href: "/privacy", label: t.settings.privacy },
-    { href: "/pricing", label: t.settings.pricing },
+    ...(pricing ? [{ href: "/pricing", label: t.settings.pricing }] : []),
     { href: "/refunds", label: t.settings.refunds },
   ]
   return (

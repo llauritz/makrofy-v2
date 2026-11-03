@@ -212,7 +212,7 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
             {t.signIn.signInWithGoogle}
           </OutlineButton>
         </div>
-        <LegalLinks className="mt-5" />
+        <LegalLinks className="mt-5" pricing={false} />
       </div>
     </Page>
   )
