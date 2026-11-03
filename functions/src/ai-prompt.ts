@@ -40,6 +40,11 @@ export const SEARCH_PROMPT = `${CORE}
 
 Web access: use Google Search to find this food's label or menu entry. Run one search query, two at most; prefer the manufacturer's, retailer's or restaurant's own nutrition data. Don't search again to double-check a figure you found.`
 
+/** After a search that ran too long: estimate without it, and say so. */
+export const ESTIMATE_PROMPT = `${CORE}
+
+Web access: none. Looking up this food's label or menu took too long, so give your best estimate from your own knowledge: use "unsure" and list the fields you are least sure of. Ask a question only if you can't estimate at all.`
+
 /** Single call: the model decides whether to search (fallback mode, dev bench). */
 export const SYSTEM_PROMPT = `${CORE}
 

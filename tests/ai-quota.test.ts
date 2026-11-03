@@ -177,15 +177,16 @@ describe("admitAiCall (server, emulator)", () => {
     const now = new Date("2026-11-03T12:00:00Z")
     const r = await admitAiCall(admin, UID, { final: false, now, accountCreated })
     if (!r.ok) throw new Error("refused")
-    await recordAiCost(admin, r.cycleRef, { final: false, queries: 3, steps: 2, now })
-    await recordAiCost(admin, r.cycleRef, { final: true, queries: 0, steps: 1, now })
+    await recordAiCost(admin, r.cycleRef, { final: false, queries: 3, steps: 2, searchTimedOut: false, now })
+    await recordAiCost(admin, r.cycleRef, { final: true, queries: 0, steps: 3, searchTimedOut: true, now })
     expect((await r.cycleRef.get()).data()).toMatchObject({ grounded: 1, queries: 3 })
     expect((await admin.doc("aiStats/2026-11-03").get()).data()).toMatchObject({
       fills: 1,
       calls: 2,
-      geminiCalls: 3,
+      geminiCalls: 5,
       grounded: 1,
       queries: 3,
+      searchTimeouts: 1,
     })
   })
 })

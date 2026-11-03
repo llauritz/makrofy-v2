@@ -23,7 +23,12 @@ import {
   type Refusal,
 } from "./ai-allowance.js"
 import type { AiFailureReport } from "./ai-failure.js"
-import { ROUTING_PROMPT, SEARCH_PROMPT, SYSTEM_PROMPT } from "./ai-prompt.js"
+import {
+  ESTIMATE_PROMPT,
+  ROUTING_PROMPT,
+  SEARCH_PROMPT,
+  SYSTEM_PROMPT,
+} from "./ai-prompt.js"
 import type { Plan, SubscriptionStatus } from "./entitlement.js"
 
 // The AI fill on the server (ADR 0016). The phone used to call Gemini itself
@@ -50,6 +55,14 @@ export const MAX_PROMPT_CHARS = 1_500
 
 /** Google's own timeout per Gemini call; a fill never waits longer. */
 const CALL_TIMEOUT_MS = 30_000
+
+/**
+ * The search step's own limit. The model is told to run one query, two at
+ * most, but sometimes keeps searching (11 queries and 33 s on one latte in
+ * the 3 Nov bench). Past this, the fill drops the search and estimates
+ * without it, so nobody waits half a minute. Normal searches take 2–4 s.
+ */
+export const SEARCH_TIMEOUT_MS = 10_000
 
 export interface AiFillRequest {
   prompt: string
@@ -176,7 +189,13 @@ export async function admitAiCall(
 export async function recordAiCost(
   db: Firestore,
   cycleRef: DocumentReference,
-  { final, queries, steps, now }: CallCost & { final: boolean; now: Date }
+  {
+    final,
+    queries,
+    steps,
+    searchTimedOut,
+    now,
+  }: CallCost & { final: boolean; now: Date }
 ): Promise<void> {
   const grounded = queries > 0 ? 1 : 0
   const batch = db.batch()
@@ -196,6 +215,7 @@ export async function recordAiCost(
       geminiCalls: FieldValue.increment(steps),
       grounded: FieldValue.increment(grounded),
       queries: FieldValue.increment(queries),
+      searchTimeouts: FieldValue.increment(searchTimedOut ? 1 : 0),
       updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
@@ -294,10 +314,20 @@ function gemini(): GoogleGenAI {
   return client
 }
 
-async function generate(
+export type Generate = (
   prompt: string,
   systemInstruction: string,
-  { search, routing }: { search: boolean; routing: boolean }
+  options: { search: boolean; routing: boolean; timeoutMs?: number }
+) => Promise<GenerateContentResponse>
+
+async function callGemini(
+  prompt: string,
+  systemInstruction: string,
+  {
+    search,
+    routing,
+    timeoutMs = CALL_TIMEOUT_MS,
+  }: { search: boolean; routing: boolean; timeoutMs?: number }
 ): Promise<GenerateContentResponse> {
   return gemini().models.generateContent({
     model: MODEL_ID,
@@ -308,7 +338,7 @@ async function generate(
       responseMimeType: "application/json",
       responseSchema: responseSchema(routing),
       thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-      httpOptions: { timeout: CALL_TIMEOUT_MS },
+      httpOptions: { timeout: timeoutMs },
     },
   })
 }
@@ -336,19 +366,38 @@ export function searchQueries(response: GenerateContentResponse): number {
 }
 
 export interface CallCost {
-  /** Billed search queries. */
+  /**
+   * Billed search queries we know of. A search step that ran out of time
+   * returns no metadata, so its queries are missing here; `searchTimedOut`
+   * marks those fills.
+   */
   queries: number
-  /** Gemini calls made: 1, or 2 when the routing step handed over. */
+  /** Gemini calls made: 1, 2 when the routing step handed over, 3 after a timed-out search. */
   steps: number
+  searchTimedOut: boolean
+}
+
+/** Whether an error is the SDK giving up at our timeout. */
+export function isTimeout(err: unknown): boolean {
+  const name = err instanceof Error ? err.name : ""
+  const message = err instanceof Error ? err.message : String(err)
+  return (
+    name === "AbortError" ||
+    name === "TimeoutError" ||
+    /timed? ?out|aborted/i.test(message)
+  )
 }
 
 /** One round trip's answer, run in the configured search mode. */
 export async function runGemini(
   prompt: string,
-  mode: SearchMode = SEARCH_MODE
+  mode: SearchMode = SEARCH_MODE,
+  /** The Gemini call; tests pass a stand-in. */
+  generate: Generate = callGemini
 ): Promise<AiFillResponse & CallCost> {
   let response: GenerateContentResponse
   let steps = 1
+  let searchTimedOut = false
   if (mode === "single") {
     response = await generate(prompt, SYSTEM_PROMPT, {
       search: true,
@@ -361,10 +410,22 @@ export async function runGemini(
     })
     if (replyStatus(response.text ?? "") === "search") {
       steps = 2
-      response = await generate(prompt, SEARCH_PROMPT, {
-        search: true,
-        routing: false,
-      })
+      try {
+        response = await generate(prompt, SEARCH_PROMPT, {
+          search: true,
+          routing: false,
+          timeoutMs: SEARCH_TIMEOUT_MS,
+        })
+      } catch (err) {
+        if (!isTimeout(err)) throw err
+        // A runaway search: estimate without it, flagged as unsure.
+        steps = 3
+        searchTimedOut = true
+        response = await generate(prompt, ESTIMATE_PROMPT, {
+          search: false,
+          routing: false,
+        })
+      }
     }
   }
   const candidate = response.candidates?.[0]
@@ -375,6 +436,7 @@ export async function runGemini(
     finishReason: candidate?.finishReason ?? null,
     queries: searchQueries(response),
     steps,
+    searchTimedOut,
   }
 }
 
@@ -383,13 +445,10 @@ export function describeGeminiError(
   err: unknown,
   { ms, final }: { ms: number; final: boolean }
 ): AiFailureReport {
-  const name = err instanceof Error ? err.name : null
   const message = err instanceof Error ? err.message : String(err)
   const status = (err as { status?: unknown } | null)?.status
-  const timeout =
-    name === "AbortError" || name === "TimeoutError" || /timed? ?out/i.test(message)
   return {
-    code: timeout ? "TimeoutError" : "upstream",
+    code: isTimeout(err) ? "TimeoutError" : "upstream",
     // The SDK's ApiError carries Google's HTTP status.
     status: typeof status === "number" ? status : null,
     reason: null,

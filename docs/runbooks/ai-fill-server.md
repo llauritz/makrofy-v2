@@ -72,7 +72,8 @@ gcloud billing budgets create \
 
 - **`/aiStats/{YYYY-MM-DD}`** (UTC days): `fills`, `calls` (fills plus
   clarifying answers), `geminiCalls` (2 when a fill went on to search),
-  `grounded` and `queries` (billed search queries). Search costs $14 per 1,000
+  `grounded`, `queries` (billed search queries) and `searchTimeouts` (searches
+  cut off at 10 s, whose queries are missing from `queries`). Search costs $14 per 1,000
   queries after the first 5,000 each month, so a day's search bill is roughly
   `queries × $0.014` once the free queries are used up.
 - **Queries per fill** = `queries ÷ fills`. The price review assumed 1.33
@@ -87,6 +88,7 @@ gcloud billing budgets create \
 | Plan limits | `functions/src/ai-allowance.ts` `CYCLE_LIMIT` | Free 10, Pro 200, Unlimited 1,000 per 30 days |
 | Burst brake | `BURST_CALLS`, `BURST_WINDOW_MS` | 10 round trips a minute |
 | Search mode | `functions/src/ai-fill.ts` `SEARCH_MODE` | `"two-step"`; `"single"` lets the model decide in one call |
+| Search time limit | `SEARCH_TIMEOUT_MS` | 10 s; past it the fill estimates without search (`searchTimeouts` in `/aiStats`) |
 | Model | `MODEL_ID` | `gemini-3.5-flash-lite`, thinking LOW |
 | Prompts | `functions/src/ai-prompt.ts` | routing, search, single |
 

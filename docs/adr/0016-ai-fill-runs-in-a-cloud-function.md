@@ -39,7 +39,10 @@ billed per query), so the margin on Pro sat close to zero.
   generic dishes and clarifying questions. Only a food whose label or menu is
   the source of truth (a brand, a packaged product, a chain-restaurant item)
   goes on to a second call with Google Search, told to run one query, two at
-  most. `SEARCH_MODE = "single"` restores the old one-call behaviour. Staples
+  most. The model sometimes ignores that (11 queries and 33 s on one latte in
+  the 3 Nov bench), so the search step has its own 10 s limit; past it the
+  fill estimates without search and comes back "unsure".
+  `SEARCH_MODE = "single"` restores the old one-call behaviour. Staples
   get faster (about 1.8 s against 3 s); branded foods pay one short extra call.
 - **Cost is counted where it happens.** Each answered trip adds `grounded` and
   `queries` (billed search queries, not just "it searched") to the cycle doc,

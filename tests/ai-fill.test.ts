@@ -15,9 +15,16 @@ import {
   parseRequest,
   replyStatus,
   responseSchema,
+  runGemini,
+  SEARCH_TIMEOUT_MS,
   searchQueries,
+  type Generate,
 } from "../functions/src/ai-fill"
-import { ROUTING_PROMPT, SEARCH_PROMPT } from "../functions/src/ai-prompt"
+import {
+  ESTIMATE_PROMPT,
+  ROUTING_PROMPT,
+  SEARCH_PROMPT,
+} from "../functions/src/ai-prompt"
 import { shownFills } from "@/data/ai-pending"
 import { describeAiError } from "@/lib/ai-report"
 
@@ -66,6 +73,68 @@ describe("two-step search", () => {
     expect(
       searchQueries(reply({ searchEntryPoint: { renderedContent: "<div/>" } })),
     ).toBe(1)
+  })
+})
+
+describe("runGemini", () => {
+  type Reply = Awaited<ReturnType<Generate>>
+  const reply = (status: string, meta?: object) =>
+    ({
+      text: JSON.stringify({ status, answerChips: [] }),
+      candidates: [{ finishReason: "STOP", groundingMetadata: meta }],
+    }) as unknown as Reply
+  const timeout = () =>
+    Object.assign(new Error("The operation was aborted"), { name: "AbortError" })
+
+  function stub(steps: ((system: string) => Reply | Error)[]) {
+    const calls: { system: string; search: boolean; timeoutMs?: number }[] = []
+    const generate: Generate = async (_prompt, system, options) => {
+      calls.push({ system, search: options.search, timeoutMs: options.timeoutMs })
+      const next = steps[calls.length - 1](system)
+      if (next instanceof Error) throw next
+      return next
+    }
+    return { calls, generate }
+  }
+
+  it("answers a staple in one call without search", async () => {
+    const { calls, generate } = stub([() => reply("confident")])
+    const r = await runGemini("1 banana", "two-step", generate)
+    expect(r).toMatchObject({ steps: 1, queries: 0, searchTimedOut: false })
+    expect(calls).toEqual([{ system: ROUTING_PROMPT, search: false, timeoutMs: undefined }])
+  })
+
+  it("hands a brand over to the search step, with its own time limit", async () => {
+    const { calls, generate } = stub([
+      () => reply("search"),
+      () => reply("confident", { webSearchQueries: ["big mac nutrition"] }),
+    ])
+    const r = await runGemini("Big Mac", "two-step", generate)
+    expect(r).toMatchObject({ steps: 2, queries: 1, searchTimedOut: false })
+    expect(calls[1]).toEqual({
+      system: SEARCH_PROMPT,
+      search: true,
+      timeoutMs: SEARCH_TIMEOUT_MS,
+    })
+  })
+
+  it("estimates without search when the search runs too long", async () => {
+    const { calls, generate } = stub([
+      () => reply("search"),
+      () => timeout(),
+      () => reply("unsure"),
+    ])
+    const r = await runGemini("Starbucks grande oat latte", "two-step", generate)
+    expect(r).toMatchObject({ steps: 3, searchTimedOut: true, attribution: null })
+    expect(calls[2]).toMatchObject({ system: ESTIMATE_PROMPT, search: false })
+  })
+
+  it("lets any other search failure through", async () => {
+    const { generate } = stub([
+      () => reply("search"),
+      () => Object.assign(new Error("overloaded"), { status: 503 }),
+    ])
+    await expect(runGemini("Big Mac", "two-step", generate)).rejects.toThrow("overloaded")
   })
 })
 

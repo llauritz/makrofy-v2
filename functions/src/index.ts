@@ -344,19 +344,21 @@ export const aiFill = onCall(
         status: report.status,
       })
     }
-    const { queries, steps, ...answer } = reply
+    const { queries, steps, searchTimedOut, ...answer } = reply
     logger.info("AI fill", {
       uid,
       plan: admission.plan,
       final: request.final,
       steps,
       queries,
+      searchTimedOut,
       ms: Date.now() - started,
     })
     await recordAiCost(db, admission.cycleRef, {
       final: request.final,
       queries,
       steps,
+      searchTimedOut,
       now,
     }).catch((e: unknown) =>
       logger.error("AI fill cost not recorded", errorFields(e))
