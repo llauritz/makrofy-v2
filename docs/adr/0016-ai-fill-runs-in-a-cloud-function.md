@@ -35,14 +35,19 @@ billed per query), so the margin on Pro sat close to zero.
   `{ warm: true }` call can start an instance without a token. The app sends it
   when a fill surface is on screen (at most every 5 minutes), so the first fill
   of a session rarely waits on a cold start, and nothing runs all month.
-- **Two-step search.** A first Gemini call without web access answers staples,
+- **Search stays as it was at launch; two-step is built but off.** The
+  function ships with `SEARCH_MODE = "single"` and the live prompt word for
+  word, so moving the call to the server changes no answer. Two-step goes live
+  only after a documented bench run compares it with single (L, 3 Nov 2026:
+  no pipeline change without one).
+- **Two-step search (off for now).** A first Gemini call without web access answers staples,
   generic dishes and clarifying questions. Only a food whose label or menu is
   the source of truth (a brand, a packaged product, a chain-restaurant item)
   goes on to a second call with Google Search, told to run one query, two at
   most. The model sometimes ignores that (11 queries and 33 s on one latte in
   the 3 Nov bench), so the search step has its own 10 s limit; past it the
   fill estimates without search and comes back "unsure".
-  `SEARCH_MODE = "single"` restores the old one-call behaviour. Staples
+  `SEARCH_MODE = "two-step"` switches it on. Staples
   get faster (about 1.8 s against 3 s); branded foods pay one short extra call.
 - **Cost is counted where it happens.** Each answered trip adds `grounded` and
   `queries` (billed search queries, not just "it searched") to the cycle doc,

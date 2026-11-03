@@ -16,6 +16,7 @@ import {
   replyStatus,
   responseSchema,
   runGemini,
+  SEARCH_MODE,
   SEARCH_TIMEOUT_MS,
   searchQueries,
   type Generate,
@@ -24,6 +25,7 @@ import {
   ESTIMATE_PROMPT,
   ROUTING_PROMPT,
   SEARCH_PROMPT,
+  SYSTEM_PROMPT,
 } from "../functions/src/ai-prompt"
 import { shownFills } from "@/data/ai-pending"
 import { describeAiError } from "@/lib/ai-report"
@@ -43,6 +45,12 @@ describe("parseRequest", () => {
     expect(parseRequest({})).toBeNull()
     expect(parseRequest(null)).toBeNull()
     expect(parseRequest({ prompt: "a".repeat(MAX_PROMPT_CHARS + 1) })).toBeNull()
+  })
+})
+
+describe("search mode", () => {
+  it("stays on the single call until two-step has been benchmarked", () => {
+    expect(SEARCH_MODE).toBe("single")
   })
 })
 
@@ -96,6 +104,13 @@ describe("runGemini", () => {
     }
     return { calls, generate }
   }
+
+  it("runs the live single call by default: one request, search allowed", async () => {
+    const { calls, generate } = stub([() => reply("confident")])
+    const r = await runGemini("Big Mac", undefined, generate)
+    expect(r).toMatchObject({ steps: 1, searchTimedOut: false })
+    expect(calls).toEqual([{ system: SYSTEM_PROMPT, search: true, timeoutMs: undefined }])
+  })
 
   it("answers a staple in one call without search", async () => {
     const { calls, generate } = stub([() => reply("confident")])

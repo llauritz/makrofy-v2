@@ -48,7 +48,9 @@ export const MODEL_ID = "gemini-3.5-flash-lite"
  * model decides whether to search, as before Nov 2026.
  */
 export type SearchMode = "two-step" | "single"
-export const SEARCH_MODE: SearchMode = "two-step"
+// Single until two-step has been benchmarked against it (L, 3 Nov 2026):
+// no pipeline change goes live without a documented comparison.
+export const SEARCH_MODE: SearchMode = "single"
 
 /** Longest prompt accepted: a description plus a question and its answer. */
 export const MAX_PROMPT_CHARS = 1_500

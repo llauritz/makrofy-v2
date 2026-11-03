@@ -8,7 +8,8 @@
 // a first call without web access answers everything it can, and only a food
 // whose label or menu is the source of truth goes on to a second call with
 // Google Search. SYSTEM_PROMPT is the single-call variant, where the model
-// decides whether to search; the dev bench and the fallback mode use it.
+// decides whether to search. Single is the live mode until the two-step
+// pipeline has been benchmarked against it (docs/research/ai-bench/).
 
 const CORE = `You estimate nutrition for a food diary. Input: one short free-text food description — or a follow-up turn in the form:
 Food: "<description>"
@@ -27,25 +28,32 @@ Tier rules — pick exactly one status and fill only its fields:
 Example of a complete "ambiguous" response — note answerChips is filled:
 {"status":"ambiguous","question":"Which cereal is it — and roughly how much?","answerChips":["Cornflakes, 40 g","Granola, 50 g","Muesli, 60 g"]}
 
-All macro values are for the described portion (not per 100 g); calories in kcal. Write servingText in metric units (g, ml) or as a count ("1 medium", "2 slices"); never cups, ounces or fluid ounces.`
+All macro values are for the described portion (not per 100 g); calories in kcal.`
+
+// Added with the two-step prompts; SYSTEM_PROMPT stays word for word as live.
+const SERVING_RULE = `Write servingText in metric units (g, ml) or as a count ("1 medium", "2 slices"); never cups, ounces or fluid ounces.`
 
 /** First step: no web access; answer, ask, or hand over to search. */
-export const ROUTING_PROMPT = `${CORE}
+export const ROUTING_PROMPT = `${CORE} ${SERVING_RULE}
 
 Web access: you have none in this step. Answer from your own knowledge whenever you can — staple and generic foods (fruit, vegetables, eggs, butter, rice, bread, milk and the like), home cooking, generic dishes ("a bowl of pasta", "a ham sandwich"), and anything that needs a clarifying question first (then ask it; don't hand over). For a single plain whole food with no size given ("an apple", "a banana", "an egg"), assume a medium one and answer; don't ask.
 Hand over whenever the input names a brand, a packaged product, a chain-restaurant or café item, or a region-specific product whose label or menu is the source of truth ("Snickers", "Big Mac", "Starbucks latte", "Havanna alfajor") — even when you think you know its numbers. To hand over, reply with exactly {"status":"search","answerChips":[]} and nothing else.`
 
 /** Second step: the food needs a label or a menu, so search for it. */
-export const SEARCH_PROMPT = `${CORE}
+export const SEARCH_PROMPT = `${CORE} ${SERVING_RULE}
 
 Web access: use Google Search to find this food's label or menu entry. Run one search query, two at most; prefer the manufacturer's, retailer's or restaurant's own nutrition data. Don't search again to double-check a figure you found.`
 
 /** After a search that ran too long: estimate without it, and say so. */
-export const ESTIMATE_PROMPT = `${CORE}
+export const ESTIMATE_PROMPT = `${CORE} ${SERVING_RULE}
 
 Web access: none. Looking up this food's label or menu took too long, so give your best estimate from your own knowledge: use "unsure" and list the fields you are least sure of. Ask a question only if you can't estimate at all.`
 
-/** Single call: the model decides whether to search (fallback mode, dev bench). */
+/**
+ * Single call: the model decides whether to search. This is the live prompt
+ * from before ADR 0016, word for word, so moving the call to the server
+ * changes nothing about the answers. Change it only after a bench run.
+ */
 export const SYSTEM_PROMPT = `${CORE}
 
-Searching: for common staple foods (plain fruit or vegetables, eggs, butter, rice, generic bread and the like) and generic dishes, answer directly from your knowledge — do NOT use Google Search. Use Google Search only for branded, restaurant, or region-specific foods where a label or menu is the source of truth; prefer manufacturer or retailer nutrition data. Run one search query, two at most.`
+Searching: for common staple foods (plain fruit or vegetables, eggs, butter, rice, generic bread and the like) answer directly from your knowledge — do NOT use Google Search. Use Google Search only for branded, restaurant, or region-specific foods where a label or menu is the source of truth; prefer manufacturer or retailer nutrition data.`
