@@ -51,7 +51,7 @@ Options:
 
 With `GEMINI_API_KEY` set, it uses the Gemini Developer API instead of Vertex.
 
-Raw calls go to `docs/research/ai-bench/runs/`. To re-score a saved run, use `node scripts/ai-bench/report.mjs <file>`.
+Raw calls go to `docs/research/ai-bench/runs/`. To add the Jev arms to a saved run without new Gemini calls, use `node scripts/ai-bench/run.mjs --add-jev <file>`. To re-score a saved run, use `node scripts/ai-bench/report.mjs <file>`.
 
 A full run is 36 foods × 3 rounds, about 430 Gemini calls (108 with search) and 200 Jev calls. It costs about $2.50 on goyaffle, mostly search fees, and takes around 10 minutes.
 

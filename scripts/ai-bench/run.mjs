@@ -46,6 +46,7 @@ const { values: args } = parseArgs({
     thinking: { type: "string", default: "LOW" },
     jev: { type: "string", default: "jev-latest" },
     out: { type: "string" },
+    "add-jev": { type: "string" },
   },
 })
 
@@ -115,14 +116,22 @@ async function runFood(food, round) {
   }
   const order = Object.keys(tasks).sort(() => Math.random() - 0.5)
   for (const k of order) raw[k] = await tasks[k]()
+  await jevCheck(raw)
+  // Raw text isn't needed in the saved file once parsed; keep it short.
+  for (const k of ["search", "plain", "cascade", "groute"]) {
+    if (raw[k]?.text) raw[k].text = raw[k].text.slice(0, 600)
+  }
+  return raw
+}
 
-  // The checker needs the no-search answer first.
+/** The checker needs the no-search answer first. */
+async function jevCheck(raw) {
   const p = raw.plain.result
   if (jev && (p.status === "confident" || p.status === "unsure")) {
     const f = p.food
     raw.jcheck = await jev.decide({
       state: {
-        entry: food.text,
+        entry: raw.food,
         answer: {
           label: f.label, serving: f.servingText, grams: f.grams,
           kcal: f.calories, protein_g: f.protein_g, fat_g: f.fat_g, carbs_g: f.carbs_g,
@@ -131,11 +140,26 @@ async function runFood(food, round) {
       questions: JEV_CHECK_QUESTIONS,
     })
   }
-  // Raw text isn't needed in the saved file once parsed; keep it short.
-  for (const k of ["search", "plain", "cascade", "groute"]) {
-    if (raw[k]?.text) raw[k].text = raw[k].text.slice(0, 600)
+}
+
+// --add-jev <run.json>: add the Jev arms to a saved run, reusing its Gemini
+// answers (no Gemini calls, no search fees).
+if (args["add-jev"]) {
+  if (!jev) throw new Error("TYPESAFE_API_KEY is not set (shell or .env.local)")
+  const file = args["add-jev"]
+  const saved = JSON.parse(readFileSync(file, "utf8"))
+  let i = 0
+  for (const raw of saved.calls) {
+    raw.jroute = await jev.decide({ state: { entry: raw.food }, questions: JEV_ROUTER_QUESTIONS })
+    await jevCheck(raw)
+    process.stderr.write(`\r${++i}/${saved.calls.length}`)
   }
-  return raw
+  process.stderr.write("\n")
+  saved.jev = { model: jev.model }
+  writeFileSync(file, JSON.stringify(saved, null, 1))
+  console.error(`updated: ${file}`)
+  console.log(report(saved, FOODS))
+  process.exit(0)
 }
 
 const jobs = []
