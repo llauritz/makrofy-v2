@@ -1,0 +1,1787 @@
+{
+ "source": "USDA FoodData Central, SR Legacy (April 2018)",
+ "built": "2026-11-03T15:33:37.670Z",
+ "foods": [
+  {
+   "id": "banana",
+   "usda": {
+    "fdcId": 173944,
+    "description": "Bananas, raw"
+   },
+   "names": {
+    "en": [
+     "banana"
+    ],
+    "es": [
+     "banana",
+     "plátano"
+    ],
+    "de": [
+     "Banane"
+    ]
+   },
+   "per100": {
+    "kcal": 89,
+    "p": 1.1,
+    "f": 0.3,
+    "c": 22.8
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 extra large",
+     "grams": 152
+    },
+    {
+     "label": "1 large",
+     "grams": 136
+    },
+    {
+     "label": "1 small",
+     "grams": 101
+    },
+    {
+     "label": "1 extra small",
+     "grams": 81
+    },
+    {
+     "label": "1 medium",
+     "grams": 118
+    }
+   ]
+  },
+  {
+   "id": "apple",
+   "usda": {
+    "fdcId": 171688,
+    "description": "Apples, raw, with skin (Includes foods for USDA's Food Distribution Program)"
+   },
+   "names": {
+    "en": [
+     "apple"
+    ],
+    "es": [
+     "manzana"
+    ],
+    "de": [
+     "Apfel"
+    ]
+   },
+   "per100": {
+    "kcal": 52,
+    "p": 0.3,
+    "f": 0.2,
+    "c": 13.8
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 medium",
+     "grams": 182
+    },
+    {
+     "label": "1 small",
+     "grams": 149
+    },
+    {
+     "label": "1 extra small",
+     "grams": 101
+    },
+    {
+     "label": "1 large",
+     "grams": 223
+    }
+   ]
+  },
+  {
+   "id": "orange",
+   "usda": {
+    "fdcId": 169097,
+    "description": "Oranges, raw, all commercial varieties"
+   },
+   "names": {
+    "en": [
+     "orange"
+    ],
+    "es": [
+     "naranja"
+    ],
+    "de": [
+     "Orange",
+     "Apfelsine"
+    ]
+   },
+   "per100": {
+    "kcal": 47,
+    "p": 0.9,
+    "f": 0.1,
+    "c": 11.8
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 small",
+     "grams": 96
+    },
+    {
+     "label": "1 large",
+     "grams": 184
+    },
+    {
+     "label": "1 fruit",
+     "grams": 131
+    }
+   ]
+  },
+  {
+   "id": "pear",
+   "usda": {
+    "fdcId": 169118,
+    "description": "Pears, raw"
+   },
+   "names": {
+    "en": [
+     "pear"
+    ],
+    "es": [
+     "pera"
+    ],
+    "de": [
+     "Birne"
+    ]
+   },
+   "per100": {
+    "kcal": 57,
+    "p": 0.4,
+    "f": 0.1,
+    "c": 15.2
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 medium",
+     "grams": 178
+    },
+    {
+     "label": "1 large",
+     "grams": 230
+    },
+    {
+     "label": "1 small",
+     "grams": 148
+    }
+   ]
+  },
+  {
+   "id": "strawberries",
+   "usda": {
+    "fdcId": 167762,
+    "description": "Strawberries, raw"
+   },
+   "names": {
+    "en": [
+     "strawberries",
+     "strawberry"
+    ],
+    "es": [
+     "frutillas",
+     "fresas"
+    ],
+    "de": [
+     "Erdbeeren"
+    ]
+   },
+   "per100": {
+    "kcal": 32,
+    "p": 0.7,
+    "f": 0.3,
+    "c": 7.7
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 large",
+     "grams": 18
+    },
+    {
+     "label": "1 medium",
+     "grams": 12
+    },
+    {
+     "label": "1 extra large",
+     "grams": 27
+    },
+    {
+     "label": "1 small",
+     "grams": 7
+    }
+   ]
+  },
+  {
+   "id": "grapes",
+   "usda": {
+    "fdcId": 174683,
+    "description": "Grapes, red or green (European type, such as Thompson seedless), raw"
+   },
+   "names": {
+    "en": [
+     "grapes"
+    ],
+    "es": [
+     "uvas"
+    ],
+    "de": [
+     "Weintrauben",
+     "Trauben"
+    ]
+   },
+   "per100": {
+    "kcal": 69,
+    "p": 0.7,
+    "f": 0.2,
+    "c": 18.1
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "10 grapes",
+     "grams": 49
+    }
+   ]
+  },
+  {
+   "id": "kiwi",
+   "usda": {
+    "fdcId": 168153,
+    "description": "Kiwifruit, green, raw"
+   },
+   "names": {
+    "en": [
+     "kiwi",
+     "kiwifruit"
+    ],
+    "es": [
+     "kiwi"
+    ],
+    "de": [
+     "Kiwi"
+    ]
+   },
+   "per100": {
+    "kcal": 61,
+    "p": 1.1,
+    "f": 0.5,
+    "c": 14.7
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 fruit",
+     "grams": 69
+    }
+   ]
+  },
+  {
+   "id": "mango",
+   "usda": {
+    "fdcId": 169910,
+    "description": "Mangos, raw"
+   },
+   "names": {
+    "en": [
+     "mango"
+    ],
+    "es": [
+     "mango"
+    ],
+    "de": [
+     "Mango"
+    ]
+   },
+   "per100": {
+    "kcal": 60,
+    "p": 0.8,
+    "f": 0.4,
+    "c": 15
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 fruit without refuse",
+     "grams": 336
+    }
+   ]
+  },
+  {
+   "id": "blueberries",
+   "usda": {
+    "fdcId": 171711,
+    "description": "Blueberries, raw"
+   },
+   "names": {
+    "en": [
+     "blueberries"
+    ],
+    "es": [
+     "arándanos"
+    ],
+    "de": [
+     "Heidelbeeren",
+     "Blaubeeren"
+    ]
+   },
+   "per100": {
+    "kcal": 57,
+    "p": 0.7,
+    "f": 0.3,
+    "c": 14.5
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "50 berries",
+     "grams": 68
+    }
+   ]
+  },
+  {
+   "id": "avocado",
+   "usda": {
+    "fdcId": 171705,
+    "description": "Avocados, raw, all commercial varieties"
+   },
+   "names": {
+    "en": [
+     "avocado"
+    ],
+    "es": [
+     "palta",
+     "aguacate"
+    ],
+    "de": [
+     "Avocado"
+    ]
+   },
+   "per100": {
+    "kcal": 160,
+    "p": 2,
+    "f": 14.7,
+    "c": 8.5
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 avocado, NS as to Florida or California",
+     "grams": 201
+    }
+   ]
+  },
+  {
+   "id": "tomato",
+   "usda": {
+    "fdcId": 170457,
+    "description": "Tomatoes, red, ripe, raw, year round average"
+   },
+   "names": {
+    "en": [
+     "tomato"
+    ],
+    "es": [
+     "tomate"
+    ],
+    "de": [
+     "Tomate"
+    ]
+   },
+   "per100": {
+    "kcal": 18,
+    "p": 0.9,
+    "f": 0.2,
+    "c": 3.9
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 medium whole",
+     "grams": 123
+    },
+    {
+     "label": "1 slice, medium",
+     "grams": 20
+    },
+    {
+     "label": "1 large whole",
+     "grams": 182
+    },
+    {
+     "label": "1 cherry",
+     "grams": 17
+    },
+    {
+     "label": "1 Italian tomato",
+     "grams": 62
+    },
+    {
+     "label": "1 slice, thin/small",
+     "grams": 15
+    },
+    {
+     "label": "1 small whole",
+     "grams": 91
+    },
+    {
+     "label": "1 slice, thick/large",
+     "grams": 27
+    },
+    {
+     "label": "1 wedge (1/4 of medium tomato)",
+     "grams": 31
+    },
+    {
+     "label": "1 plum tomato",
+     "grams": 62
+    }
+   ]
+  },
+  {
+   "id": "carrot",
+   "usda": {
+    "fdcId": 170393,
+    "description": "Carrots, raw"
+   },
+   "names": {
+    "en": [
+     "carrot"
+    ],
+    "es": [
+     "zanahoria"
+    ],
+    "de": [
+     "Karotte",
+     "Möhre"
+    ]
+   },
+   "per100": {
+    "kcal": 41,
+    "p": 0.9,
+    "f": 0.2,
+    "c": 9.6
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 slice",
+     "grams": 3
+    },
+    {
+     "label": "1 strip large",
+     "grams": 7
+    },
+    {
+     "label": "1 small",
+     "grams": 50
+    },
+    {
+     "label": "1 medium",
+     "grams": 61
+    },
+    {
+     "label": "1 large",
+     "grams": 72
+    },
+    {
+     "label": "1 strip medium",
+     "grams": 4
+    }
+   ]
+  },
+  {
+   "id": "cucumber",
+   "usda": {
+    "fdcId": 168409,
+    "description": "Cucumber, with peel, raw"
+   },
+   "names": {
+    "en": [
+     "cucumber"
+    ],
+    "es": [
+     "pepino"
+    ],
+    "de": [
+     "Gurke"
+    ]
+   },
+   "per100": {
+    "kcal": 15,
+    "p": 0.7,
+    "f": 0.1,
+    "c": 3.6
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 cucumber",
+     "grams": 301
+    }
+   ]
+  },
+  {
+   "id": "broccoli-boiled",
+   "usda": {
+    "fdcId": 169967,
+    "description": "Broccoli, cooked, boiled, drained, without salt"
+   },
+   "names": {
+    "en": [
+     "cooked broccoli",
+     "boiled broccoli",
+     "broccoli"
+    ],
+    "es": [
+     "brócoli hervido",
+     "brócoli"
+    ],
+    "de": [
+     "Brokkoli gekocht",
+     "Brokkoli"
+    ]
+   },
+   "per100": {
+    "kcal": 35,
+    "p": 2.4,
+    "f": 0.4,
+    "c": 7.2
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 stalk, large",
+     "grams": 280
+    },
+    {
+     "label": "1 spear",
+     "grams": 37
+    },
+    {
+     "label": "1 stalk, medium",
+     "grams": 180
+    },
+    {
+     "label": "1 stalk, small",
+     "grams": 140
+    }
+   ]
+  },
+  {
+   "id": "potato-boiled",
+   "usda": {
+    "fdcId": 170438,
+    "description": "Potatoes, boiled, cooked in skin, flesh, without salt"
+   },
+   "names": {
+    "en": [
+     "boiled potatoes",
+     "boiled potato",
+     "potatoes"
+    ],
+    "es": [
+     "papas hervidas",
+     "papa hervida",
+     "patatas cocidas"
+    ],
+    "de": [
+     "Salzkartoffeln",
+     "Pellkartoffeln",
+     "gekochte Kartoffeln",
+     "Kartoffeln"
+    ]
+   },
+   "per100": {
+    "kcal": 87,
+    "p": 1.9,
+    "f": 0.1,
+    "c": 20.1
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 potato",
+     "grams": 136
+    }
+   ]
+  },
+  {
+   "id": "sweet-potato-baked",
+   "usda": {
+    "fdcId": 168483,
+    "description": "Sweet potato, cooked, baked in skin, flesh, without salt"
+   },
+   "names": {
+    "en": [
+     "baked sweet potato",
+     "sweet potato"
+    ],
+    "es": [
+     "batata al horno",
+     "batata"
+    ],
+    "de": [
+     "Süßkartoffel"
+    ]
+   },
+   "per100": {
+    "kcal": 90,
+    "p": 2,
+    "f": 0.2,
+    "c": 20.7
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 large",
+     "grams": 180
+    },
+    {
+     "label": "1 small",
+     "grams": 60
+    },
+    {
+     "label": "1 medium",
+     "grams": 114
+    }
+   ]
+  },
+  {
+   "id": "spinach",
+   "usda": {
+    "fdcId": 168462,
+    "description": "Spinach, raw"
+   },
+   "names": {
+    "en": [
+     "spinach"
+    ],
+    "es": [
+     "espinaca"
+    ],
+    "de": [
+     "Spinat"
+    ]
+   },
+   "per100": {
+    "kcal": 23,
+    "p": 2.9,
+    "f": 0.4,
+    "c": 3.6
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 bunch",
+     "grams": 340
+    },
+    {
+     "label": "1 leaf",
+     "grams": 10
+    }
+   ]
+  },
+  {
+   "id": "onion",
+   "usda": {
+    "fdcId": 170000,
+    "description": "Onions, raw"
+   },
+   "names": {
+    "en": [
+     "onion"
+    ],
+    "es": [
+     "cebolla"
+    ],
+    "de": [
+     "Zwiebel"
+    ]
+   },
+   "per100": {
+    "kcal": 40,
+    "p": 1.1,
+    "f": 0.1,
+    "c": 9.3
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 slice, medium",
+     "grams": 14
+    },
+    {
+     "label": "1 medium",
+     "grams": 110
+    },
+    {
+     "label": "1 large",
+     "grams": 150
+    },
+    {
+     "label": "10 rings",
+     "grams": 60
+    },
+    {
+     "label": "1 slice, thin",
+     "grams": 9
+    },
+    {
+     "label": "1 small",
+     "grams": 70
+    },
+    {
+     "label": "1 slice, large",
+     "grams": 38
+    }
+   ]
+  },
+  {
+   "id": "egg-raw",
+   "usda": {
+    "fdcId": 171287,
+    "description": "Egg, whole, raw, fresh"
+   },
+   "names": {
+    "en": [
+     "egg",
+     "raw egg"
+    ],
+    "es": [
+     "huevo"
+    ],
+    "de": [
+     "Ei",
+     "Eier"
+    ]
+   },
+   "per100": {
+    "kcal": 143,
+    "p": 12.6,
+    "f": 9.5,
+    "c": 0.7
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 medium",
+     "grams": 44
+    },
+    {
+     "label": "1 extra large",
+     "grams": 56
+    },
+    {
+     "label": "1 small",
+     "grams": 38
+    },
+    {
+     "label": "1 jumbo",
+     "grams": 63
+    },
+    {
+     "label": "1 large",
+     "grams": 50
+    }
+   ]
+  },
+  {
+   "id": "egg-boiled",
+   "usda": {
+    "fdcId": 173424,
+    "description": "Egg, whole, cooked, hard-boiled"
+   },
+   "names": {
+    "en": [
+     "boiled egg",
+     "hard-boiled egg"
+    ],
+    "es": [
+     "huevo duro",
+     "huevo hervido"
+    ],
+    "de": [
+     "gekochtes Ei",
+     "Eier gekocht",
+     "hartgekochtes Ei"
+    ]
+   },
+   "per100": {
+    "kcal": 155,
+    "p": 12.6,
+    "f": 10.6,
+    "c": 1.1
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 large",
+     "grams": 50
+    }
+   ]
+  },
+  {
+   "id": "egg-fried",
+   "usda": {
+    "fdcId": 173423,
+    "description": "Egg, whole, cooked, fried"
+   },
+   "names": {
+    "en": [
+     "fried egg"
+    ],
+    "es": [
+     "huevo frito"
+    ],
+    "de": [
+     "Spiegelei"
+    ]
+   },
+   "per100": {
+    "kcal": 196,
+    "p": 13.6,
+    "f": 14.8,
+    "c": 0.8
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 large",
+     "grams": 46
+    }
+   ]
+  },
+  {
+   "id": "egg-scrambled",
+   "usda": {
+    "fdcId": 172187,
+    "description": "Egg, whole, cooked, scrambled"
+   },
+   "names": {
+    "en": [
+     "scrambled eggs",
+     "scrambled egg"
+    ],
+    "es": [
+     "huevos revueltos"
+    ],
+    "de": [
+     "Rührei"
+    ]
+   },
+   "per100": {
+    "kcal": 149,
+    "p": 10,
+    "f": 11,
+    "c": 1.6
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 large",
+     "grams": 61
+    }
+   ]
+  },
+  {
+   "id": "butter",
+   "usda": {
+    "fdcId": 173410,
+    "description": "Butter, salted"
+   },
+   "names": {
+    "en": [
+     "butter"
+    ],
+    "es": [
+     "manteca",
+     "mantequilla"
+    ],
+    "de": [
+     "Butter"
+    ]
+   },
+   "per100": {
+    "kcal": 717,
+    "p": 0.9,
+    "f": 81.1,
+    "c": 0.1
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 pat",
+     "grams": 5
+    }
+   ]
+  },
+  {
+   "id": "olive-oil",
+   "usda": {
+    "fdcId": 171413,
+    "description": "Oil, olive, salad or cooking"
+   },
+   "names": {
+    "en": [
+     "olive oil"
+    ],
+    "es": [
+     "aceite de oliva"
+    ],
+    "de": [
+     "Olivenöl"
+    ]
+   },
+   "per100": {
+    "kcal": 884,
+    "p": 0,
+    "f": 100,
+    "c": 0
+   },
+   "density": 0.92,
+   "portions": [
+    {
+     "label": "1 drizzle",
+     "grams": 5
+    }
+   ]
+  },
+  {
+   "id": "milk-whole",
+   "usda": {
+    "fdcId": 171265,
+    "description": "Milk, whole, 3.25% milkfat, with added vitamin D"
+   },
+   "names": {
+    "en": [
+     "whole milk",
+     "milk"
+    ],
+    "es": [
+     "leche entera",
+     "leche"
+    ],
+    "de": [
+     "Vollmilch",
+     "Milch"
+    ]
+   },
+   "per100": {
+    "kcal": 61,
+    "p": 3.2,
+    "f": 3.3,
+    "c": 4.8
+   },
+   "density": 1.03,
+   "portions": [
+    {
+     "label": "1 glass (250 ml)",
+     "grams": 258
+    }
+   ]
+  },
+  {
+   "id": "milk-skim",
+   "usda": {
+    "fdcId": 171269,
+    "description": "Milk, nonfat, fluid, with added vitamin A and vitamin D (fat free or skim)"
+   },
+   "names": {
+    "en": [
+     "skimmed milk",
+     "skim milk"
+    ],
+    "es": [
+     "leche descremada"
+    ],
+    "de": [
+     "Magermilch"
+    ]
+   },
+   "per100": {
+    "kcal": 34,
+    "p": 3.4,
+    "f": 0.1,
+    "c": 5
+   },
+   "density": 1.03,
+   "portions": [
+    {
+     "label": "1 glass (250 ml)",
+     "grams": 258
+    }
+   ]
+  },
+  {
+   "id": "greek-yogurt-nonfat",
+   "usda": {
+    "fdcId": 170894,
+    "description": "Yogurt, Greek, plain, nonfat (Includes foods for USDA's Food Distribution Program)"
+   },
+   "names": {
+    "en": [
+     "plain nonfat Greek yogurt",
+     "Greek yogurt"
+    ],
+    "es": [
+     "yogur griego natural descremado",
+     "yogur griego"
+    ],
+    "de": [
+     "griechischer Joghurt"
+    ]
+   },
+   "per100": {
+    "kcal": 59,
+    "p": 10.2,
+    "f": 0.4,
+    "c": 3.6
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 container",
+     "grams": 170
+    }
+   ]
+  },
+  {
+   "id": "cheddar",
+   "usda": {
+    "fdcId": 173414,
+    "description": "Cheese, cheddar (Includes foods for USDA's Food Distribution Program)"
+   },
+   "names": {
+    "en": [
+     "cheddar"
+    ],
+    "es": [
+     "queso cheddar"
+    ],
+    "de": [
+     "Cheddar"
+    ]
+   },
+   "per100": {
+    "kcal": 403,
+    "p": 22.9,
+    "f": 33.3,
+    "c": 3.4
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 cubic inch",
+     "grams": 17
+    }
+   ]
+  },
+  {
+   "id": "mozzarella",
+   "usda": {
+    "fdcId": 170845,
+    "description": "Cheese, mozzarella, whole milk"
+   },
+   "names": {
+    "en": [
+     "mozzarella"
+    ],
+    "es": [
+     "mozzarella",
+     "muzzarella"
+    ],
+    "de": [
+     "Mozzarella"
+    ]
+   },
+   "per100": {
+    "kcal": 299,
+    "p": 22.2,
+    "f": 22.1,
+    "c": 2.4
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "6 slices",
+     "grams": 170
+    }
+   ]
+  },
+  {
+   "id": "rice-white-cooked",
+   "usda": {
+    "fdcId": 168878,
+    "description": "Rice, white, long-grain, regular, enriched, cooked"
+   },
+   "names": {
+    "en": [
+     "cooked white rice",
+     "white rice",
+     "rice"
+    ],
+    "es": [
+     "arroz blanco cocido",
+     "arroz blanco",
+     "arroz"
+    ],
+    "de": [
+     "gekochter Reis",
+     "weißer Reis",
+     "Reis"
+    ]
+   },
+   "per100": {
+    "kcal": 130,
+    "p": 2.7,
+    "f": 0.3,
+    "c": 28.2
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "rice-brown-cooked",
+   "usda": {
+    "fdcId": 169704,
+    "description": "Rice, brown, long-grain, cooked (Includes foods for USDA's Food Distribution Program)"
+   },
+   "names": {
+    "en": [
+     "cooked brown rice",
+     "brown rice"
+    ],
+    "es": [
+     "arroz integral"
+    ],
+    "de": [
+     "Naturreis",
+     "Vollkornreis"
+    ]
+   },
+   "per100": {
+    "kcal": 123,
+    "p": 2.7,
+    "f": 1,
+    "c": 25.6
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "pasta-cooked",
+   "usda": {
+    "fdcId": 169737,
+    "description": "Pasta, cooked, enriched, without added salt"
+   },
+   "names": {
+    "en": [
+     "cooked pasta",
+     "cooked spaghetti",
+     "pasta",
+     "spaghetti"
+    ],
+    "es": [
+     "fideos cocidos",
+     "pasta cocida",
+     "fideos",
+     "espaguetis"
+    ],
+    "de": [
+     "gekochte Nudeln",
+     "Nudeln",
+     "Spaghetti"
+    ]
+   },
+   "per100": {
+    "kcal": 158,
+    "p": 5.8,
+    "f": 0.9,
+    "c": 30.9
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "oats",
+   "usda": {
+    "fdcId": 173904,
+    "description": "Cereals, oats, regular and quick, not fortified, dry"
+   },
+   "names": {
+    "en": [
+     "oats",
+     "rolled oats",
+     "porridge oats"
+    ],
+    "es": [
+     "avena"
+    ],
+    "de": [
+     "Haferflocken"
+    ]
+   },
+   "per100": {
+    "kcal": 379,
+    "p": 13.2,
+    "f": 6.5,
+    "c": 67.7
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "bread-white",
+   "usda": {
+    "fdcId": 174924,
+    "description": "Bread, white, commercially prepared (includes soft bread crumbs)"
+   },
+   "names": {
+    "en": [
+     "white bread",
+     "bread"
+    ],
+    "es": [
+     "pan blanco",
+     "pan de molde"
+    ],
+    "de": [
+     "Weißbrot",
+     "Toastbrot"
+    ]
+   },
+   "per100": {
+    "kcal": 266,
+    "p": 8.9,
+    "f": 3.3,
+    "c": 49.4
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 slice",
+     "grams": 29
+    },
+    {
+     "label": "1 slice crust not eaten",
+     "grams": 12
+    },
+    {
+     "label": "1 slice, thin",
+     "grams": 20
+    },
+    {
+     "label": "1 slice, very thin",
+     "grams": 15
+    },
+    {
+     "label": "1 slice",
+     "grams": 25
+    },
+    {
+     "label": "1 slice, large",
+     "grams": 30
+    },
+    {
+     "label": "1 slice thin, crust not eaten",
+     "grams": 9
+    }
+   ]
+  },
+  {
+   "id": "bread-wholewheat",
+   "usda": {
+    "fdcId": 172688,
+    "description": "Bread, whole-wheat, commercially prepared"
+   },
+   "names": {
+    "en": [
+     "wholemeal bread",
+     "whole wheat bread"
+    ],
+    "es": [
+     "pan integral"
+    ],
+    "de": [
+     "Vollkornbrot"
+    ]
+   },
+   "per100": {
+    "kcal": 252,
+    "p": 12.4,
+    "f": 3.5,
+    "c": 42.7
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 slice",
+     "grams": 32
+    }
+   ]
+  },
+  {
+   "id": "chicken-breast-cooked",
+   "usda": {
+    "fdcId": 171477,
+    "description": "Chicken, broilers or fryers, breast, meat only, cooked, roasted"
+   },
+   "names": {
+    "en": [
+     "chicken breast",
+     "grilled chicken breast",
+     "roast chicken breast"
+    ],
+    "es": [
+     "pechuga de pollo"
+    ],
+    "de": [
+     "Hähnchenbrust",
+     "Hühnerbrust"
+    ]
+   },
+   "per100": {
+    "kcal": 165,
+    "p": 31,
+    "f": 3.6,
+    "c": 0
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "0.5 breast, bone and skin removed",
+     "grams": 86
+    }
+   ]
+  },
+  {
+   "id": "salmon-raw",
+   "usda": {
+    "fdcId": 175167,
+    "description": "Fish, salmon, Atlantic, farmed, raw"
+   },
+   "names": {
+    "en": [
+     "salmon",
+     "raw salmon"
+    ],
+    "es": [
+     "salmón"
+    ],
+    "de": [
+     "Lachs"
+    ]
+   },
+   "per100": {
+    "kcal": 208,
+    "p": 20.4,
+    "f": 13.4,
+    "c": 0
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "0.5 fillet",
+     "grams": 198
+    }
+   ]
+  },
+  {
+   "id": "tuna-canned-water",
+   "usda": {
+    "fdcId": 171986,
+    "description": "Fish, tuna, light, canned in water, without salt, drained solids"
+   },
+   "names": {
+    "en": [
+     "tuna in water",
+     "canned tuna"
+    ],
+    "es": [
+     "atún al natural",
+     "atún en lata"
+    ],
+    "de": [
+     "Thunfisch im eigenen Saft",
+     "Thunfisch"
+    ]
+   },
+   "per100": {
+    "kcal": 116,
+    "p": 25.5,
+    "f": 0.8,
+    "c": 0
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 can",
+     "grams": 165
+    }
+   ]
+  },
+  {
+   "id": "tofu-firm",
+   "usda": {
+    "fdcId": 172475,
+    "description": "Tofu, raw, firm, prepared with calcium sulfate"
+   },
+   "names": {
+    "en": [
+     "tofu",
+     "firm tofu"
+    ],
+    "es": [
+     "tofu"
+    ],
+    "de": [
+     "Tofu"
+    ]
+   },
+   "per100": {
+    "kcal": 144,
+    "p": 17.3,
+    "f": 8.7,
+    "c": 2.8
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "0.25 block",
+     "grams": 81
+    }
+   ]
+  },
+  {
+   "id": "lentils-cooked",
+   "usda": {
+    "fdcId": 172421,
+    "description": "Lentils, mature seeds, cooked, boiled, without salt"
+   },
+   "names": {
+    "en": [
+     "cooked lentils",
+     "lentils"
+    ],
+    "es": [
+     "lentejas cocidas",
+     "lentejas"
+    ],
+    "de": [
+     "gekochte Linsen",
+     "Linsen"
+    ]
+   },
+   "per100": {
+    "kcal": 116,
+    "p": 9,
+    "f": 0.4,
+    "c": 20.1
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "chickpeas-cooked",
+   "usda": {
+    "fdcId": 173757,
+    "description": "Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, without salt"
+   },
+   "names": {
+    "en": [
+     "cooked chickpeas",
+     "chickpeas"
+    ],
+    "es": [
+     "garbanzos cocidos",
+     "garbanzos"
+    ],
+    "de": [
+     "Kichererbsen"
+    ]
+   },
+   "per100": {
+    "kcal": 164,
+    "p": 8.9,
+    "f": 2.6,
+    "c": 27.4
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "black-beans-cooked",
+   "usda": {
+    "fdcId": 173735,
+    "description": "Beans, black, mature seeds, cooked, boiled, without salt"
+   },
+   "names": {
+    "en": [
+     "black beans"
+    ],
+    "es": [
+     "porotos negros",
+     "frijoles negros"
+    ],
+    "de": [
+     "schwarze Bohnen"
+    ]
+   },
+   "per100": {
+    "kcal": 132,
+    "p": 8.9,
+    "f": 0.5,
+    "c": 23.7
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "almonds",
+   "usda": {
+    "fdcId": 170567,
+    "description": "Nuts, almonds"
+   },
+   "names": {
+    "en": [
+     "almonds"
+    ],
+    "es": [
+     "almendras"
+    ],
+    "de": [
+     "Mandeln"
+    ]
+   },
+   "per100": {
+    "kcal": 579,
+    "p": 21.2,
+    "f": 49.9,
+    "c": 21.6
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 almond",
+     "grams": 1.2
+    }
+   ]
+  },
+  {
+   "id": "walnuts",
+   "usda": {
+    "fdcId": 170187,
+    "description": "Nuts, walnuts, english"
+   },
+   "names": {
+    "en": [
+     "walnuts"
+    ],
+    "es": [
+     "nueces"
+    ],
+    "de": [
+     "Walnüsse"
+    ]
+   },
+   "per100": {
+    "kcal": 654,
+    "p": 15.2,
+    "f": 65.2,
+    "c": 13.7
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "peanuts",
+   "usda": {
+    "fdcId": 172430,
+    "description": "Peanuts, all types, raw"
+   },
+   "names": {
+    "en": [
+     "peanuts"
+    ],
+    "es": [
+     "maní",
+     "cacahuetes"
+    ],
+    "de": [
+     "Erdnüsse"
+    ]
+   },
+   "per100": {
+    "kcal": 567,
+    "p": 25.8,
+    "f": 49.2,
+    "c": 16.1
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "peanut-butter",
+   "usda": {
+    "fdcId": 172470,
+    "description": "Peanut butter, smooth style, without salt"
+   },
+   "names": {
+    "en": [
+     "peanut butter"
+    ],
+    "es": [
+     "mantequilla de maní",
+     "manteca de maní"
+    ],
+    "de": [
+     "Erdnussbutter"
+    ]
+   },
+   "per100": {
+    "kcal": 598,
+    "p": 22.2,
+    "f": 51.4,
+    "c": 22.3
+   },
+   "density": null,
+   "portions": []
+  },
+  {
+   "id": "sugar",
+   "usda": {
+    "fdcId": 169655,
+    "description": "Sugars, granulated"
+   },
+   "names": {
+    "en": [
+     "sugar"
+    ],
+    "es": [
+     "azúcar"
+    ],
+    "de": [
+     "Zucker"
+    ]
+   },
+   "per100": {
+    "kcal": 387,
+    "p": 0,
+    "f": 0,
+    "c": 100
+   },
+   "density": null,
+   "portions": [
+    {
+     "label": "1 serving 1 cube",
+     "grams": 2.3
+    },
+    {
+     "label": "1 serving packet",
+     "grams": 2.8
+    }
+   ]
+  },
+  {
+   "id": "honey",
+   "usda": {
+    "fdcId": 169640,
+    "description": "Honey"
+   },
+   "names": {
+    "en": [
+     "honey"
+    ],
+    "es": [
+     "miel"
+    ],
+    "de": [
+     "Honig"
+    ]
+   },
+   "per100": {
+    "kcal": 304,
+    "p": 0.3,
+    "f": 0,
+    "c": 82.4
+   },
+   "density": 1.42,
+   "portions": []
+  },
+  {
+   "id": "coffee-black",
+   "usda": {
+    "fdcId": 171890,
+    "description": "Beverages, coffee, brewed, prepared with tap water"
+   },
+   "names": {
+    "en": [
+     "black coffee",
+     "filter coffee",
+     "coffee"
+    ],
+    "es": [
+     "café negro",
+     "café de filtro"
+    ],
+    "de": [
+     "Kaffee schwarz",
+     "Filterkaffee",
+     "Kaffee"
+    ]
+   },
+   "per100": {
+    "kcal": 1,
+    "p": 0.1,
+    "f": 0,
+    "c": 0
+   },
+   "density": 1,
+   "portions": [
+    {
+     "label": "1 mug (240 ml)",
+     "grams": 240
+    }
+   ]
+  },
+  {
+   "id": "espresso",
+   "usda": {
+    "fdcId": 171891,
+    "description": "Beverages, coffee, brewed, espresso, restaurant-prepared"
+   },
+   "names": {
+    "en": [
+     "espresso"
+    ],
+    "es": [
+     "espresso",
+     "café expreso",
+     "café"
+    ],
+    "de": [
+     "Espresso"
+    ]
+   },
+   "per100": {
+    "kcal": 9,
+    "p": 0.1,
+    "f": 0.2,
+    "c": 1.7
+   },
+   "density": 1,
+   "portions": [
+    {
+     "label": "1 shot (30 ml)",
+     "grams": 30
+    }
+   ]
+  }
+ ]
+}
