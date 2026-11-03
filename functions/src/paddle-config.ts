@@ -17,7 +17,7 @@ export type Billing = "monthly" | "annual"
 export const PADDLE = {
   environment: "production" as PaddleEnvironment,
   /** Developer tools → Authentication → client-side token (`live_…`). */
-  clientToken: "",
+  clientToken: "live_5ac501d20644d8a0463e3477735",
   /** Catalog → Products → each price's `pri_…` ID. */
   prices: {
     pro: {
