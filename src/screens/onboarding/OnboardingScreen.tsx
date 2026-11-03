@@ -337,11 +337,8 @@ function GoalStep({
               <Plus className="h-[18px] w-[18px]" />
             </Stepper>
           }
-          onChange={(raw) => setDraft(raw.replace(/\D/g, "").slice(0, 5))}
-          onFocus={(e) => {
-            setDraft(String(kcal))
-            requestAnimationFrame(() => e.target.select())
-          }}
+          onChange={(digits) => setDraft(digits.slice(0, 5))}
+          onFocus={() => setDraft(String(kcal))}
           onBlur={commitDraft}
         />
 
@@ -400,25 +397,61 @@ function GoalField({
   ariaLabel: string
   decrease: React.ReactNode
   increase: React.ReactNode
-  onChange: (raw: string) => void
-  onFocus: (e: React.FocusEvent<HTMLInputElement>) => void
+  /** The field's digits, without grouping. */
+  onChange: (digits: string) => void
+  onFocus: () => void
   onBlur: () => void
 }) {
   const id = React.useId()
   const ref = React.useRef<HTMLInputElement>(null)
+  // The figure is regrouped on every keystroke ("950" + "1" shows "1,950"),
+  // and a controlled input whose text changes under it puts the caret at the
+  // end. So the caret is kept as a count of the digits before it, and put
+  // back after that many digits of the new text.
+  const caretDigits = React.useRef<number | null>(null)
+  const placeCaret = React.useCallback(() => {
+    const el = ref.current
+    const count = caretDigits.current
+    if (!el || count === null || document.activeElement !== el) return
+    caretDigits.current = null
+    let at = 0
+    for (let seen = 0; at < el.value.length && seen < count; at++)
+      if (/\d/.test(el.value[at])) seen++
+    el.setSelectionRange(at, at)
+  }, [])
   // A typed digit lands before the copy under the input has widened it, so
   // the browser scrolls the text to keep the caret in view and the first
   // digit slips out of sight. The input is as wide as its text again by
   // layout, so scroll it back before the frame paints.
   React.useLayoutEffect(() => {
     if (ref.current) ref.current.scrollLeft = 0
-  }, [value])
+    placeCaret()
+  }, [value, placeCaret])
+
+  const change = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value
+    const caret = e.target.selectionStart ?? text.length
+    let digits = text.replace(/\D/g, "")
+    let before = text.slice(0, caret).replace(/\D/g, "").length
+    const shown = value.replace(/\D/g, "")
+    // Backspace over a group separator deletes the digit before it, as in
+    // any grouped number field, rather than doing nothing.
+    if (digits === shown && text.length < value.length && before > 0) {
+      digits = digits.slice(0, before - 1) + digits.slice(before)
+      before -= 1
+    }
+    caretDigits.current = before
+    onChange(digits)
+    // Unchanged digits (a letter typed) mean no re-render to place the
+    // caret after React puts the old text back, so place it next frame.
+    if (digits === shown) requestAnimationFrame(placeCaret)
+  }
   const input = (
     <input
       ref={ref}
       id={id}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={change}
       onFocus={onFocus}
       onBlur={onBlur}
       onKeyDown={(e) => {
