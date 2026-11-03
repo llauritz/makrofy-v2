@@ -166,7 +166,10 @@ function score(pipe, calls, foodsByText) {
       statusOk: rs.filter((r) => r.statusOk).length / (rs.length || 1),
       hits: refRows.filter((r) => r.hit).length,
       refN: refRows.length,
-      medErr: median(refRows.filter((r) => r.kcalErr !== null).map((r) => r.kcalErr)),
+      meanErr: (() => {
+        const e = refRows.filter((r) => r.kcalErr !== null).map((r) => r.kcalErr)
+        return e.length ? e.reduce((a, b) => a + b, 0) / e.length : NaN
+      })(),
       searched: rs.filter((r) => r.searched).length / (rs.length || 1),
       queries: rs.reduce((s, r) => s + r.queries, 0) / (rs.length || 1),
       cost: rs.reduce((s, r) => s + r.cost, 0) / (rs.length || 1),
@@ -226,6 +229,7 @@ function routeAccuracy(calls, foodsByText) {
 // ── Markdown ───────────────────────────────────────────────────────────────
 const f1 = (x) => (Number.isNaN(x) ? "–" : x.toFixed(1))
 const pc = (x) => (Number.isNaN(x) ? "–" : `${Math.round(x * 100)}%`)
+const pc1 = (x) => (Number.isNaN(x) ? "–" : `${(x * 100).toFixed(1)}%`)
 const usd = (x) => `$${(x * 1000).toFixed(2)}`
 const sec = (ms) => (Number.isNaN(ms) ? "–" : `${(ms / 1000).toFixed(2)} s`)
 const md = (cells) => `| ${cells.map((c) => String(c).replace(/\|/g, "/")).join(" | ")} |`
@@ -250,10 +254,10 @@ export function report(run, foods = FOODS) {
   out.push("### Designs compared", "")
   out.push(
     table(
-      ["Design", "Cost per 1,000 fills", "Searches per fill", "Median", "p90", "kcal within tolerance", "Median kcal error", "Right kind of reply", "Failed"],
+      ["Design", "Cost per 1,000 fills", "Searches per fill", "Median", "p90", "kcal within tolerance", "Mean kcal error", "Right kind of reply", "Failed"],
       scored.map(({ p, s }) => [
         p.name, usd(s.all.cost), s.all.queries.toFixed(2), sec(s.all.msMed), sec(s.all.msP90),
-        `${s.all.hits}/${s.all.refN}`, pc(s.all.medErr), pc(s.all.statusOk), s.all.failed,
+        `${s.all.hits}/${s.all.refN}`, pc1(s.all.meanErr), pc(s.all.statusOk), s.all.failed,
       ])
     ),
     ""
@@ -262,11 +266,11 @@ export function report(run, foods = FOODS) {
   out.push("### By kind of food", "")
   out.push(
     table(
-      ["Design", "Kind", "Cost per 1,000", "Searched", "Median", "kcal within tolerance", "Median kcal error", "Right kind of reply"],
+      ["Design", "Kind", "Cost per 1,000", "Searched", "Median", "kcal within tolerance", "Mean kcal error", "Right kind of reply"],
       scored.flatMap(({ p, s }) =>
         ["staple", "branded", "vague"].map((k) => {
           const b = s.byKind[k]
-          return [p.name, k, usd(b.cost), pc(b.searched), sec(b.msMed), b.refN ? `${b.hits}/${b.refN}` : "–", pc(b.medErr), pc(b.statusOk)]
+          return [p.name, k, usd(b.cost), pc(b.searched), sec(b.msMed), b.refN ? `${b.hits}/${b.refN}` : "–", pc1(b.meanErr), pc(b.statusOk)]
         })
       )
     ),
