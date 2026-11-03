@@ -19,6 +19,10 @@ async function cascade(s, o) {
   return { result: second.out }
 }
 
+// verify=<0..1>: a second Jev question checks the pick is the same food in
+// the same state (part, cooking, fat level); below the threshold is a miss.
+const tableOpts = (o) => ({ jevModel: o.jev, minConfidence: Number(o.minConfidence ?? 0.6), verify: o.verify === undefined ? null : Number(o.verify) })
+
 const isFood = (r) => r?.status === "confident" || r?.status === "unsure"
 
 export const VARIANTS = {
@@ -79,9 +83,9 @@ export const VARIANTS = {
     },
   },
   "table-jev": {
-    describe: "Our USDA food table first: Jev picks the food and portion and code does the sums; a miss (no match, \"none\", Jev unsure, not a single food) falls back to the cascade.",
+    describe: "Our USDA food table first: Jev picks the food and portion and code does the sums; a miss (no match, \"none\", Jev unsure, not a single food) falls back to the cascade. Option verify=0.5 adds a Jev check that the pick is the same food in the same state.",
     run: async (s, o) => {
-      const t = await s.table({ jevModel: o.jev, minConfidence: Number(o.minConfidence ?? 0.6) })
+      const t = await s.table(tableOpts(o))
       if (t.out?.result) return { result: t.out.result, tableHit: t.out.match }
       return { tableMiss: t.out?.reason, ...(await cascade(s, o)) }
     },
@@ -96,7 +100,7 @@ export const VARIANTS = {
       }
       let tableMiss
       if (route === "staple") {
-        const t = await s.table({ jevModel: o.jev, minConfidence: Number(o.minConfidence ?? 0.6) })
+        const t = await s.table(tableOpts(o))
         if (t.out?.result) return { route, result: t.out.result, tableHit: t.out.match }
         tableMiss = t.out?.reason
       }

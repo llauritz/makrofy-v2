@@ -80,7 +80,7 @@ const describe = (f) =>
  * Match one entry against the table with Jev. Returns { result, reason,
  * calls } where result is a MacroFillResult or null (a miss).
  */
-export async function matchWithJev({ table, text, decide, minConfidence = 0.6 }) {
+export async function matchWithJev({ table, text, decide, minConfidence = 0.6, verify = null }) {
   const calls = []
   const list = shortlist(table, text)
   if (!list.length) return { result: null, reason: "no candidates", calls }
@@ -103,6 +103,24 @@ export async function matchWithJev({ table, text, decide, minConfidence = 0.6 })
   if ((first.answers.single?.noul ?? 1) < 0.5) return { result: null, reason: "jev: not a single food", calls }
   const food = list.find((f) => f.id === pick.choice)
   if (!food) return { result: null, reason: `jev picked unknown ${pick.choice}`, calls }
+
+  // Optional check that the pick is the same food in the same state, not a
+  // near neighbour ("egg whites" → whole egg, "con piel" → breast without skin).
+  if (verify !== null) {
+    const v = await decide({
+      state: { entry: text, food: describe(food) },
+      questions: {
+        same: {
+          type: "noul",
+          instructions:
+            "The table food is exactly what the entry describes: the same food, the same part (whole, whites, yolks, with or without skin), the same state (raw, cooked, dry, smoked, juice) and the same fat level. The amount doesn't matter.",
+        },
+      },
+    })
+    calls.push(v)
+    if (v.error) return { result: null, reason: `jev error: ${v.error}`, calls }
+    if ((v.answers.same?.noul ?? 0) < verify) return { result: null, reason: `jev: not the same food (${v.answers.same?.noul})`, calls }
+  }
 
   let grams = statedGrams(text, food.density)
   let serving = grams === null ? null : `${Math.round(grams)} g`

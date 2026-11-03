@@ -116,12 +116,12 @@ export function foodContext({ gemini, jev, prompts, table, text }) {
       },
 
       /** Our food table, with Jev picking the food and the portion. */
-      table: ({ jevModel, minConfidence }) => {
+      table: ({ jevModel, minConfidence, verify = null }) => {
         needJev()
         if (!table) throw new Error("No food table: run scripts/ai-bench/data/build-food-table.mjs first.")
-        return use(JSON.stringify(["table", jevModel, minConfidence]), async () => {
+        return use(JSON.stringify(["table", jevModel, minConfidence, verify]), async () => {
           const decide = (req) => jev.decide({ model: jevModel, ...req })
-          const m = await matchWithJev({ table, text, decide, minConfidence })
+          const m = await matchWithJev({ table, text, decide, minConfidence, verify })
           const usage = { input: m.calls.reduce((s, c) => s + (c.usage?.input ?? 0), 0), output: 0 }
           return {
             step: "table + jev", model: jevModel, search: false, queries: 0, usage,
