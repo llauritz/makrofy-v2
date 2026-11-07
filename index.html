@@ -42,6 +42,23 @@
     })()
   </script>
 
+  <!-- iOS Safari zooms the page in on any text field whose text is under
+       16px, and leaves it zoomed after the keyboard closes. Our fields use
+       14px, so on iOS (iPadOS reports itself as a Mac with touch) the viewport
+       gets maximum-scale=1: Safari then no longer zooms on focus, while pinch
+       zoom keeps working, since iOS ignores maximum-scale for the user's own
+       gestures. Android does not zoom on focus and does honour maximum-scale,
+       so it keeps the plain viewport and its pinch zoom. -->
+  <script>
+    try {
+      if (/iP(hone|ad|od)/.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) {
+        var v = document.querySelector('meta[name="viewport"]')
+        if (v) v.setAttribute("content", v.getAttribute("content") + ", maximum-scale=1")
+      }
+    } catch (e) {}
+  </script>
+
   <!-- Since Chrome 135, Android's browser draws a viewport-fit=cover page
        edge-to-edge: the page runs on under the gesture/navigation bar, and
        env(safe-area-inset-bottom) reports that bar's height. The installed
